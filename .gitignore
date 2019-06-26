@@ -1,0 +1,8 @@
+/build/
+/bin/
+/.settings/
+/.classpath
+/.project
+/common-mvc.log
+/bigdata.log
+/out/

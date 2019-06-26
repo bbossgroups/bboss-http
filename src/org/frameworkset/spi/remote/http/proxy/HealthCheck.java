@@ -88,8 +88,8 @@ public class HealthCheck implements Runnable{
 						 });
 					
 					 } catch (Exception e) {
-						 if(logger.isInfoEnabled())
-							 logger.info(new StringBuilder().append("Down Http  pool[").append(poolName).append( "] Server health check use [").append(address.getHealthPath()).append("] failed:").append(" Http server[").append(address.toString()).append("] is down.").toString());
+						 if(logger.isDebugEnabled())
+							 logger.debug(new StringBuilder().append("Down Http  pool[").append(poolName).append( "] Server health check use [").append(address.getHealthPath()).append("] failed:").append(" Http server[").append(address.toString()).append("] is down.").toString());
 						 address.onlySetStatus(1);
 					 }
 			 		 if(this.stop)

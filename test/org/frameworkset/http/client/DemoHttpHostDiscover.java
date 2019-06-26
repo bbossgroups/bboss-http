@@ -40,16 +40,16 @@ public class DemoHttpHostDiscover extends HttpHostDiscover {
 									  GetProperties context) {
 
 		List<HttpHost> hosts = new ArrayList<HttpHost>();
-		HttpHost host = new HttpHost("192.168.137.1:808");
+		HttpHost host = new HttpHost("192.168.137.1:808|beijing");
 		hosts.add(host);
 		if(count != 2) {
-			host = new HttpHost("192.168.137.1:809");
+			host = new HttpHost("192.168.137.1:809|beijing");
 			hosts.add(host);
 		}
 		else{
 			System.out.println("aa");
 		}
-		host = new HttpHost("192.168.137.1:810");
+		host = new HttpHost("192.168.137.1:810|shanghai");
 		hosts.add(host);
 		count ++;
 		return hosts;

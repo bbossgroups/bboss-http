@@ -5,6 +5,16 @@ import java.util.Map;
 
 public class HttpAddress {
 	private String address;
+
+	public void setOriginAddress(String originAddress) {
+		this.originAddress = originAddress;
+	}
+
+	public String getOriginAddress() {
+		return originAddress;
+	}
+
+	private String originAddress;
 	private String healthPath;
 	private transient Thread healthCheck;
 	private String routing;
@@ -25,7 +35,7 @@ public class HttpAddress {
 		this.healthPath = healthPath;
 	}
 	private void initAddress(){
-		String[] infos = address.split("\\|");
+		String[] infos = this.originAddress.split("\\|");
 
 		if(infos.length == 2){
 			this.address = infos[0];
@@ -39,19 +49,29 @@ public class HttpAddress {
 		if (!address.startsWith("http://") && !address.startsWith("https://")) {
 			address = "http://" + address;
 		}
-		this.address = address;
+		this.originAddress = address;
 		initAddress();
-		this.healthPath = this.getPath(address,"/");
+		this.healthPath = this.getPath(this.address,"/");
 	}
 
 	public HttpAddress(String address,String healthPath){
 		if (!address.startsWith("http://") && !address.startsWith("https://")) {
 			address = "http://" + address;
 		}
-		this.address = address;
+		this.originAddress = address;
 		initAddress();
 		if(healthPath != null) {
-			this.healthPath = this.getPath(address, healthPath.trim());
+			this.healthPath = this.getPath(this.address, healthPath.trim());
+		}
+	}
+
+	public HttpAddress(String originAddress,String address,String routing,String healthPath){
+
+		this.originAddress = originAddress;
+		this.address = address;
+		this.routing = routing;
+		if(healthPath != null) {
+			this.healthPath = this.getPath(this.address, healthPath.trim());
 		}
 	}
 	private String getPath(String host,String path){
@@ -103,7 +123,7 @@ public class HttpAddress {
 		
 	}
 	public String toString(){
-		return this.address;
+		return new StringBuilder().append(this.originAddress).append("|status=").append(status).toString();
 	}
 	public boolean ok(){
 		return this.status == 0;

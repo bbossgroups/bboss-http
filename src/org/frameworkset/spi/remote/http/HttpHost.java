@@ -45,11 +45,27 @@ public final class HttpHost implements Cloneable, Serializable {
 	private static final long serialVersionUID = -7529410654042457626L;
 
 
+	private String origineAddress;
+
+	public String getHostAddress() {
+		return hostAddress;
+	}
 
 	protected String hostAddress;
 	protected Map<String,Object> attributes;
 	protected String routing;
+	private void initAddress(){
+		this.origineAddress = hostAddress;
+		String[] infos = hostAddress.split("\\|");
 
+		if(infos.length == 2){
+			this.hostAddress = infos[0];
+			this.routing = infos[1];
+		}
+		else{
+			this.hostAddress = infos[0];
+		}
+	}
 
 
 	/**
@@ -57,13 +73,14 @@ public final class HttpHost implements Cloneable, Serializable {
 	 *
 	 * @param hostname  the hostname (IP or DNS name)
 	 */
-	public HttpHost(final String hostname) {
+	public HttpHost( String hostname) {
 		if (!hostname.startsWith("http://") && !hostname.startsWith("https://")) {
-			this.hostAddress = "http://" + hostname;
+			hostAddress = "http://" + hostname;
 		}
-		else {
-			this.hostAddress = hostname;
+		else{
+			hostAddress = hostname;
 		}
+		this.initAddress();
 	}
 
 	public Map<String,Object> getAttributes(){
@@ -71,6 +88,9 @@ public final class HttpHost implements Cloneable, Serializable {
 	}
 
 
+	public String getOrigineAddress() {
+		return origineAddress;
+	}
 
 	/**
 	 * Copy constructor for {@link HttpHost HttpHost}.
@@ -84,6 +104,7 @@ public final class HttpHost implements Cloneable, Serializable {
 		this.hostAddress = httphost.hostAddress;
 		this.attributes = httphost.attributes;
 		this.routing = httphost.routing;
+		this.origineAddress = httphost.origineAddress;
 	}
 
 
@@ -91,8 +112,7 @@ public final class HttpHost implements Cloneable, Serializable {
 
 	@Override
 	public String toString() {
-
-			return hostAddress;
+			return origineAddress;
 
 	}
 
@@ -141,7 +161,5 @@ public final class HttpHost implements Cloneable, Serializable {
 	public String getRouting(){
 		return this.routing;
 	}
-	public void setRouting(String routing){
-		this.routing = routing;
-	}
+
 }

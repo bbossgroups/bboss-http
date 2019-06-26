@@ -47,6 +47,12 @@ public class HttpRequestProxyTest {
 //		configs.put("report.http.health","/health");//health监控检查地址必须配置，否则将不会启动健康检查机制
 //		configs.put("report.http.discoverService","org.frameworkset.http.client.DemoHttpHostDiscover");
 		configs.put("http.health","/health");//health监控检查地址必须配置，否则将不会启动健康检查机制
+		/**
+		# 指定本地区信息，系统按地区部署时，指定地区信息，
+		# 不同的地区请求只路由到本地区（beijing）对应的服务器，shanghai的服务器作为backup服务器，
+		# 当本地(beijing)的服务器都不可用时，才将请求转发到可用的上海服务器
+		 */
+		configs.put("http.routing","beijing");//指定
 //		configs.put("http.hosts","1111:90222,http://1111:90222,https://1111:90222");//health监控检查地址必须配置，否则将不会启动健康检查机制
 		DemoHttpHostDiscover demoHttpHostDiscover = new DemoHttpHostDiscover();
 		configs.put("http.discoverService",demoHttpHostDiscover);
@@ -55,6 +61,12 @@ public class HttpRequestProxyTest {
 		configs.put("report.http.health","/health");//health监控检查地址必须配置，否则将不会启动健康检查机制
 //		configs.put("report.http.hosts","1111:90222,http://1111:90222,https://1111:90222");//health监控检查地址必须配置，否则将不会启动健康检查机制
 		configs.put("report.http.discoverService","org.frameworkset.http.client.DemoHttpHostDiscover");
+		/**
+		 # 指定本地区信息，系统按地区部署时，指定地区信息，
+		 # 不同的地区请求只路由到本地区（beijing）对应的服务器，shanghai的服务器作为backup服务器，
+		 # 当本地(beijing)的服务器都不可用时，才将请求转发到可用的上海服务器
+		 */
+		configs.put("report.http.routing","beijing");//指定
 		HttpRequestProxy.startHttpPools(configs);
 	}
 	@Test

@@ -30,12 +30,12 @@ public class RoundRobinList {
 	private final List<HttpAddress> elements;
 
 	private Iterator<HttpAddress> iterator;
-	private String message;
+//	private String message;
 
 
 	public RoundRobinList(List<HttpAddress> elements) {
 		this.elements = elements;
-		message = "All Http Server "+elements.toString()+" can't been connected.";
+//		message = "All Http Server "+elements.toString()+" can't been connected.";
 		iterator = this.elements.iterator();
 	}
 
@@ -44,7 +44,7 @@ public class RoundRobinList {
 		try{
 			lock.lock();
 			this.elements.addAll(address);
-			message = new StringBuilder().append("All Http Server ").append(elements.toString()).append(" can't been connected.").toString();
+
 			this.iterator = elements.iterator();
 		}
 		finally {
@@ -76,8 +76,10 @@ public class RoundRobinList {
 						break;
 					}
 				}
-				if(temp == null)
+				if(temp == null) {
+					String message = new StringBuilder().append("All Http Server ").append(elements.toString()).append(" can't been connected.").toString();
 					throw new NoHttpServerException(message);
+				}
 				return temp;
 			}
 		}
@@ -91,7 +93,9 @@ public class RoundRobinList {
 			lock.lock();
 			HttpAddress address = null;
 			HttpAddress temp = null;
+
 			while (iterator.hasNext()) {
+
 				address = iterator.next();
 				if (address.ok()){
 					temp = address;
@@ -111,8 +115,9 @@ public class RoundRobinList {
 					}
 				}
 
-				if(temp == null && logger.isInfoEnabled()) {
-					logger.info(message);
+				if(temp == null && logger.isDebugEnabled()) {
+					String message = new StringBuilder().append("All Http Server ").append(elements.toString()).append(" can't been connected.").toString();
+					logger.debug(message);
 				}
 				return temp;
 			}

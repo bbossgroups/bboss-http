@@ -47,8 +47,11 @@ public abstract class HttpHostDiscover extends Thread{
 		//识别新增节点
 		for(int i = 0; hosts !=null && i < hosts.size();i ++){
 			httpHost = hosts.get(i);
-			HttpAddress address = new HttpAddress(httpHost.toString(),health);
-			address.setRouting(httpHost.getRouting());
+			HttpAddress address = new HttpAddress(httpHost.getOrigineAddress(),
+					                              httpHost.getHostAddress(),
+					                              httpHost.getRouting(),health);
+//			if(address.getRouting() == null || address.getRouting().equals(""))
+//				address.setRouting(httpHost.getRouting());
 			address.setAttributes(httpHost.getAttributes());
 			if(!httpServiceHosts.containAddress(address)){
 				newAddress.add(address);
@@ -65,10 +68,7 @@ public abstract class HttpHostDiscover extends Thread{
 			httpServiceHosts.addAddresses(newAddress);
 		}
 		//处理删除节点
-		if(!changed)
-			changed = httpServiceHosts.handleRemoved( hosts);
-		else
-			httpServiceHosts.handleRemoved( hosts);
+		httpServiceHosts.handleRemoved( hosts);
 		//如果数据有变化，则根据routing规则对地址进行重新分组
 		if(changed) {
 			httpServiceHosts.routingGroup();

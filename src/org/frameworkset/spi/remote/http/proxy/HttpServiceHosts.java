@@ -215,7 +215,7 @@ public class HttpServiceHosts {
 			boolean firsted = true;
 			while(iterator.hasNext()){
 				Map.Entry<String, HttpAddress> esAddressEntry = iterator.next();
-				String host = esAddressEntry.getKey();
+				String host = esAddressEntry.getValue().getOriginAddress();
 
 				if(firsted){
 					info.append(host);
@@ -235,9 +235,8 @@ public class HttpServiceHosts {
 		}
 		this.routingFilter = new RoutingFilter(this.addressList,routing);
 	}
-	public boolean handleRemoved(List<HttpHost> hosts){
+	public void handleRemoved(List<HttpHost> hosts){
 		boolean hasHosts = true;
-		boolean changed = false;
 		if(hosts == null || hosts.size() == 0){//没有可用节点
 			hasHosts = false;
 		}
@@ -249,14 +248,13 @@ public class HttpServiceHosts {
 			if(hasHosts) {
 				boolean exist = false;
 				for (HttpHost httpHost : hosts) {
-					if (httpHost.toString().equals(host)) {
+					if (httpHost.getHostAddress().equals(host)) {
 						exist = true;
 						break;
 					}
 				}
 				if (!exist) {
-					if(!changed)
-						changed = true;
+
 					address.setStatus(2);
 					if(logger.isInfoEnabled()){
 						logger.info(new StringBuilder().append("Http pool[")
@@ -266,8 +264,7 @@ public class HttpServiceHosts {
 			}
 			else {
 				address.setStatus(2);
-				if(!changed)
-					changed = true;
+
 				if(logger.isInfoEnabled()){
 					logger.info(new StringBuilder().append("Http pool[")
 							.append(getClientConfiguration().getBeanName()).append("]").append(" Http Node[").append(address.toString()).append("] is down and removed.").toString());
@@ -275,19 +272,19 @@ public class HttpServiceHosts {
 			}
 
 		}
-		return changed;
 
 	}
 
 	/**
 	 * 如果有效更新了路由数据，则返回true
 	 * @param address
-	 * @param routing
+	 * @param httpHost
 	 * @return
 	 */
-	private boolean compareAndSetRouting(HttpAddress address,String routing){
+	private boolean compareAndSetRouting(HttpAddress address,HttpHost httpHost){
 		String old = address.getRouting();
-
+		String routing = httpHost.getRouting();
+		address.setOriginAddress(httpHost.getOrigineAddress());
 		address.setRouting(routing);
 		if(old == null || old.equals("")){
 			if(routing == null || routing.equals(""))
@@ -315,13 +312,13 @@ public class HttpServiceHosts {
 		}
 		boolean result = false;
 		for(HttpHost httpHost: hosts) {
-			HttpAddress address = this.addressMap.get(httpHost.toString());
+			HttpAddress address = this.addressMap.get(httpHost.getHostAddress());
 			if(address != null  ){
 				address.setAttributes(httpHost.getAttributes());
 				if(!result)
-					result = compareAndSetRouting(  address,httpHost.getRouting());
+					result = compareAndSetRouting(  address,httpHost);
 				else{
-					compareAndSetRouting(  address,httpHost.getRouting());
+					compareAndSetRouting(  address,httpHost);
 				}
 				if(address.getStatus() == 2){//节点还原
 					address.onlySetStatus(0);

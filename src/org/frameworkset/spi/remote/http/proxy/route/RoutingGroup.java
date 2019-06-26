@@ -18,6 +18,8 @@ package org.frameworkset.spi.remote.http.proxy.route;
 import org.frameworkset.spi.remote.http.proxy.HttpAddress;
 import org.frameworkset.spi.remote.http.proxy.RoundRobinList;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -31,8 +33,8 @@ import java.util.Map;
  */
 public class RoutingGroup {
 	protected RoundRobinList serversList;
-	protected List<HttpAddress> addressList;
-	private Map<String,HttpAddress> addressMap ;
+	protected List<HttpAddress> addressList = new ArrayList<HttpAddress>();
+	private Map<String,HttpAddress> addressMap = new HashMap<String, HttpAddress>();
 	public void addHttpAddress(HttpAddress httpAddress){
 		this.addressList.add(httpAddress);
 		this.addressMap.put(httpAddress.getAddress(),httpAddress);

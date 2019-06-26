@@ -209,7 +209,11 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 				try {
 					clientConfiguration = context.getTBeanObject(name, ClientConfiguration.class);
 				} catch (SPIException e) {
-					logger.warn(new StringBuilder().append("Make Defualt ClientConfiguration [").append(name).append("] failed,an internal http pool will been constructed:").append(e.getMessage()).toString());
+					if(logger.isWarnEnabled()) {
+						if(!name.startsWith("HealthCheck_")) {
+							logger.warn(new StringBuilder().append("Make ClientConfiguration [").append(name).append("] failed,an internal http pool will been constructed:").append(e.getMessage()).toString());
+						}
+					}
 				}
 
 			}
@@ -241,6 +245,9 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 
 					clientConfiguration.afterPropertiesSet();
 					clientConfigs.put(name, clientConfiguration);
+					if(logger.isInfoEnabled()){
+						logger.info("Make http pool[{}] use default config completed!",name);
+					}
 				}
 				else{
 					clientConfiguration = new ClientConfiguration();
@@ -268,6 +275,9 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 					clientConfiguration.setBeanName(name);
 					clientConfiguration.afterPropertiesSet();
 					clientConfigs.put(name, clientConfiguration);
+					if(logger.isInfoEnabled()){
+						logger.info("Make http pool[{}] use default config completed!",name);
+					}
 				}
 			}
 		}

@@ -111,6 +111,14 @@ public abstract class HttpHostDiscover extends Thread{
 				logger.debug(new StringBuilder().append("Discovery Http pool[")
 						.append(httpServiceHosts.getClientConfiguration().getBeanName()).append("] servers.").toString());
 			List<HttpHost> httpHosts = discover(httpServiceHosts.getHttpServiceHostsConfig(), httpServiceHosts.getClientConfiguration(), httpServiceHosts.getClientConfiguration().getContextProperties());
+			if(httpHosts == null || httpHosts.size() == 0){
+				if(!handleNullOrEmptyHostsByDiscovery()) {
+					if (logger.isInfoEnabled())
+						logger.info(new StringBuilder().append("Discovery ")
+								.append(httpServiceHosts.getClientConfiguration().getBeanName()).append(" servers : ignore with httpHosts == null || httpHosts.size() == 0").toString());
+					return;
+				}
+			}
 			handleDiscoverHosts( httpHosts);
 		} catch (Exception e) {
 			if (logger.isInfoEnabled())
@@ -134,5 +142,15 @@ public abstract class HttpHostDiscover extends Thread{
 		this.doDiscover();
 		super.start();
 
+	}
+
+	/**
+	 * 返回false，忽略对返回的null或者空的hosts进行处理；
+	 * 返回true，要对null或者空的hosts进行处理，这样会导致所有的地址不可用
+	 *
+	 * @return 默认返回false
+	 */
+	protected boolean handleNullOrEmptyHostsByDiscovery(){
+		return false;
 	}
 }

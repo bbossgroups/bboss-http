@@ -19,20 +19,21 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
-import org.frameworkset.spi.remote.http.proxy.*;
+import org.frameworkset.spi.remote.http.proxy.ExceptionWare;
+import org.frameworkset.spi.remote.http.proxy.HttpAddress;
+import org.frameworkset.spi.remote.http.proxy.HttpProxyRequestException;
+import org.frameworkset.spi.remote.http.proxy.NoHttpServerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.NoRouteToHostException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 /**
@@ -57,10 +58,33 @@ public class HttpRequestProxy {
     public static String httpGetforString(String url) throws HttpProxyRequestException {
         return httpGetforString(url, (String) null, (String) null, (Map<String, String>) null);
     }
+    public static <T> T httpGetforObject(String url,final Class<T> resultType) throws HttpProxyRequestException {
+        return httpGetforString("default",url, (String) null, (String) null, (Map<String, String>) null, new ResponseHandler<T>() {
 
+            @Override
+            public T handleResponse(final HttpResponse response)
+                    throws ClientProtocolException, IOException {
+                return HttpRequestProxy.handleResponse(  response, resultType);
+            }
+
+        });
+    }
     public static String httpGetforString(String poolname, String url) throws HttpProxyRequestException {
         return httpGetforString(poolname, url, (String) null, (String) null, (Map<String, String>) null);
     }
+
+    public static <T> T httpGetforObject(String poolname, String url,final Class<T> resultType) throws HttpProxyRequestException {
+        return httpGetforString(poolname, url, (String) null, (String) null, (Map<String, String>) null, new ResponseHandler<T>() {
+
+            @Override
+            public T handleResponse(final HttpResponse response)
+                    throws ClientProtocolException, IOException {
+                return HttpRequestProxy.handleResponse(  response, resultType);
+            }
+
+        });
+    }
+
 
     public static <T> T httpGet(String poolname, String url,ResponseHandler<T> responseHandler) throws HttpProxyRequestException {
         return httpGetforString(poolname, url, (String) null, (String) null, (Map<String, String>) null,responseHandler);
@@ -1622,11 +1646,47 @@ public class HttpRequestProxy {
         return  sendBody(   poolname, requestBody,   url,   null,ContentType.APPLICATION_JSON);
     }
 
+    public static <T> T sendJsonBody(String poolname,String requestBody, String url,Class<T> resultType) throws HttpProxyRequestException {
+
+        return  sendBody(   poolname, requestBody,   url,   null,ContentType.APPLICATION_JSON,resultType);
+    }
+    public static <T> List<T> sendJsonBodyForList(String poolname,String requestBody, String url,Class<T> resultType) throws HttpProxyRequestException {
+
+        return  sendBodyForList(   poolname, requestBody,   url,   null,ContentType.APPLICATION_JSON,resultType);
+    }
+
+    public static <T> Set<T> sendJsonBodyForSet(String poolname,String requestBody, String url,Class<T> resultType) throws HttpProxyRequestException {
+
+        return  sendBodyForSet(   poolname, requestBody,   url,   null,ContentType.APPLICATION_JSON,resultType);
+    }
+
+    public static <K,T> Map<K,T> sendJsonBodyForMap(String poolname,String requestBody, String url,Class<K> keyType,Class<T> resultType) throws HttpProxyRequestException {
+
+        return  sendBodyForMap(   poolname, requestBody,   url,   null,ContentType.APPLICATION_JSON, keyType,resultType);
+    }
     public static String sendJsonBody(String poolname,Object requestBody, String url) throws HttpProxyRequestException {
 
         return  sendBody(   poolname, SimpleStringUtil.object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON);
     }
 
+    public static <T> T sendJsonBody(String poolname,Object requestBody, String url,Class<T> resultType) throws HttpProxyRequestException {
+
+        return  sendBody(   poolname, SimpleStringUtil.object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON,  resultType);
+    }
+
+    public static <T> List<T> sendJsonBodyForList(String poolname,Object requestBody, String url,Class<T> resultType) throws HttpProxyRequestException {
+
+        return  sendBodyForList(   poolname, SimpleStringUtil.object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON,  resultType);
+    }
+    public static <T> Set<T> sendJsonBodyForSet(String poolname,Object requestBody, String url,Class<T> resultType) throws HttpProxyRequestException {
+
+        return  sendBodyForSet(   poolname, SimpleStringUtil.object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON,  resultType);
+    }
+
+    public static <K,T> Map<K,T> sendJsonBodyForMap(String poolname,Object requestBody, String url,Class<K> keyType,Class<T> resultType) throws HttpProxyRequestException {
+
+        return  sendBodyForMap(   poolname, SimpleStringUtil.object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON, keyType, resultType);
+    }
     public static String sendStringBody(String poolname,String requestBody, String url) throws HttpProxyRequestException {
         return  sendBody(  poolname,  requestBody,   url,   null,ContentType.create(
                 "text/plain", Consts.UTF_8));
@@ -1650,7 +1710,10 @@ public class HttpRequestProxy {
 
         return  sendBody( "default", requestBody,   url,   null,ContentType.APPLICATION_JSON);
     }
+    public static <T> T sendJsonBody(String requestBody, String url,Class<T> resultType) throws HttpProxyRequestException {
 
+        return  sendBody( "default", requestBody,   url,   null,ContentType.APPLICATION_JSON,  resultType);
+    }
     public static String sendJsonBody( String url) throws HttpProxyRequestException {
 
         return  sendBody( "default", (String)null,   url,   null,ContentType.APPLICATION_JSON);
@@ -1664,6 +1727,11 @@ public class HttpRequestProxy {
     public static String sendJsonBody(Object requestBody, String url) throws HttpProxyRequestException {
 
         return  sendBody( "default", SimpleStringUtil.object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON);
+    }
+
+    public static <T> T sendJsonBody(Object requestBody, String url,Class<T> resultType) throws HttpProxyRequestException {
+
+        return  sendBody( "default", SimpleStringUtil.object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON,resultType);
     }
 
     public static String sendStringBody(String requestBody, String url) throws HttpProxyRequestException {
@@ -2089,6 +2157,171 @@ public class HttpRequestProxy {
 
         });
         
+    }
+    public static <T> T converJson(HttpEntity entity, Class<T> clazz) throws IOException {
+        InputStream inputStream = null;
+
+        T var4;
+        try {
+            inputStream = entity.getContent();
+            var4 = SimpleStringUtil.json2Object(inputStream, clazz);
+        } finally {
+            inputStream.close();
+        }
+
+        return var4;
+    }
+
+    public static <T> List<T> converJson2List(HttpEntity entity, Class<T> clazz) throws IOException {
+        InputStream inputStream = null;
+
+        List<T> var4;
+        try {
+            inputStream = entity.getContent();
+            var4 = SimpleStringUtil.json2ListObject(inputStream, clazz);
+        } finally {
+            inputStream.close();
+        }
+
+        return var4;
+    }
+
+    public static <T> Set<T> converJson2Set(HttpEntity entity, Class<T> clazz) throws IOException {
+        InputStream inputStream = null;
+
+        Set<T> var4;
+        try {
+            inputStream = entity.getContent();
+            var4 = SimpleStringUtil.json2LSetObject(inputStream, clazz);
+        } finally {
+            inputStream.close();
+        }
+
+        return var4;
+    }
+
+    public static <K,T> Map<K,T> converJson2Map(HttpEntity entity,Class<K> keyType,Class<T> beanType) throws IOException {
+        InputStream inputStream = null;
+
+        Map<K,T> var4;
+        try {
+            inputStream = entity.getContent();
+            var4 = SimpleStringUtil.json2LHashObject(inputStream,  keyType, beanType);
+        } finally {
+            inputStream.close();
+        }
+
+        return var4;
+    }
+    public static <K,T> Map<K,T> handleMapResponse(HttpResponse response,Class<K> keyType,Class<T> beanType)
+            throws ClientProtocolException, IOException {
+        int status = response.getStatusLine().getStatusCode();
+
+        if (status >= 200 && status < 300) {
+            HttpEntity entity = response.getEntity();
+            return entity != null ? converJson2Map(  entity,  keyType,  beanType) : null;
+        } else {
+            HttpEntity entity = response.getEntity();
+            if (entity != null )
+                throw new ClientProtocolException(EntityUtils.toString(entity));
+            else
+                throw new ClientProtocolException("Unexpected response status: " + status);
+        }
+    }
+    public static <T> List<T> handleListResponse(HttpResponse response, Class<T> resultType)
+            throws ClientProtocolException, IOException {
+        int status = response.getStatusLine().getStatusCode();
+
+        if (status >= 200 && status < 300) {
+            HttpEntity entity = response.getEntity();
+            return entity != null ? converJson2List(  entity,  resultType) : null;
+        } else {
+            HttpEntity entity = response.getEntity();
+            if (entity != null )
+                throw new ClientProtocolException(EntityUtils.toString(entity));
+            else
+                throw new ClientProtocolException("Unexpected response status: " + status);
+        }
+    }
+    public static <T> Set<T> handleSetResponse(HttpResponse response, Class<T> resultType)
+            throws ClientProtocolException, IOException {
+        int status = response.getStatusLine().getStatusCode();
+
+        if (status >= 200 && status < 300) {
+            HttpEntity entity = response.getEntity();
+            return entity != null ? converJson2Set(  entity,  resultType) : null;
+        } else {
+            HttpEntity entity = response.getEntity();
+            if (entity != null )
+                throw new ClientProtocolException(EntityUtils.toString(entity));
+            else
+                throw new ClientProtocolException("Unexpected response status: " + status);
+        }
+    }
+    public static <T> T handleResponse(HttpResponse response, Class<T> resultType)
+            throws ClientProtocolException, IOException {
+        int status = response.getStatusLine().getStatusCode();
+
+        if (status >= 200 && status < 300) {
+            HttpEntity entity = response.getEntity();
+            return entity != null ? converJson(  entity,  resultType) : null;
+        } else {
+            HttpEntity entity = response.getEntity();
+            if (entity != null )
+                throw new ClientProtocolException(EntityUtils.toString(entity));
+            else
+                throw new ClientProtocolException("Unexpected response status: " + status);
+        }
+    }
+    public static <T> T sendBody(String poolname,String requestBody, String url, Map<String, String> headers,ContentType contentType,final Class<T> resultType) throws HttpProxyRequestException {
+        return sendBody(  poolname,  requestBody,   url, headers,  contentType, new ResponseHandler<T>() {
+
+            @Override
+            public T handleResponse(final HttpResponse response)
+                    throws ClientProtocolException, IOException {
+                return HttpRequestProxy.handleResponse(  response, resultType);
+            }
+
+        });
+
+    }
+    public static <T> List<T> sendBodyForList(String poolname,String requestBody, String url, Map<String, String> headers,ContentType contentType,final Class<T> resultType) throws HttpProxyRequestException {
+        return sendBody(  poolname,  requestBody,   url, headers,  contentType, new ResponseHandler<List<T>>() {
+
+            @Override
+            public List<T> handleResponse(final HttpResponse response)
+                    throws ClientProtocolException, IOException {
+                return HttpRequestProxy.handleListResponse(  response, resultType);
+            }
+
+        });
+
+    }
+
+    public static <T> Set<T> sendBodyForSet(String poolname,String requestBody, String url, Map<String, String> headers,ContentType contentType,final Class<T> resultType) throws HttpProxyRequestException {
+        return sendBody(  poolname,  requestBody,   url, headers,  contentType, new ResponseHandler<Set<T>>() {
+
+            @Override
+            public Set<T> handleResponse(final HttpResponse response)
+                    throws ClientProtocolException, IOException {
+                return HttpRequestProxy.handleSetResponse(  response, resultType);
+            }
+
+        });
+
+    }
+
+    public static <K,T> Map<K,T> sendBodyForMap(String poolname,String requestBody, String url, Map<String, String> headers,ContentType contentType,final Class<K> keyType,final Class<T> resultType) throws HttpProxyRequestException {
+        return sendBody(  poolname,  requestBody,   url, headers,  contentType, new ResponseHandler<Map<K,T> >() {
+
+            @Override
+            public Map<K,T>  handleResponse(final HttpResponse response)
+                    throws ClientProtocolException, IOException {
+                return HttpRequestProxy.handleMapResponse(  response, keyType,resultType);
+            }
+
+        });
+
     }
     
     public static <T> T putBody(String poolname,String requestBody, String url, Map<String, String> headers,ContentType contentType, ResponseHandler<T> responseHandler) throws HttpProxyRequestException {

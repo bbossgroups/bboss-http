@@ -129,6 +129,9 @@ public abstract class HttpHostDiscover extends Thread{
 
 	public void setHttpServiceHosts(HttpServiceHosts httpServiceHosts) {
 		this.httpServiceHosts = httpServiceHosts;
+		if(this.httpServiceHosts.getDiscoverServiceInterval() > 0l){
+			this.discoverInterval = this.httpServiceHosts.getDiscoverServiceInterval();
+		}
 		String threadName = "Http pool["+httpServiceHosts.getClientConfiguration().getBeanName()+"] HostDiscover Thread";
 		this.setName(threadName);
 		if(logger.isInfoEnabled())

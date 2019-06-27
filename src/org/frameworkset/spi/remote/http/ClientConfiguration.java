@@ -639,6 +639,20 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 					}
 				}
 			}
+			String discoverServiceInterval_ = ClientConfiguration._getStringValue(name, "http.discoverServiceInterval", context, null);
+			if(discoverServiceInterval_ == null){
+				httpServiceHosts.setDiscoverServiceInterval(10000l);
+			}
+			else{
+				try {
+					httpServiceHosts.setDiscoverServiceInterval(Long.parseLong(discoverServiceInterval_));
+				}
+				catch (Exception e){
+					if(logger.isErrorEnabled()) {
+						logger.error("Parse Long discoverServiceInterval parameter failed:" + discoverServiceInterval_, e);
+					}
+				}
+			}
 //			httpServiceHosts.after();
 			httpServiceHosts.toString(log);
 

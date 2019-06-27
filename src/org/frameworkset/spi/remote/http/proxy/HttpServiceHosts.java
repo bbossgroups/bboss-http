@@ -371,7 +371,12 @@ public class HttpServiceHosts {
 	public void setHealthCheckInterval(long healthCheckInterval) {
 		httpServiceHostsConfig.setHealthCheckInterval(  healthCheckInterval);
 	}
-
+	public long getDiscoverServiceInterval() {
+		return httpServiceHostsConfig.getDiscoverServiceInterval();
+	}
+	public void setDiscoverServiceInterval(long discoverServiceInterval){
+		httpServiceHostsConfig.setDiscoverServiceInterval(  discoverServiceInterval);
+	}
 
 	public void setExceptionWare(String exceptionWare) {
 		httpServiceHostsConfig.setExceptionWare(  exceptionWare);

@@ -71,7 +71,7 @@ public abstract class HttpHostDiscover extends Thread{
 		httpServiceHosts.handleRemoved( hosts);
 		//如果数据有变化，则根据routing规则对地址进行重新分组
 		if(changed) {
-			httpServiceHosts.routingGroup();
+			httpServiceHosts.routingGroup(true);
 		}
 	}
 	protected abstract List<HttpHost> discover(HttpServiceHostsConfig httpServiceHostsConfig, ClientConfiguration configuration, GetProperties context);

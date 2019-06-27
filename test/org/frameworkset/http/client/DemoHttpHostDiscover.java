@@ -49,7 +49,12 @@ public class DemoHttpHostDiscover extends HttpHostDiscover {
 		else{
 			System.out.println("aa");
 		}
-		host = new HttpHost("192.168.137.1:810|shanghai");
+		if(count > 10 && count < 15) {
+			host = new HttpHost("192.168.137.1:810|beijing");
+		}
+		else{
+			host = new HttpHost("192.168.137.1:810|shanghai");
+		}
 		hosts.add(host);
 		count ++;
 		return hosts;

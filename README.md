@@ -44,8 +44,12 @@
 构建发布版本：gradle publish
 
 
-## License
+# License
 
 The BBoss Framework is released under version 2.0 of the [Apache License][].
 
 [Apache License]: http://www.apache.org/licenses/LICENSE-2.0
+
+# todo
+1.routing信息变更验证
+2.routingfilter并发控制

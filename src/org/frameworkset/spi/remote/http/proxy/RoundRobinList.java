@@ -128,6 +128,12 @@ public class RoundRobinList {
 	}
 
 	public int size() {
-		return elements.size();
+		try {
+			lock.lock();
+			return elements.size();
+		}
+		finally {
+			lock.unlock();
+		}
 	}
 }

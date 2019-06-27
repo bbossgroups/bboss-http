@@ -25,6 +25,9 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * <p>Description: </p>
@@ -52,6 +55,9 @@ public class HttpServiceHosts {
 	private Map<String,HttpAddress> addressMap ;
 	private String routing;
 	private RoutingFilter routingFilter;
+	private final ReadWriteLock routingFilterLock = new ReentrantReadWriteLock();
+	private Lock routingFilterReadLock = routingFilterLock.readLock();
+	private Lock routingFilterWriteLock = routingFilterLock.writeLock();
 
 	private ClientConfiguration clientConfiguration;
 	public HttpServiceHosts(){
@@ -61,7 +67,13 @@ public class HttpServiceHosts {
 		if(!hasRouting)
 			return serversList.get();
 		else{
-			return this.routingFilter.get();
+			try {
+				routingFilterReadLock.lock();
+				return this.routingFilter.get();
+			}
+			finally {
+				routingFilterReadLock.unlock();
+			}
 		}
 	}
 
@@ -70,7 +82,13 @@ public class HttpServiceHosts {
 			return tryCount >= serversList.size();
 		}
 		else{
-			return tryCount >= routingFilter.size();
+			try {
+				routingFilterReadLock.lock();
+				return tryCount >= routingFilter.size();
+			}
+			finally {
+				routingFilterReadLock.unlock();
+			}
 		}
 	}
 	public static String getHeader(String user, String password) {
@@ -91,7 +109,7 @@ public class HttpServiceHosts {
 				addressMap.put(esAddress.getAddress(), esAddress);
 			}
 			//第一次强制分组
-			routingGroup();
+			routingGroup(false);
 		}
 		serversList = new RoundRobinList(addressList);
 		if (httpServiceHostsConfig.getAuthAccount() != null && !httpServiceHostsConfig.getAuthAccount().equals("")) {
@@ -229,11 +247,23 @@ public class HttpServiceHosts {
 		}
 	}
 
-	public void routingGroup(){
+	public void routingGroup(boolean changed){
 		if(this.routing == null || this.routing.equals("")){
 			return;
 		}
-		this.routingFilter = new RoutingFilter(this.addressList,routing);
+		if(!changed)
+			this.routingFilter = new RoutingFilter(this.addressList,routing);
+		else{
+			RoutingFilter temp = new RoutingFilter(this.addressList,routing);
+			try {
+				routingFilterWriteLock.lock();
+				routingFilter = temp;
+			}
+			finally {
+				routingFilterWriteLock.unlock();
+			}
+
+		}
 	}
 	public void handleRemoved(List<HttpHost> hosts){
 		boolean hasHosts = true;

@@ -36,13 +36,12 @@ public class RoutingFilter {
 	private Map<String,RoutingGroup> routingGroupMap = new HashMap<String, RoutingGroup>();
 	private RoutingGroup currentRoutingGroup = new RoutingGroup();
 	private String currentRouting;
-	private String message;
 	private List<HttpAddress> addressList;
 
 	public RoutingFilter(List<HttpAddress> addressList,String currentRouting) {
 		this.currentRouting = currentRouting;
 		this.addressList = addressList;
-		message = new StringBuilder().append("All Http Server ").append(addressList.toString()).append(" can't been connected.").toString();
+
 		grouped( addressList,  currentRouting);
 	}
 
@@ -94,6 +93,7 @@ public class RoutingFilter {
 			}
 		}
 		if(httpAddress == null){
+			String message = new StringBuilder().append("All Http Server ").append(addressList.toString()).append(" can't been connected.").toString();
 			throw new NoHttpServerException(message);
 		}
 		return httpAddress;

@@ -372,7 +372,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 				_value = context.getExternalObjectProperty(poolName + "." + propertyName);
 
 		} else {
-			_value = context.getExternalProperty(poolName + "." + propertyName);
+			_value = context.getExternalObjectProperty(poolName + "." + propertyName);
 		}
 		if (_value == null) {
 			return defaultValue;

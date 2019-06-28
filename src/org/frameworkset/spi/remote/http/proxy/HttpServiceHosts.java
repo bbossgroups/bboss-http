@@ -377,7 +377,13 @@ public class HttpServiceHosts {
 	public void setDiscoverServiceInterval(long discoverServiceInterval){
 		httpServiceHostsConfig.setDiscoverServiceInterval(  discoverServiceInterval);
 	}
+	public Boolean getHandleNullOrEmptyHostsByDiscovery() {
+		return httpServiceHostsConfig.getHandleNullOrEmptyHostsByDiscovery();
+	}
 
+	public void setHandleNullOrEmptyHostsByDiscovery(Boolean handleNullOrEmptyHostsByDiscovery) {
+		this.httpServiceHostsConfig.setHandleNullOrEmptyHostsByDiscovery(handleNullOrEmptyHostsByDiscovery);
+	}
 	public void setExceptionWare(String exceptionWare) {
 		httpServiceHostsConfig.setExceptionWare(  exceptionWare);
 	}

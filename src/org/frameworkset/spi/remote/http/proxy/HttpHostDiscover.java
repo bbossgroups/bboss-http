@@ -112,7 +112,11 @@ public abstract class HttpHostDiscover extends Thread{
 						.append(httpServiceHosts.getClientConfiguration().getBeanName()).append("] servers.").toString());
 			List<HttpHost> httpHosts = discover(httpServiceHosts.getHttpServiceHostsConfig(), httpServiceHosts.getClientConfiguration(), httpServiceHosts.getClientConfiguration().getContextProperties());
 			if(httpHosts == null || httpHosts.size() == 0){
-				if(!handleNullOrEmptyHostsByDiscovery()) {
+				Boolean handleNullOrEmptyHostsByDiscovery = handleNullOrEmptyHostsByDiscovery();
+				if(handleNullOrEmptyHostsByDiscovery == null){
+					handleNullOrEmptyHostsByDiscovery = httpServiceHosts.getHandleNullOrEmptyHostsByDiscovery();
+				}
+				if( handleNullOrEmptyHostsByDiscovery == null || !handleNullOrEmptyHostsByDiscovery) {
 					if (logger.isInfoEnabled())
 						logger.info(new StringBuilder().append("Discovery ")
 								.append(httpServiceHosts.getClientConfiguration().getBeanName()).append(" servers : ignore with httpHosts == null || httpHosts.size() == 0").toString());
@@ -153,7 +157,7 @@ public abstract class HttpHostDiscover extends Thread{
 	 *
 	 * @return 默认返回false
 	 */
-	protected boolean handleNullOrEmptyHostsByDiscovery(){
-		return false;
+	protected Boolean handleNullOrEmptyHostsByDiscovery(){
+		return null;
 	}
 }

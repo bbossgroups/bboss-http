@@ -88,6 +88,7 @@ public class HttpServiceHostsConfig {
 	private String exceptionWare;
 	private String hosts;
 	private long discoverServiceInterval = 10000l;
+	private Boolean handleNullOrEmptyHostsByDiscovery;
 	public void toString(StringBuilder log, ExceptionWare exceptionWareBean, HttpHostDiscover httpHostDiscover){
 		log.append(",http.authAccount=").append(authAccount);
 		log.append(",http.authPassword=").append(authPassword);
@@ -95,6 +96,7 @@ public class HttpServiceHostsConfig {
 		log.append(",http.health=").append(health);
 		log.append(",http.healthCheckInterval=").append(healthCheckInterval);
 		log.append(",http.discoverServiceInterval=").append(discoverServiceInterval);
+		log.append(",http.handleNullOrEmptyHostsByDiscovery=").append(handleNullOrEmptyHostsByDiscovery);
 		if(exceptionWare != null)
 			log.append(",http.exceptionWare=").append(exceptionWare);
 		else if(exceptionWareBean != null){
@@ -113,5 +115,13 @@ public class HttpServiceHostsConfig {
 
 	public void setDiscoverServiceInterval(long discoverServiceInterval) {
 		this.discoverServiceInterval = discoverServiceInterval;
+	}
+
+	public Boolean getHandleNullOrEmptyHostsByDiscovery() {
+		return handleNullOrEmptyHostsByDiscovery;
+	}
+
+	public void setHandleNullOrEmptyHostsByDiscovery(Boolean handleNullOrEmptyHostsByDiscovery) {
+		this.handleNullOrEmptyHostsByDiscovery = handleNullOrEmptyHostsByDiscovery;
 	}
 }

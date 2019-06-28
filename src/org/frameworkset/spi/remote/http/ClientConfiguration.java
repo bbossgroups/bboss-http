@@ -653,6 +653,21 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 					}
 				}
 			}
+
+			String handleNullOrEmptyHostsByDiscovery_ = ClientConfiguration._getStringValue(name, "http.handleNullOrEmptyHostsByDiscovery", context, null);
+			if(handleNullOrEmptyHostsByDiscovery_ == null){
+				httpServiceHosts.setHandleNullOrEmptyHostsByDiscovery(false);
+			}
+			else{
+				try {
+					httpServiceHosts.setHandleNullOrEmptyHostsByDiscovery(Boolean.parseBoolean(handleNullOrEmptyHostsByDiscovery_));
+				}
+				catch (Exception e){
+					if(logger.isErrorEnabled()) {
+						logger.error("Parse Boolean handleNullOrEmptyHostsByDiscovery_ parameter failed:" + handleNullOrEmptyHostsByDiscovery_, e);
+					}
+				}
+			}
 //			httpServiceHosts.after();
 			httpServiceHosts.toString(log);
 

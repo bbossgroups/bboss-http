@@ -85,7 +85,77 @@ public class HttpRequestProxy {
         });
     }
 
+    public static <T> List<T> httpGetforList(String url,final Class<T> resultType) throws HttpProxyRequestException {
+        return httpGetforString("default",url, (String) null, (String) null, (Map<String, String>) null, new ResponseHandler<List<T>>() {
 
+            @Override
+            public List<T> handleResponse(final HttpResponse response)
+                    throws ClientProtocolException, IOException {
+                return HttpRequestProxy.handleListResponse(  response, resultType);
+            }
+
+        });
+    }
+
+    public static <K,T> Map<K,T> httpGetforMap(String url,final Class<K> keyType,final Class<T> resultType) throws HttpProxyRequestException {
+        return httpGetforString("default",url, (String) null, (String) null, (Map<String, String>) null, new ResponseHandler<Map<K,T> >() {
+
+            @Override
+            public Map<K,T>  handleResponse(final HttpResponse response)
+                    throws ClientProtocolException, IOException {
+                return HttpRequestProxy.handleMapResponse(  response,keyType, resultType);
+            }
+
+        });
+    }
+
+    public static <T> Set<T> httpGetforSet(String url,final Class<T> resultType) throws HttpProxyRequestException {
+        return httpGetforString("default",url, (String) null, (String) null, (Map<String, String>) null, new ResponseHandler<Set<T>>() {
+
+            @Override
+            public Set<T> handleResponse(final HttpResponse response)
+                    throws ClientProtocolException, IOException {
+                return HttpRequestProxy.handleSetResponse(  response, resultType);
+            }
+
+        });
+    }
+
+    public static <T> List<T> httpGetforList(String poolName,String url,final Class<T> resultType) throws HttpProxyRequestException {
+        return httpGetforString(  poolName,url, (String) null, (String) null, (Map<String, String>) null, new ResponseHandler<List<T>>() {
+
+            @Override
+            public List<T> handleResponse(final HttpResponse response)
+                    throws ClientProtocolException, IOException {
+                return HttpRequestProxy.handleListResponse(  response, resultType);
+            }
+
+        });
+    }
+
+    public static <K,T> Map<K,T> httpGetforMap(String poolName,String url,final Class<K> keyType,final Class<T> resultType) throws HttpProxyRequestException {
+        return httpGetforString(  poolName,url, (String) null, (String) null, (Map<String, String>) null, new ResponseHandler<Map<K,T> >() {
+
+            @Override
+            public Map<K,T>  handleResponse(final HttpResponse response)
+                    throws ClientProtocolException, IOException {
+                return HttpRequestProxy.handleMapResponse(  response,keyType, resultType);
+            }
+
+        });
+    }
+
+    public static <T> Set<T> httpGetforSet(String poolName,String url,final Class<T> resultType) throws HttpProxyRequestException {
+        return httpGetforString(  poolName,url, (String) null, (String) null, (Map<String, String>) null, new ResponseHandler<Set<T>>() {
+
+            @Override
+            public Set<T> handleResponse(final HttpResponse response)
+                    throws ClientProtocolException, IOException {
+                return HttpRequestProxy.handleSetResponse(  response, resultType);
+            }
+
+        });
+    }
     public static <T> T httpGet(String poolname, String url,ResponseHandler<T> responseHandler) throws HttpProxyRequestException {
         return httpGetforString(poolname, url, (String) null, (String) null, (Map<String, String>) null,responseHandler);
     }
@@ -536,6 +606,75 @@ public class HttpRequestProxy {
         return httpPostforString(url, params, (Map<String, String>) null, responseHandler);
     }
 
+    public static <T> T httpPostForObject(String url, Map<String, Object> params, final Class<T> resultType) throws HttpProxyRequestException {
+        return httpPostforString(url, params, (Map<String, String>) null, new ResponseHandler<T>() {
+            @Override
+            public T handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                return HttpRequestProxy.handleResponse(response,resultType);
+            }
+        });
+    }
+
+    public static <T> List<T> httpPostForList(String url, Map<String, Object> params, final Class<T> resultType) throws HttpProxyRequestException {
+        return httpPostforString(url, params, (Map<String, String>) null, new ResponseHandler<List<T>>() {
+            @Override
+            public List<T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                return HttpRequestProxy.handleListResponse(response,resultType);
+            }
+        });
+    }
+    public static <T> Set<T> httpPostForSet(String url, Map<String, Object> params, final Class<T> resultType) throws HttpProxyRequestException {
+        return httpPostforString(url, params, (Map<String, String>) null, new ResponseHandler<Set<T>>() {
+            @Override
+            public Set<T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                return HttpRequestProxy.handleSetResponse(response,resultType);
+            }
+        });
+    }
+
+    public static <K,T> Map<K,T> httpPostForMap(String url, Map<String, Object> params, final Class<K> keyType, final Class<T> resultType) throws HttpProxyRequestException {
+        return httpPostforString(url, params, (Map<String, String>) null, new ResponseHandler<Map<K,T>>() {
+            @Override
+            public Map<K,T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                return HttpRequestProxy.handleMapResponse(response,keyType,resultType);
+            }
+        });
+    }
+
+    public static <T> T httpPostForObject(String poolName,String url, Map<String, Object> params, final Class<T> resultType) throws HttpProxyRequestException {
+        return httpPostforString(  poolName,url, params, (Map<String, String>) null, new ResponseHandler<T>() {
+            @Override
+            public T handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                return HttpRequestProxy.handleResponse(response,resultType);
+            }
+        });
+    }
+
+    public static <T> List<T> httpPostForList(String poolName,String url, Map<String, Object> params, final Class<T> resultType) throws HttpProxyRequestException {
+        return httpPostforString(  poolName,url, params, (Map<String, String>) null, new ResponseHandler<List<T>>() {
+            @Override
+            public List<T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                return HttpRequestProxy.handleListResponse(response,resultType);
+            }
+        });
+    }
+    public static <T> Set<T> httpPostForSet(String poolName,String url, Map<String, Object> params, final Class<T> resultType) throws HttpProxyRequestException {
+        return httpPostforString(  poolName,url, params, (Map<String, String>) null, new ResponseHandler<Set<T>>() {
+            @Override
+            public Set<T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                return HttpRequestProxy.handleSetResponse(response,resultType);
+            }
+        });
+    }
+
+    public static <K,T> Map<K,T> httpPostForMap(String poolName,String url, Map<String, Object> params, final Class<K> keyType, final Class<T> resultType) throws HttpProxyRequestException {
+        return httpPostforString(poolName,url, params, (Map<String, String>) null, new ResponseHandler<Map<K,T>>() {
+            @Override
+            public Map<K,T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                return HttpRequestProxy.handleMapResponse(response,keyType,resultType);
+            }
+        });
+    }
     /**
      * 公用post方法
      *
@@ -931,6 +1070,167 @@ public class HttpRequestProxy {
     	return httpPut(  "default",   url,   (String)null,   (String)null,  params,
     			( Map<String, File> )null,   headers,new StringResponseHandler());
     }
+
+    /**
+     *
+     * @param url
+     * @param params
+     * @param headers
+     * @return
+     * @throws HttpProxyRequestException
+     */
+
+    public static <T> T httpPutforObject(String url, Map<String, Object> params, Map<String, String> headers, final Class<T> resultType ) throws HttpProxyRequestException{
+        return httpPut(  "default",   url,   (String)null,   (String)null,  params,
+                ( Map<String, File> )null,   headers,new ResponseHandler<T>(){
+
+                    @Override
+                    public T handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                        return HttpRequestProxy.handleResponse(response,resultType);
+                    }
+                });
+    }
+
+    /**
+     *
+     * @param url
+     * @param params
+     * @param headers
+     * @return
+     * @throws HttpProxyRequestException
+     */
+
+    public static <T> List<T> httpPutforList(String url, Map<String, Object> params, Map<String, String> headers, final Class<T> resultType ) throws HttpProxyRequestException{
+        return httpPut(  "default",   url,   (String)null,   (String)null,  params,
+                ( Map<String, File> )null,   headers,new ResponseHandler<List<T>>(){
+
+                    @Override
+                    public List<T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                        return HttpRequestProxy.handleListResponse(response,resultType);
+                    }
+                });
+    }
+
+    /**
+     *
+     * @param url
+     * @param params
+     * @param headers
+     * @return
+     * @throws HttpProxyRequestException
+     */
+
+    public static <T> Set<T> httpPutforSet(String url, Map<String, Object> params, Map<String, String> headers, final Class<T> resultType ) throws HttpProxyRequestException{
+        return httpPut(  "default",   url,   (String)null,   (String)null,  params,
+                ( Map<String, File> )null,   headers,new ResponseHandler<Set<T>>(){
+
+                    @Override
+                    public Set<T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                        return HttpRequestProxy.handleSetResponse(response,resultType);
+                    }
+                });
+    }
+
+    /**
+     *
+     * @param url
+     * @param params
+     * @param headers
+     * @return
+     * @throws HttpProxyRequestException
+     */
+
+    public static <K,T> Map<K,T> httpPutforObject(String url, Map<String, Object> params, Map<String, String> headers, final Class<K> keyType , final Class<T> resultType ) throws HttpProxyRequestException{
+        return httpPut(  "default",   url,   (String)null,   (String)null,  params,
+                ( Map<String, File> )null,   headers,new ResponseHandler<Map<K,T>>(){
+
+                    @Override
+                    public Map<K,T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                        return HttpRequestProxy.handleMapResponse(response,keyType,resultType);
+                    }
+                });
+    }
+
+    /**
+     *
+     * @param url
+     * @param params
+     * @param headers
+     * @return
+     * @throws HttpProxyRequestException
+     */
+
+    public static <T> T httpPutforObject(String poolName,String url, Map<String, Object> params, Map<String, String> headers, final Class<T> resultType ) throws HttpProxyRequestException{
+        return httpPut(  poolName,   url,   (String)null,   (String)null,  params,
+                ( Map<String, File> )null,   headers,new ResponseHandler<T>(){
+
+                    @Override
+                    public T handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                        return HttpRequestProxy.handleResponse(response,resultType);
+                    }
+                });
+    }
+
+    /**
+     *
+     * @param url
+     * @param params
+     * @param headers
+     * @return
+     * @throws HttpProxyRequestException
+     */
+
+    public static <T> List<T> httpPutforList(String poolName,String url, Map<String, Object> params, Map<String, String> headers, final Class<T> resultType ) throws HttpProxyRequestException{
+        return httpPut(  poolName,   url,   (String)null,   (String)null,  params,
+                ( Map<String, File> )null,   headers,new ResponseHandler<List<T>>(){
+
+                    @Override
+                    public List<T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                        return HttpRequestProxy.handleListResponse(response,resultType);
+                    }
+                });
+    }
+
+    /**
+     *
+     * @param url
+     * @param params
+     * @param headers
+     * @return
+     * @throws HttpProxyRequestException
+     */
+
+    public static <T> Set<T> httpPutforSet(String poolName,String url, Map<String, Object> params, Map<String, String> headers, final Class<T> resultType ) throws HttpProxyRequestException{
+        return httpPut(  poolName,   url,   (String)null,   (String)null,  params,
+                ( Map<String, File> )null,   headers,new ResponseHandler<Set<T>>(){
+
+                    @Override
+                    public Set<T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                        return HttpRequestProxy.handleSetResponse(response,resultType);
+                    }
+                });
+    }
+
+    /**
+     *
+     * @param url
+     * @param params
+     * @param headers
+     * @return
+     * @throws HttpProxyRequestException
+     */
+
+    public static <K,T> Map<K,T> httpPutforObject(String poolName,String url, Map<String, Object> params, Map<String, String> headers, final Class<K> keyType , final Class<T> resultType ) throws HttpProxyRequestException{
+        return httpPut(   poolName,   url,   (String)null,   (String)null,  params,
+                ( Map<String, File> )null,   headers,new ResponseHandler<Map<K,T>>(){
+
+                    @Override
+                    public Map<K,T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                        return HttpRequestProxy.handleMapResponse(response,keyType,resultType);
+                    }
+                });
+    }
+
     public static <T> T httpPutforString(  String url,Map<String, Object> params, Map<String, String> headers ,ResponseHandler<T> responseHandler ) throws HttpProxyRequestException{
         return httpPut(  "default",   url,   (String)null,   (String)null,  params,
                 ( Map<String, File> )null,   headers ,responseHandler);
@@ -1004,6 +1304,148 @@ public class HttpRequestProxy {
     public static <T> T httpPut(String url,ResponseHandler<T> responseHandler) throws HttpProxyRequestException {
     	return httpPut( url, (String)null, (String)null, (Map<String, Object>)null,
     							(Map<String, File>)null, (Map<String, String>)null, responseHandler) ;
+    }
+
+    /**
+     *
+     * @param url
+     * @param resultType
+     * @param <T>
+     * @return
+     * @throws HttpProxyRequestException
+     */
+    public static <T> T httpPut(String url, final Class<T> resultType) throws HttpProxyRequestException {
+        return httpPut(url, (String) null, (String) null, (Map<String, Object>) null,
+                (Map<String, File>) null, (Map<String, String>) null, new ResponseHandler<T>() {
+                    @Override
+                    public T handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                        return HttpRequestProxy.handleResponse(response,resultType);
+                    }
+                }) ;
+    }
+
+    /**
+     *
+     * @param url
+     * @param resultType
+     * @param <T>
+     * @return
+     * @throws HttpProxyRequestException
+     */
+    public static <T> List<T> httpPutForList(String url, final Class<T> resultType) throws HttpProxyRequestException {
+        return httpPut(url, (String) null, (String) null, (Map<String, Object>) null,
+                (Map<String, File>) null, (Map<String, String>) null, new ResponseHandler<List<T>>() {
+                    @Override
+                    public List<T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                        return HttpRequestProxy.handleListResponse(response,resultType);
+                    }
+                }) ;
+    }
+
+    /**
+     *
+     * @param url
+     * @param resultType
+     * @param <T>
+     * @return
+     * @throws HttpProxyRequestException
+     */
+    public static <T> Set<T> httpPutForSet(String url, final Class<T> resultType) throws HttpProxyRequestException {
+        return httpPut(url, (String) null, (String) null, (Map<String, Object>) null,
+                (Map<String, File>) null, (Map<String, String>) null, new ResponseHandler<Set<T>>() {
+                    @Override
+                    public Set<T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                        return HttpRequestProxy.handleSetResponse(response,resultType);
+                    }
+                }) ;
+    }
+
+    /**
+     *
+     * @param url
+     * @param resultType
+     * @return
+     * @throws HttpProxyRequestException
+     */
+    public static <K,T> Map<K,T> httpPutForMap(String url, final Class<K> keyType, final Class<T> resultType) throws HttpProxyRequestException {
+        return httpPut(url, (String) null, (String) null, (Map<String, Object>) null,
+                (Map<String, File>) null, (Map<String, String>) null, new ResponseHandler<Map<K,T>>() {
+                    @Override
+                    public Map<K,T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                        return HttpRequestProxy.handleMapResponse(response,keyType,resultType);
+                    }
+                }) ;
+    }
+
+    /**
+     *
+     * @param url
+     * @param resultType
+     * @param <T>
+     * @return
+     * @throws HttpProxyRequestException
+     */
+    public static <T> T httpPut(String poolName,String url, final Class<T> resultType) throws HttpProxyRequestException {
+        return httpPut(  poolName,url, (String) null, (String) null, (Map<String, Object>) null,
+                (Map<String, File>) null, (Map<String, String>) null, new ResponseHandler<T>() {
+                    @Override
+                    public T handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                        return HttpRequestProxy.handleResponse(response,resultType);
+                    }
+                }) ;
+    }
+
+    /**
+     *
+     * @param url
+     * @param resultType
+     * @param <T>
+     * @return
+     * @throws HttpProxyRequestException
+     */
+    public static <T> List<T> httpPutForList(String poolName,String url, final Class<T> resultType) throws HttpProxyRequestException {
+        return httpPut(  poolName,url, (String) null, (String) null, (Map<String, Object>) null,
+                (Map<String, File>) null, (Map<String, String>) null, new ResponseHandler<List<T>>() {
+                    @Override
+                    public List<T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                        return HttpRequestProxy.handleListResponse(response,resultType);
+                    }
+                }) ;
+    }
+
+    /**
+     *
+     * @param url
+     * @param resultType
+     * @param <T>
+     * @return
+     * @throws HttpProxyRequestException
+     */
+    public static <T> Set<T> httpPutForSet(String poolName,String url, final Class<T> resultType) throws HttpProxyRequestException {
+        return httpPut(  poolName,url, (String) null, (String) null, (Map<String, Object>) null,
+                (Map<String, File>) null, (Map<String, String>) null, new ResponseHandler<Set<T>>() {
+                    @Override
+                    public Set<T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                        return HttpRequestProxy.handleSetResponse(response,resultType);
+                    }
+                }) ;
+    }
+
+    /**
+     *
+     * @param url
+     * @param resultType
+     * @return
+     * @throws HttpProxyRequestException
+     */
+    public static <K,T> Map<K,T> httpPutForMap(String poolName,String url, final Class<K> keyType, final Class<T> resultType) throws HttpProxyRequestException {
+        return httpPut(  poolName,url, (String) null, (String) null, (Map<String, Object>) null,
+                (Map<String, File>) null, (Map<String, String>) null, new ResponseHandler<Map<K,T>>() {
+                    @Override
+                    public Map<K,T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                        return HttpRequestProxy.handleMapResponse(response,keyType,resultType);
+                    }
+                }) ;
     }
     /**
      * 公用post方法

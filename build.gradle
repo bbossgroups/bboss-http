@@ -35,7 +35,18 @@
 			options.addStringOption('Xdoclint:none', '-quiet')
 		}
 	}
+	task sourcesJar(type: Jar) {
+		classifier = "sources"
+		from sourceSets.main.allJava
+	}
 
+	task javaDocJar(type: Jar, dependsOn: javadoc) {
+		classifier = "javadoc"
+		from javadoc.destinationDir
+	}
+	artifacts {
+		archives sourcesJar, javaDocJar
+	}
 	jar {
 		manifest {
 			attributes (
@@ -50,9 +61,6 @@
 	}
 
 
-	dependencies {
-		testCompile 'junit:junit:4.12'
-	}
 
 	repositories {
 		mavenLocal()
@@ -69,7 +77,79 @@
 		testClasses.enabled = false
 		test.enabled = false  
 	}
-	
+	ext.uploadtocenter=uploadArchivesToMavenCenter.equals("true")
+	if(uploadtocenter)
+	{
+		signing {
+			//required { uploadtocenter }
+			sign configurations.archives
+		}
+	}
+	uploadArchives {
+		repositories {
+
+			mavenDeployer {
+
+
+
+				beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+				repository(url: sonatype_url) {
+
+					authentication(userName: sonatype_username, password: sonatype_password)
+				}
+
+
+
+
+				pom.project {
+					name project.name
+					packaging 'jar'
+					// optionally artifactId can be defined here
+					description PROJ_DESCRIPTION
+					url PROJ_WEBSITEURL
+
+					scm {
+						connection scm_connection
+						developerConnection scm_developerConnection
+						url scm_url
+					}
+
+					licenses {
+						license {
+							name PROJ_LICENCE_NAME
+							url PROJ_LICENCE_URL
+						}
+					}
+
+					developers {
+						developer {
+							id DEVELOPER_ID
+							name DEVELOPER_NAME
+							email DEVELOPER_EMAIL
+						}
+					}
+				}
+			}
+		}
+	}
+
+	publishing {
+		publications {
+			mavenJava(MavenPublication) {
+
+				from components.java
+
+				artifact sourcesJar
+				artifact javaDocJar
+
+			}
+		}
+		repositories {
+
+			mavenLocal()
+		}
+
+	}
 
 sourceSets {
     main {
@@ -93,8 +173,10 @@ sourceSets {
     }
    
     
-} 
+}
+
 dependencies {
+	testCompile 'junit:junit:4.12'
     compile (
              //[group: 'commons-httpclient', name: 'commons-httpclient', version: '3.1', transitive: false],
 			[group: 'com.bbossgroups', name: 'bboss-core', version: "${BBOSS_VERSION}", transitive: true],

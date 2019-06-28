@@ -642,13 +642,87 @@ public class HttpRequestProxy {
     }
 
     public static <T> T httpPostForObject(String poolName,String url, Map<String, Object> params, final Class<T> resultType) throws HttpProxyRequestException {
-        return httpPostforString(  poolName,url, params, (Map<String, String>) null, new ResponseHandler<T>() {
-            @Override
-            public T handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-                return HttpRequestProxy.handleResponse(response,resultType);
-            }
-        });
+		HttpOption httpOption = new HttpOption();
+
+		httpOption.params = params;
+
+		return httpPost(  poolName,   url,  httpOption, new ResponseHandler<T>() {
+			@Override
+			public T handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+				return HttpRequestProxy.handleResponse(response,resultType);
+			}
+		});
+//        return httpPostforString(  poolName,url, params, (Map<String, String>) null);
     }
+
+	public static <T> T httpPostForObject(String poolName,String url, Map<String, Object> params, final Class<T> resultType,DataSerialType dataSerialType) throws HttpProxyRequestException {
+		HttpOption httpOption = new HttpOption();
+
+		httpOption.params = params;
+		httpOption.dataSerialType = dataSerialType;
+
+		return httpPost(  poolName,   url,  httpOption, new ResponseHandler<T>() {
+			@Override
+			public T handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+				return HttpRequestProxy.handleResponse(response,resultType);
+			}
+		});
+//        return httpPostforString(  poolName,url, params, (Map<String, String>) null);
+	}
+
+	public static <T> List<T> httpPostForList(String poolName,String url, Map<String, Object> params, final Class<T> resultType,DataSerialType dataSerialType) throws HttpProxyRequestException {
+		HttpOption httpOption = new HttpOption();
+
+		httpOption.params = params;
+		httpOption.dataSerialType = dataSerialType;
+
+		return httpPost(  poolName,   url,  httpOption, new ResponseHandler<List<T>>() {
+			@Override
+			public List<T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+				return HttpRequestProxy.handleListResponse(response,resultType);
+			}
+		});
+
+	}
+	public static <T> Set<T> httpPostForSet(String poolName,String url, Map<String, Object> params, final Class<T> resultType,DataSerialType dataSerialType) throws HttpProxyRequestException {
+		HttpOption httpOption = new HttpOption();
+
+		httpOption.params = params;
+		httpOption.dataSerialType = dataSerialType;
+
+		return httpPost(  poolName,   url,  httpOption, new ResponseHandler<Set<T>>() {
+			@Override
+			public Set<T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+				return HttpRequestProxy.handleSetResponse(response,resultType);
+			}
+		});
+//		return httpPostforString(  poolName,url, params, (Map<String, String>) null, new ResponseHandler<Set<T>>() {
+//			@Override
+//			public Set<T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+//				return HttpRequestProxy.handleSetResponse(response,resultType);
+//			}
+//		});
+	}
+
+	public static <K,T> Map<K,T> httpPostForMap(String poolName,String url, Map<String, Object> params, final Class<K> keyType, final Class<T> resultType,DataSerialType dataSerialType) throws HttpProxyRequestException {
+		HttpOption httpOption = new HttpOption();
+
+		httpOption.params = params;
+		httpOption.dataSerialType = dataSerialType;
+
+		return httpPost(  poolName,   url,  httpOption,new ResponseHandler<Map<K,T>>() {
+			@Override
+			public Map<K,T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+				return HttpRequestProxy.handleMapResponse(response,keyType,resultType);
+			}
+		});
+//    	return httpPostforString(poolName,url, params, (Map<String, String>) null, new ResponseHandler<Map<K,T>>() {
+//			@Override
+//			public Map<K,T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+//				return HttpRequestProxy.handleMapResponse(response,keyType,resultType);
+//			}
+//		});
+	}
 
     public static <T> List<T> httpPostForList(String poolName,String url, Map<String, Object> params, final Class<T> resultType) throws HttpProxyRequestException {
         return httpPostforString(  poolName,url, params, (Map<String, String>) null, new ResponseHandler<List<T>>() {
@@ -738,8 +812,25 @@ public class HttpRequestProxy {
     }
 
     public static String httpPostforString(String poolname, String url, Map<String, Object> params) throws HttpProxyRequestException {
-        return httpPostFileforString(poolname, url, (String) null, (String) null, params, (Map<String, File>) null);
+		HttpOption httpOption = new HttpOption();
+
+		httpOption.params = params;
+
+		return httpPost(  poolname,   url,  httpOption,new StringResponseHandler());
+//        return httpPostFileforString(poolname, url, (String) null, (String) null, params, (Map<String, File>) null);
     }
+
+	public static String httpPostforString(String poolname, String url, Map<String, Object> params,DataSerialType dataSerialType) throws HttpProxyRequestException {
+		HttpOption httpOption = new HttpOption();
+
+		httpOption.params = params;
+		httpOption.dataSerialType = dataSerialType;
+		return httpPost(  poolname,   url,  httpOption,new StringResponseHandler());
+//        return httpPostFileforString(poolname, url, (String) null, (String) null, params, (Map<String, File>) null);
+	}
+	public static enum DataSerialType{
+    	JSON,TEXT
+	}
 
     public static String httpPostforString(String url) throws HttpProxyRequestException {
         return httpPostforString("default", url);
@@ -799,6 +890,264 @@ public class HttpRequestProxy {
     }
 
 
+
+	public static class HttpOption{
+		private String cookie;
+		private String userAgent;
+		private Map<String, Object> params;
+		private Map<String, File> files;
+		private Map<String, String> headers;
+		private DataSerialType dataSerialType = DataSerialType.TEXT;
+	}
+
+	/**
+	 * 公用post方法
+	 *
+	 * @param poolname
+	 * @param url
+	 * @param httpOption
+	 * @throws HttpProxyRequestException
+	 */
+	public static <T> T httpPost(String poolname, String url, HttpOption httpOption,ResponseHandler<T> responseHandler) throws HttpProxyRequestException {
+		// System.out.println("post_url==> "+url);
+		// String cookie = getCookie(appContext);
+		// String userAgent = getUserAgent(appContext);
+
+		HttpClient httpClient = null;
+		HttpPost httpPost = null;
+
+//
+//                .addPart("bin", bin)
+//                .addPart("comment", comment)
+//                .build();
+//				 FileBody bin = new FileBody(new File(args[0]));
+//        StringBody comment = new StringBody("A binary file of some kind", ContentType.TEXT_PLAIN);
+		HttpEntity httpEntity = null;
+		List<NameValuePair> paramPair = null;
+		if (httpOption.files != null) {
+			MultipartEntityBuilder multipartEntityBuilder = MultipartEntityBuilder.create();
+			// post表单参数处理
+			int length = (httpOption.params == null ? 0 : httpOption.params.size()) + (httpOption.files == null ? 0 : httpOption.files.size());
+
+			int i = 0;
+			boolean hasdata = false;
+
+			if (httpOption.params != null) {
+				Iterator<Entry<String, Object>> it = httpOption.params.entrySet().iterator();
+				while (it.hasNext()) {
+					Entry<String, Object> entry = it.next();
+					if(entry.getValue() == null)
+						continue;
+					if(httpOption.dataSerialType != DataSerialType.JSON) {
+						multipartEntityBuilder.addTextBody(entry.getKey(), String.valueOf(entry.getValue()), ClientConfiguration.TEXT_PLAIN_UTF_8);
+					}
+					else{
+						multipartEntityBuilder.addTextBody(entry.getKey(), SimpleStringUtil.object2json(entry.getValue()), ClientConfiguration.TEXT_PLAIN_UTF_8);
+					}
+					hasdata = true;
+				}
+			}
+			if (httpOption.files != null) {
+				Iterator<Entry<String, File>> it = httpOption.files.entrySet().iterator();
+				while (it.hasNext()) {
+					Entry<String, File> entry = it.next();
+
+//						parts[i++] = new FilePart(entry.getKey(), entry.getValue());
+					File f = new File(String.valueOf(entry.getValue()));
+					if (f.exists()) {
+						FileBody file = new FileBody(f);
+						multipartEntityBuilder.addPart(entry.getKey(), file);
+						hasdata = true;
+					} else {
+
+					}
+
+					// System.out.println("post_key_file==> "+file);
+				}
+			}
+			if (hasdata)
+				httpEntity = multipartEntityBuilder.build();
+		} else if (httpOption.params != null && httpOption.params.size() > 0) {
+			paramPair = new ArrayList<NameValuePair>();
+			Iterator<Entry<String, Object>> it = httpOption.params.entrySet().iterator();
+			NameValuePair paramPair_ = null;
+			for (int i = 0; it.hasNext(); i++) {
+				Entry<String, Object> entry = it.next();
+				if(entry.getValue() == null)
+					continue;
+				if(httpOption.dataSerialType != DataSerialType.JSON) {
+					paramPair_ = new BasicNameValuePair(entry.getKey(), String.valueOf(entry.getValue()));
+				}
+				else{
+					paramPair_ = new BasicNameValuePair(entry.getKey(), SimpleStringUtil.object2json(entry.getValue()));
+				}
+				paramPair.add(paramPair_);
+			}
+		}
+
+		T responseBody = null;
+//        int time = 0;
+		ClientConfiguration config = ClientConfiguration.getClientConfiguration(poolname);
+//        int RETRY_TIME = config.getRetryTime();
+//        do {
+		String endpoint = null;
+		Throwable e = null;
+		int triesCount = 0;
+		if(!url.startsWith("http://") && !url.startsWith("https://")) {
+			endpoint = url;
+			HttpAddress httpAddress = null;
+			do {
+
+				try {
+
+					httpAddress = config.getHttpServiceHosts().getHttpAddress();
+
+					url = SimpleStringUtil.getPath(httpAddress.getAddress(), endpoint);
+					if(logger.isTraceEnabled()){
+						logger.trace("Post call {}",url);
+					}
+					httpClient = HttpRequestUtil.getHttpClient(config);
+					httpPost = HttpRequestUtil.getHttpPost(config, url, httpOption.cookie, httpOption.userAgent, httpOption.headers);
+
+
+					if (httpEntity != null) {
+						httpPost.setEntity(httpEntity);
+					} else if (paramPair != null && paramPair.size() > 0) {
+						UrlEncodedFormEntity entity = new UrlEncodedFormEntity(paramPair, Consts.UTF_8);
+
+						httpPost.setEntity(entity);
+
+					}
+
+					responseBody = httpClient.execute(httpPost, responseHandler);
+					e = getException(  responseHandler,config );
+					break;
+				} catch (HttpHostConnectException ex) {
+					httpAddress.setStatus(1);
+					e = new NoHttpServerException(ex);
+					if (!config.getHttpServiceHosts().reachEnd(triesCount )) {//失败尝试下一个地址
+						triesCount++;
+						continue;
+					} else {
+						break;
+					}
+
+				} catch (UnknownHostException ex) {
+					httpAddress.setStatus(1);
+					e = new NoHttpServerException(ex);
+					if (!config.getHttpServiceHosts().reachEnd(triesCount ))  {//失败尝试下一个地址
+						triesCount++;
+						continue;
+					} else {
+						break;
+					}
+
+				}
+				catch (NoRouteToHostException ex) {
+					httpAddress.setStatus(1);
+					e = new NoHttpServerException(ex);
+					if (!config.getHttpServiceHosts().reachEnd(triesCount ))  {//失败尝试下一个地址
+						triesCount++;
+						continue;
+					} else {
+						break;
+					}
+
+				}
+				catch (NoHttpResponseException ex) {
+					httpAddress.setStatus(1);
+					e = new NoHttpServerException(ex);
+					if (!config.getHttpServiceHosts().reachEnd(triesCount ))  {//失败尝试下一个地址
+						triesCount++;
+						continue;
+					} else {
+						break;
+					}
+
+				}
+				catch (ConnectionPoolTimeoutException ex){//连接池获取connection超时，直接抛出
+
+					e = handleConnectionPoolTimeOutException( config,ex);
+					break;
+				}
+				catch (ConnectTimeoutException connectTimeoutException){
+					httpAddress.setStatus(1);
+					e = handleConnectionTimeOutException(config,connectTimeoutException);
+					if (!config.getHttpServiceHosts().reachEnd(triesCount )) {//失败尝试下一个地址
+						triesCount++;
+						continue;
+					} else {
+						break;
+					}
+				}
+
+				catch (SocketTimeoutException ex) {
+					e = handleSocketTimeoutException(config, ex);
+					break;
+				}
+				catch (NoHttpServerException ex){
+					e = ex;
+
+					break;
+				}
+				catch (ClientProtocolException ex){
+					throw new NoHttpServerException(new StringBuilder().append("Request[").append(url)
+							.append("] handle failed: must use http/https protocol port such as 9200,do not use other transport such as 9300.").toString(),ex);
+				}
+
+				catch (Exception ex) {
+					e = ex;
+					break;
+				}
+				catch (Throwable ex) {
+					e = ex;
+					break;
+				} finally {
+					// 释放连接
+					if (httpPost != null)
+						httpPost.releaseConnection();
+					httpClient = null;
+				}
+			} while (true);
+		}
+		else{
+			try {
+
+				if(logger.isTraceEnabled()){
+					logger.trace("Post call {}",url);
+				}
+				httpClient = HttpRequestUtil.getHttpClient(config);
+				httpPost = HttpRequestUtil.getHttpPost(config, url, httpOption.cookie, httpOption.userAgent, httpOption.headers);
+
+
+				if (httpEntity != null) {
+					httpPost.setEntity(httpEntity);
+				} else if (paramPair != null && paramPair.size() > 0) {
+					UrlEncodedFormEntity entity = new UrlEncodedFormEntity(paramPair, Consts.UTF_8);
+
+					httpPost.setEntity(entity);
+
+				}
+
+				responseBody = httpClient.execute(httpPost, responseHandler);
+
+			} catch (Exception ex) {
+				e = ex;
+			} finally {
+				// 释放连接
+				if (httpPost != null)
+					httpPost.releaseConnection();
+				httpClient = null;
+			}
+		}
+		if (e != null){
+			if(e instanceof HttpProxyRequestException)
+				throw (HttpProxyRequestException)e;
+			throw new HttpProxyRequestException(e);
+		}
+		return responseBody;
+
+	}
     /**
      * 公用post方法
      *
@@ -813,229 +1162,13 @@ public class HttpRequestProxy {
      */
     public static <T> T httpPost(String poolname, String url, String cookie, String userAgent, Map<String, Object> params,
                                                Map<String, File> files, Map<String, String> headers,ResponseHandler<T> responseHandler) throws HttpProxyRequestException {
-        // System.out.println("post_url==> "+url);
-        // String cookie = getCookie(appContext);
-        // String userAgent = getUserAgent(appContext);
-
-        HttpClient httpClient = null;
-        HttpPost httpPost = null;
-
-//
-//                .addPart("bin", bin)
-//                .addPart("comment", comment)
-//                .build();
-//				 FileBody bin = new FileBody(new File(args[0]));
-//        StringBody comment = new StringBody("A binary file of some kind", ContentType.TEXT_PLAIN);
-        HttpEntity httpEntity = null;
-        List<NameValuePair> paramPair = null;
-        if (files != null) {
-            MultipartEntityBuilder multipartEntityBuilder = MultipartEntityBuilder.create();
-            // post表单参数处理
-            int length = (params == null ? 0 : params.size()) + (files == null ? 0 : files.size());
-
-            int i = 0;
-            boolean hasdata = false;
-
-            if (params != null) {
-                Iterator<Entry<String, Object>> it = params.entrySet().iterator();
-                while (it.hasNext()) {
-                    Entry<String, Object> entry = it.next();
-                    multipartEntityBuilder.addTextBody(entry.getKey(), String.valueOf(entry.getValue()), ClientConfiguration.TEXT_PLAIN_UTF_8);
-                    hasdata = true;
-                }
-            }
-            if (files != null) {
-                Iterator<Entry<String, File>> it = files.entrySet().iterator();
-                while (it.hasNext()) {
-                    Entry<String, File> entry = it.next();
-
-//						parts[i++] = new FilePart(entry.getKey(), entry.getValue());
-                    File f = new File(String.valueOf(entry.getValue()));
-                    if (f.exists()) {
-                        FileBody file = new FileBody(f);
-                        multipartEntityBuilder.addPart(entry.getKey(), file);
-                        hasdata = true;
-                    } else {
-
-                    }
-
-                    // System.out.println("post_key_file==> "+file);
-                }
-            }
-            if (hasdata)
-                httpEntity = multipartEntityBuilder.build();
-        } else if (params != null && params.size() > 0) {
-            paramPair = new ArrayList<NameValuePair>();
-            Iterator<Entry<String, Object>> it = params.entrySet().iterator();
-            NameValuePair paramPair_ = null;
-            for (int i = 0; it.hasNext(); i++) {
-                Entry<String, Object> entry = it.next();
-                paramPair_ = new BasicNameValuePair(entry.getKey(), String.valueOf(entry.getValue()));
-                paramPair.add(paramPair_);
-            }
-        }
-
-        T responseBody = null;
-//        int time = 0;
-        ClientConfiguration config = ClientConfiguration.getClientConfiguration(poolname);
-//        int RETRY_TIME = config.getRetryTime();
-//        do {
-        String endpoint = null;
-        Throwable e = null;
-        int triesCount = 0;
-        if(!url.startsWith("http://") && !url.startsWith("https://")) {
-            endpoint = url;
-            HttpAddress httpAddress = null;
-            do {
-
-                try {
-
-                    httpAddress = config.getHttpServiceHosts().getHttpAddress();
-
-                    url = SimpleStringUtil.getPath(httpAddress.getAddress(), endpoint);
-                    if(logger.isTraceEnabled()){
-                        logger.trace("Post call {}",url);
-                    }
-                    httpClient = HttpRequestUtil.getHttpClient(config);
-                    httpPost = HttpRequestUtil.getHttpPost(config, url, cookie, userAgent, headers);
-
-
-                    if (httpEntity != null) {
-                        httpPost.setEntity(httpEntity);
-                    } else if (paramPair != null && paramPair.size() > 0) {
-                        UrlEncodedFormEntity entity = new UrlEncodedFormEntity(paramPair, Consts.UTF_8);
-
-                        httpPost.setEntity(entity);
-
-                    }
-
-                    responseBody = httpClient.execute(httpPost, responseHandler);
-                    e = getException(  responseHandler,config );
-                    break;
-                } catch (HttpHostConnectException ex) {
-                    httpAddress.setStatus(1);
-                    e = new NoHttpServerException(ex);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount )) {//失败尝试下一个地址
-                        triesCount++;
-                        continue;
-                    } else {
-                        break;
-                    }
-
-                } catch (UnknownHostException ex) {
-                    httpAddress.setStatus(1);
-                    e = new NoHttpServerException(ex);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount ))  {//失败尝试下一个地址
-                        triesCount++;
-                        continue;
-                    } else {
-                        break;
-                    }
-
-                }
-                catch (NoRouteToHostException ex) {
-                    httpAddress.setStatus(1);
-                    e = new NoHttpServerException(ex);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount ))  {//失败尝试下一个地址
-                        triesCount++;
-                        continue;
-                    } else {
-                        break;
-                    }
-
-                }
-                catch (NoHttpResponseException ex) {
-                    httpAddress.setStatus(1);
-                    e = new NoHttpServerException(ex);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount ))  {//失败尝试下一个地址
-                        triesCount++;
-                        continue;
-                    } else {
-                        break;
-                    }
-
-                }
-                catch (ConnectionPoolTimeoutException ex){//连接池获取connection超时，直接抛出
-
-                    e = handleConnectionPoolTimeOutException( config,ex);
-                    break;
-                }
-                catch (ConnectTimeoutException connectTimeoutException){
-                    httpAddress.setStatus(1);
-                    e = handleConnectionTimeOutException(config,connectTimeoutException);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount )) {//失败尝试下一个地址
-                        triesCount++;
-                        continue;
-                    } else {
-                        break;
-                    }
-                }
-
-                catch (SocketTimeoutException ex) {
-                    e = handleSocketTimeoutException(config, ex);
-                    break;
-                }
-                catch (NoHttpServerException ex){
-                    e = ex;
-
-                    break;
-                }
-                catch (ClientProtocolException ex){
-                    throw new NoHttpServerException(new StringBuilder().append("Request[").append(url)
-                            .append("] handle failed: must use http/https protocol port such as 9200,do not use other transport such as 9300.").toString(),ex);
-                }
-
-                catch (Exception ex) {
-                    e = ex;
-                    break;
-                }
-                catch (Throwable ex) {
-                    e = ex;
-                    break;
-                } finally {
-                    // 释放连接
-                    if (httpPost != null)
-                        httpPost.releaseConnection();
-                    httpClient = null;
-                }
-            } while (true);
-        }
-        else{
-            try {
-
-                if(logger.isTraceEnabled()){
-                    logger.trace("Post call {}",url);
-                }
-                httpClient = HttpRequestUtil.getHttpClient(config);
-                httpPost = HttpRequestUtil.getHttpPost(config, url, cookie, userAgent, headers);
-
-
-                if (httpEntity != null) {
-                    httpPost.setEntity(httpEntity);
-                } else if (paramPair != null && paramPair.size() > 0) {
-                    UrlEncodedFormEntity entity = new UrlEncodedFormEntity(paramPair, Consts.UTF_8);
-
-                    httpPost.setEntity(entity);
-
-                }
-
-                responseBody = httpClient.execute(httpPost, responseHandler);
-
-            } catch (Exception ex) {
-                e = ex;
-            } finally {
-                // 释放连接
-                if (httpPost != null)
-                    httpPost.releaseConnection();
-                httpClient = null;
-            }
-        }
-        if (e != null){
-            if(e instanceof HttpProxyRequestException)
-                throw (HttpProxyRequestException)e;
-            throw new HttpProxyRequestException(e);
-        }
-        return responseBody;
+		HttpOption httpOption = new HttpOption();
+		httpOption.cookie = cookie;
+		httpOption.userAgent = userAgent;
+		httpOption.params = params;
+		httpOption.files = files;
+		httpOption.headers = headers;
+    	return httpPost(  poolname,   url,  httpOption,  responseHandler);
 
     }
 
@@ -1703,6 +1836,8 @@ public class HttpRequestProxy {
 
 
     }
+
+
 
 
     /**

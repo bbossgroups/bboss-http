@@ -84,6 +84,10 @@ public class HttpRequestProxy1Test {
 		do {
 			try {
 				data = HttpRequestProxy.httpGetforObject("report","/testBBossIndexCrud",Map.class);
+//				data = HttpRequestProxy.httpPostForObject("report","/testBBossIndexCrud",(Map)null,Map.class);
+//				List<Map> datas = HttpRequestProxy.httpPostForList("report","/testBBossIndexCrud",(Map)null,Map.class);
+//				Set<Map> dataSet = HttpRequestProxy.httpPostForSet("report","/testBBossIndexCrud",(Map)null,Map.class);
+//				Map<String,Object> dataMap = HttpRequestProxy.httpPostForMap("report","/testBBossIndexCrud",(Map)null,String.class,Object.class);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

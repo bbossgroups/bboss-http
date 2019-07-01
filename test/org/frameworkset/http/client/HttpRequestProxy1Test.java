@@ -46,7 +46,7 @@ public class HttpRequestProxy1Test {
 
 		configs.put("report.http.authAccount","elastic");//账号和口令
 		configs.put("report.http.authPassword","changeme");//账号和口令
-		configs.put("report.http.health","/health");//health监控检查地址必须配置，否则将不会启动健康检查机制
+//		configs.put("report.http.health","/health");//health监控检查地址必须配置，否则将不会启动健康检查机制
 //		configs.put("report.http.hosts","1111:90222,http://1111:90222,https://1111:90222");//设置初始地址
 		configs.put("report.http.discoverService",new org.frameworkset.http.client.DemoHttpHostDiscover());//设置服务自动发现机制
 		/**

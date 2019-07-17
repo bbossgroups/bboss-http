@@ -49,8 +49,8 @@ public class RoutingFilter {
 		if(addressList == null || addressList.size() ==0)
 			return;
 		HttpAddress httpAddress = null;
-		if(logger.isInfoEnabled()){
-			logger.info("grouped http address by routing rule.");
+		if(logger.isDebugEnabled()){
+			logger.debug("Grouped http address by routing rule.currentRouting is {}",currentRouting);
 		}
 		List<HttpAddress> commonGroup = new ArrayList<HttpAddress>();
 		for(int i = 0; i < addressList.size(); i ++){
@@ -73,10 +73,17 @@ public class RoutingFilter {
 
 		}
 		this.currentRoutingGroup.after(commonGroup);
+		if(logger.isDebugEnabled()){
+			logger.debug("Current RoutingGroup {} http address {}.",currentRouting,currentRoutingGroup.toString());
+		}
 		Iterator<Map.Entry<String, RoutingGroup>> iterator = routingGroupMap.entrySet().iterator();
 		while (iterator.hasNext()){
 			Map.Entry<String, RoutingGroup> entry = iterator.next();
 			entry.getValue().after(commonGroup);
+
+			if(logger.isDebugEnabled()){
+				logger.debug("RoutingGroup {} http address {}.",entry.getKey(),entry.getValue().toString());
+			}
 		}
 	}
 

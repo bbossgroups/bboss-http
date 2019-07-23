@@ -35,10 +35,15 @@ public abstract class HttpHostDiscover extends Thread{
 
 	/**
 	 * 主动定时服务发现和被动服务发现api
-	 * @param hosts
+	 * @param _hosts
 	 */
-	public synchronized void handleDiscoverHosts(List<HttpHost> hosts){
-
+	public synchronized void handleDiscoverHosts(List<HttpHost> _hosts){
+		List<HttpHost> hosts = null;
+		if(_hosts != null && _hosts.size() > 0)
+			hosts = new ArrayList<HttpHost>(_hosts);
+		else{
+			hosts = new ArrayList<HttpHost>();
+		}
 		List<HttpAddress> newAddress = new ArrayList<HttpAddress>();
 		//恢复移除节点
 		boolean changed = httpServiceHosts.recoverRemovedNodes(hosts);

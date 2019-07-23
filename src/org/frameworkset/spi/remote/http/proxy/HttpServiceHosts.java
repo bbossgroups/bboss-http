@@ -139,7 +139,7 @@ public class HttpServiceHosts {
 			if(logger.isInfoEnabled()) {
 				logger.info(new StringBuilder().append("Start Http pool[")
 							.append(getClientConfiguration().getBeanName()).append("]")
-					.append(" HttpProxy server healthCheck thread,you can set http.healthCheckInterval=-1 in config file to disable healthCheck thread.").toString());
+					.append(" HttpProxy server healthCheck thread,you can set http.healthCheckInterval=-1 in config file to disable healthCheck.").toString());
 			}
 			healthCheck = new HealthCheck(httpPoolName,addressList, httpServiceHostsConfig.getHealthCheckInterval(),authHeaders);
 			healthCheck.run();
@@ -148,7 +148,7 @@ public class HttpServiceHosts {
 			if(logger.isInfoEnabled()) {
 				logger.info(new StringBuilder().append("HttpProxy server Http pool[")
 							.append(getClientConfiguration().getBeanName()).append("]")
-					.append(" healthCheck disable,you can set HttpProxy http.healthCheckInterval (>0) and http.health in configfile to enabled healthCheck thread.").toString());
+					.append(" healthCheck is disabled,you can set HttpProxy http.healthCheckInterval (>0) and http.health in configfile to enabled healthCheck.").toString());
 			}
 		}
 

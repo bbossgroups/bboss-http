@@ -55,4 +55,10 @@ public class RoutingGroup {
 		}
 		serversList = new RoundRobinList(this.addressList);
 	}
+	public String toString(){
+		if(addressList != null ){
+			return addressList.toString();
+		}
+		return "{}";
+	}
 }

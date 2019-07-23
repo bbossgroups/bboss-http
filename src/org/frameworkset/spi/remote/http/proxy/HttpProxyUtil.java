@@ -41,30 +41,49 @@ public class HttpProxyUtil {
 	public static void handleDiscoverHosts(String poolName, List<HttpHost> hosts){
 		if(poolName == null)
 			poolName = "default";
-		ClientConfiguration clientConfiguration = ClientConfiguration.getClientConfiguration(poolName);
-		if (clientConfiguration != null){
-			HttpHostDiscover httpHostDiscover = null;
-			HttpServiceHosts httpServiceHosts = clientConfiguration.getHttpServiceHosts();
-			if(httpServiceHosts != null) {
-				httpHostDiscover = httpServiceHosts.getHostDiscover();
-				if (httpHostDiscover == null) {
-					if (logger.isInfoEnabled()) {//Registry default HttpHostDiscover
-						logger.info("Registry default HttpHostDiscover to httppool[{}]", poolName);
-					}
-					synchronized (HttpProxyUtil.class) {
-						httpHostDiscover = httpServiceHosts.getHostDiscover();
-						if (httpHostDiscover == null) {
-							httpHostDiscover = new DefaultHttpHostDiscover();
-							httpHostDiscover.setHttpServiceHosts(httpServiceHosts);
-							httpServiceHosts.setHostDiscover(httpHostDiscover);
+		try {
+			ClientConfiguration clientConfiguration = ClientConfiguration.getClientConfiguration(poolName);
+			if (clientConfiguration != null) {
+				HttpHostDiscover httpHostDiscover = null;
+				HttpServiceHosts httpServiceHosts = clientConfiguration.getHttpServiceHosts();
+				if (httpServiceHosts != null) {
+					httpHostDiscover = httpServiceHosts.getHostDiscover();
+					if (httpHostDiscover == null) {
+						if (logger.isInfoEnabled()) {//Registry default HttpHostDiscover
+							logger.info("Registry default HttpHostDiscover to httppool[{}]", poolName);
+						}
+						synchronized (HttpProxyUtil.class) {
+							httpHostDiscover = httpServiceHosts.getHostDiscover();
+							if (httpHostDiscover == null) {
+								httpHostDiscover = new DefaultHttpHostDiscover();
+								httpHostDiscover.setHttpServiceHosts(httpServiceHosts);
+								httpServiceHosts.setHostDiscover(httpHostDiscover);
+							}
 						}
 					}
-				}
-				if (httpHostDiscover != null) {
-					httpHostDiscover.handleDiscoverHosts(hosts);
+					if (httpHostDiscover != null) {
+						if (hosts == null || hosts.size() == 0) {
+							Boolean handleNullOrEmptyHostsByDiscovery = httpHostDiscover.handleNullOrEmptyHostsByDiscovery();
+							if (handleNullOrEmptyHostsByDiscovery == null) {
+								handleNullOrEmptyHostsByDiscovery = httpServiceHosts.getHandleNullOrEmptyHostsByDiscovery();
+							}
+							if (handleNullOrEmptyHostsByDiscovery == null || !handleNullOrEmptyHostsByDiscovery) {
+								if (logger.isInfoEnabled())
+									logger.info(new StringBuilder().append("Discovery ")
+											.append(httpServiceHosts.getClientConfiguration().getBeanName()).append(" servers : ignore with httpHosts == null || httpHosts.size() == 0").toString());
+								return;
+							}
+						}
+						httpHostDiscover.handleDiscoverHosts(hosts);
+					}
 				}
 			}
+		} catch (Exception e) {
+			if (logger.isInfoEnabled())
+				logger.info(new StringBuilder().append("Discovery ")
+						.append(poolName).append(" servers failed:").toString(),e);
 		}
+
 
 	}
 //	public static HttpHostDiscover getHttpHostDiscover(String poolName){

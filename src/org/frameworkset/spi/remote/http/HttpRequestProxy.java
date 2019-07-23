@@ -315,7 +315,7 @@ public class HttpRequestProxy {
                     break;
                 }
                 catch (ClientProtocolException ex){
-                    throw new NoHttpServerException(new StringBuilder().append("Request[").append(url)
+                    throw new HttpProxyRequestException(new StringBuilder().append("Request[").append(url)
                             .append("] handle failed: must use http/https protocol port such as 9200,do not use other transport such as 9300.").toString(),ex);
                 }
 
@@ -522,7 +522,7 @@ public class HttpRequestProxy {
                     break;
                 }
                 catch (ClientProtocolException ex){
-                    throw new NoHttpServerException(new StringBuilder().append("Request[").append(url)
+                    throw new HttpProxyRequestException(new StringBuilder().append("Request[").append(url)
                             .append("] handle failed: must use http/https protocol port such as 9200,do not use other transport such as 9300.").toString(),ex);
                 }
 
@@ -1090,7 +1090,7 @@ public class HttpRequestProxy {
 					break;
 				}
 				catch (ClientProtocolException ex){
-					throw new NoHttpServerException(new StringBuilder().append("Request[").append(url)
+					throw new HttpProxyRequestException(new StringBuilder().append("Request[").append(url)
 							.append("] handle failed: must use http/https protocol port such as 9200,do not use other transport such as 9300.").toString(),ex);
 				}
 
@@ -1908,7 +1908,7 @@ public class HttpRequestProxy {
                     break;
                 }
                 catch (ClientProtocolException ex){
-                    throw new NoHttpServerException(new StringBuilder().append("Request[").append(url)
+                    throw new HttpProxyRequestException(new StringBuilder().append("Request[").append(url)
                             .append("] handle failed: must use http/https protocol port such as 9200,do not use other transport such as 9300.").toString(),ex);
                 }
 
@@ -2289,7 +2289,7 @@ public class HttpRequestProxy {
                     break;
                 }
                 catch (ClientProtocolException ex){
-                    throw new NoHttpServerException(new StringBuilder().append("Request[").append(url)
+                    throw new HttpProxyRequestException(new StringBuilder().append("Request[").append(url)
                             .append("] handle failed: must use http/https protocol port such as 9200,do not use other transport such as 9300.").toString(),ex);
                 }
 
@@ -2586,7 +2586,7 @@ public class HttpRequestProxy {
                     break;
                 }
                 catch (ClientProtocolException ex){
-                    throw new NoHttpServerException(new StringBuilder().append("Request[").append(url)
+                    throw new HttpProxyRequestException(new StringBuilder().append("Request[").append(url)
                             .append("] handle failed: must use http/https protocol port such as 9200,do not use other transport such as 9300.").toString(),ex);
                 }
 
@@ -2807,7 +2807,7 @@ public class HttpRequestProxy {
                     break;
                 }
                 catch (ClientProtocolException ex){
-                    throw new NoHttpServerException(new StringBuilder().append("Request[").append(url)
+                    throw new HttpProxyRequestException(new StringBuilder().append("Request[").append(url)
                             .append("] handle failed: must use http/https protocol port such as 9200,do not use other transport such as 9300.").toString(),ex);
                 }
 
@@ -2875,7 +2875,7 @@ public class HttpRequestProxy {
                     if (entity != null )
                         return EntityUtils.toString(entity);
                     else
-                        throw new ClientProtocolException("Unexpected response status: " + status);
+                        throw new HttpProxyRequestException("Unexpected response status: " + status);
                 }
             }
 
@@ -2949,9 +2949,9 @@ public class HttpRequestProxy {
         } else {
             HttpEntity entity = response.getEntity();
             if (entity != null )
-                throw new ClientProtocolException(EntityUtils.toString(entity));
+                throw new HttpProxyRequestException(EntityUtils.toString(entity));
             else
-                throw new ClientProtocolException("Unexpected response status: " + status);
+                throw new HttpProxyRequestException("Unexpected response status: " + status);
         }
     }
     public static <T> List<T> handleListResponse(HttpResponse response, Class<T> resultType)
@@ -2964,9 +2964,9 @@ public class HttpRequestProxy {
         } else {
             HttpEntity entity = response.getEntity();
             if (entity != null )
-                throw new ClientProtocolException(EntityUtils.toString(entity));
+                throw new HttpProxyRequestException(EntityUtils.toString(entity));
             else
-                throw new ClientProtocolException("Unexpected response status: " + status);
+                throw new HttpProxyRequestException("Unexpected response status: " + status);
         }
     }
     public static <T> Set<T> handleSetResponse(HttpResponse response, Class<T> resultType)
@@ -2979,9 +2979,9 @@ public class HttpRequestProxy {
         } else {
             HttpEntity entity = response.getEntity();
             if (entity != null )
-                throw new ClientProtocolException(EntityUtils.toString(entity));
+                throw new HttpProxyRequestException(EntityUtils.toString(entity));
             else
-                throw new ClientProtocolException("Unexpected response status: " + status);
+                throw new HttpProxyRequestException("Unexpected response status: " + status);
         }
     }
     public static <T> T handleResponse(HttpResponse response, Class<T> resultType)
@@ -2994,9 +2994,9 @@ public class HttpRequestProxy {
         } else {
             HttpEntity entity = response.getEntity();
             if (entity != null )
-                throw new ClientProtocolException(EntityUtils.toString(entity));
+                throw new HttpProxyRequestException(EntityUtils.toString(entity));
             else
-                throw new ClientProtocolException("Unexpected response status: " + status);
+                throw new HttpProxyRequestException("Unexpected response status: " + status);
         }
     }
     public static <T> T sendBody(String poolname,String requestBody, String url, Map<String, String> headers,ContentType contentType,final Class<T> resultType) throws HttpProxyRequestException {
@@ -3157,7 +3157,7 @@ public class HttpRequestProxy {
                     break;
                 }
                 catch (ClientProtocolException ex){
-                    throw new NoHttpServerException(new StringBuilder().append("Request[").append(url)
+                    throw new HttpProxyRequestException(new StringBuilder().append("Request[").append(url)
                             .append("] handle failed: must use http/https protocol port such as 9200,do not use other transport such as 9300.").toString(),ex);
                 }
 
@@ -3221,9 +3221,9 @@ public class HttpRequestProxy {
                 } else {
                     HttpEntity entity = response.getEntity();
                     if (entity != null )
-                        return EntityUtils.toString(entity);
+                        throw new HttpProxyRequestException( EntityUtils.toString(entity));
                     else
-                        throw new ClientProtocolException("Unexpected response status: " + status);
+                        throw new HttpProxyRequestException("Unexpected response status: " + status);
                 }
             }
 

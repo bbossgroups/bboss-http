@@ -44,6 +44,7 @@ import java.nio.charset.CodingErrorAction;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
@@ -125,6 +126,9 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	private int timeToLive = 3600000;
 	private String keystore;
 	private String keyPassword;
+
+	private String truststore;
+	private String trustPassword;
 	private String supportedProtocols;
 	private String[] _supportedProtocols;
 	private transient HostnameVerifier hostnameVerifier;
@@ -817,7 +821,9 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		this.retryTime = retryTime;
 	}
 
-	private SSLConnectionSocketFactory buildSSLConnectionSocketFactory() throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, KeyManagementException {
+	private SSLConnectionSocketFactory buildSSLConnectionSocketFactory() throws CertificateException, NoSuchAlgorithmException,
+			KeyStoreException, IOException,
+			KeyManagementException, UnrecoverableKeyException {
 		// Trust own CA and all self-signed certs
 		if (this.keystore == null || this.keystore.equals("")) {
 			SSLContextBuilder sslContextBuilder = new SSLContextBuilder();
@@ -833,6 +839,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 			SSLContext sslcontext = SSLContexts.custom()
 					.loadTrustMaterial(new File(keystore), this.keyPassword.toCharArray(),
 							new TrustSelfSignedStrategy())
+//					.loadKeyMaterial(new File(keystore),this.keyPassword.toCharArray(),this.trustPassword.toCharArray())
 					.build();
 			// Allow TLSv1 protocol only
 

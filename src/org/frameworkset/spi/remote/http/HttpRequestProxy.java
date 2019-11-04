@@ -20,10 +20,7 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
-import org.frameworkset.spi.remote.http.proxy.ExceptionWare;
-import org.frameworkset.spi.remote.http.proxy.HttpAddress;
-import org.frameworkset.spi.remote.http.proxy.HttpProxyRequestException;
-import org.frameworkset.spi.remote.http.proxy.NoHttpServerException;
+import org.frameworkset.spi.remote.http.proxy.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -200,8 +197,9 @@ public class HttpRequestProxy {
     public static <T> T httpGetforString(String poolname, String url, String cookie, String userAgent, Map<String, String> headers,ResponseHandler<T> responseHandler) throws HttpProxyRequestException {
        return httpGet(  poolname,   url,   cookie,   userAgent,   headers, responseHandler);
     }
-    private static Exception getException(ResponseHandler responseHandler,ClientConfiguration configuration ){
-        ExceptionWare exceptionWare =configuration.getHttpServiceHosts().getExceptionWare();
+    private static Exception getException(ResponseHandler responseHandler,HttpServiceHosts httpServiceHosts ){
+//        assertCheck(  httpServiceHosts );
+        ExceptionWare exceptionWare = httpServiceHosts.getExceptionWare();
         if(exceptionWare != null) {
             return exceptionWare.getExceptionFromResponse(responseHandler);
         }
@@ -231,11 +229,13 @@ public class HttpRequestProxy {
         if(!url.startsWith("http://") && !url.startsWith("https://")) {
             endpoint = url;
             HttpAddress httpAddress = null;
+			HttpServiceHosts httpServiceHosts = config.getHttpServiceHosts();
+            assertCheck(  httpServiceHosts );
             do {
 
                 try {
 
-                    httpAddress = config.getHttpServiceHosts().getHttpAddress();
+                    httpAddress = httpServiceHosts.getHttpAddress();
 
                     url = SimpleStringUtil.getPath(httpAddress.getAddress(), endpoint);
                     if(logger.isTraceEnabled()){
@@ -244,12 +244,12 @@ public class HttpRequestProxy {
                     httpClient = HttpRequestUtil.getHttpClient(config);
                     httpGet = HttpRequestUtil.getHttpGet(config, url, cookie, userAgent, headers);
                     responseBody = httpClient.execute(httpGet, responseHandler);
-                    e = getException(  responseHandler,config );
+                    e = getException(  responseHandler,httpServiceHosts );
                     break;
                 } catch (HttpHostConnectException ex) {
                     httpAddress.setStatus(1);
                     e = new NoHttpServerException(ex);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount )) {//失败尝试下一个地址
+                    if (!httpServiceHosts.reachEnd(triesCount )) {//失败尝试下一个地址
                         triesCount++;
                         continue;
                     } else {
@@ -259,7 +259,7 @@ public class HttpRequestProxy {
                 } catch (UnknownHostException ex) {
                     httpAddress.setStatus(1);
                     e = new NoHttpServerException(ex);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount ))  {//失败尝试下一个地址
+                    if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
                         triesCount++;
                         continue;
                     } else {
@@ -270,7 +270,7 @@ public class HttpRequestProxy {
                 catch (NoRouteToHostException ex) {
                     httpAddress.setStatus(1);
                     e = new NoHttpServerException(ex);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount ))  {//失败尝试下一个地址
+                    if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
                         triesCount++;
                         continue;
                     } else {
@@ -281,7 +281,7 @@ public class HttpRequestProxy {
                 catch (NoHttpResponseException ex) {
                     httpAddress.setStatus(1);
                     e = new NoHttpServerException(ex);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount ))  {//失败尝试下一个地址
+                    if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
                         triesCount++;
                         continue;
                     } else {
@@ -297,7 +297,7 @@ public class HttpRequestProxy {
                 catch (ConnectTimeoutException connectTimeoutException){
                     httpAddress.setStatus(1);
                     e = handleConnectionTimeOutException(config,connectTimeoutException);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount )) {//失败尝试下一个地址
+                    if (!httpServiceHosts.reachEnd(triesCount )) {//失败尝试下一个地址
                         triesCount++;
                         continue;
                     } else {
@@ -427,11 +427,13 @@ public class HttpRequestProxy {
         if(!url.startsWith("http://") && !url.startsWith("https://")) {
             endpoint = url;
             HttpAddress httpAddress = null;
+			HttpServiceHosts httpServiceHosts = config.getHttpServiceHosts();
+            assertCheck(  httpServiceHosts );
             do {
 
                 try {
 
-                    httpAddress = config.getHttpServiceHosts().getHttpAddress();
+                    httpAddress = httpServiceHosts.getHttpAddress();
 
                     url = SimpleStringUtil.getPath(httpAddress.getAddress(), endpoint);
                     if(logger.isTraceEnabled()){
@@ -451,12 +453,12 @@ public class HttpRequestProxy {
                         httpHead.setParams(httpParams);
                     }
                     responseBody = httpClient.execute(httpHead, responseHandler);
-                    e = getException(  responseHandler,config );
+                    e = getException(  responseHandler,httpServiceHosts );
                     break;
                 } catch (HttpHostConnectException ex) {
                     httpAddress.setStatus(1);
                     e = new NoHttpServerException(ex);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount )) {//失败尝试下一个地址
+                    if (!httpServiceHosts.reachEnd(triesCount )) {//失败尝试下一个地址
                         triesCount++;
                         continue;
                     } else {
@@ -466,7 +468,7 @@ public class HttpRequestProxy {
                 } catch (UnknownHostException ex) {
                     httpAddress.setStatus(1);
                     e = new NoHttpServerException(ex);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount ))  {//失败尝试下一个地址
+                    if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
                         triesCount++;
                         continue;
                     } else {
@@ -477,7 +479,7 @@ public class HttpRequestProxy {
                 catch (NoRouteToHostException ex) {
                     httpAddress.setStatus(1);
                     e = new NoHttpServerException(ex);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount ))  {//失败尝试下一个地址
+                    if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
                         triesCount++;
                         continue;
                     } else {
@@ -488,7 +490,7 @@ public class HttpRequestProxy {
                 catch (NoHttpResponseException ex) {
                     httpAddress.setStatus(1);
                     e = new NoHttpServerException(ex);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount ))  {//失败尝试下一个地址
+                    if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
                         triesCount++;
                         continue;
                     } else {
@@ -504,7 +506,7 @@ public class HttpRequestProxy {
                 catch (ConnectTimeoutException connectTimeoutException){
                     httpAddress.setStatus(1);
                     e = handleConnectionTimeOutException(config,connectTimeoutException);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount )) {//失败尝试下一个地址
+                    if (!httpServiceHosts.reachEnd(triesCount )) {//失败尝试下一个地址
                         triesCount++;
                         continue;
                     } else {
@@ -727,6 +729,22 @@ public class HttpRequestProxy {
 
     public static <T> List<T> httpPostForList(String poolName,String url, Map<String, Object> params, final Class<T> resultType) throws HttpProxyRequestException {
         return httpPostforString(  poolName,url, params, (Map<String, String>) null, new ResponseHandler<List<T>>() {
+            @Override
+            public List<T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                return HttpRequestProxy.handleListResponse(response,resultType);
+            }
+        });
+    }
+    public static <T> List<T> httpPostForList(String poolName,String url , final Class<T> resultType) throws HttpProxyRequestException {
+        return httpPostforString(  poolName,url, (Map<String, Object>) null, (Map<String, String>) null, new ResponseHandler<List<T>>() {
+            @Override
+            public List<T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                return HttpRequestProxy.handleListResponse(response,resultType);
+            }
+        });
+    }
+    public static <T> List<T> httpPostForList(String url , final Class<T> resultType) throws HttpProxyRequestException {
+        return httpPostforString(  (String)null,url, (Map<String, Object>) null, (Map<String, String>) null, new ResponseHandler<List<T>>() {
             @Override
             public List<T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
                 return HttpRequestProxy.handleListResponse(response,resultType);
@@ -995,11 +1013,13 @@ public class HttpRequestProxy {
 		if(!url.startsWith("http://") && !url.startsWith("https://")) {
 			endpoint = url;
 			HttpAddress httpAddress = null;
+			HttpServiceHosts httpServiceHosts = config.getHttpServiceHosts();
+            assertCheck(  httpServiceHosts );
 			do {
 
 				try {
 
-					httpAddress = config.getHttpServiceHosts().getHttpAddress();
+					httpAddress = httpServiceHosts.getHttpAddress();
 
 					url = SimpleStringUtil.getPath(httpAddress.getAddress(), endpoint);
 					if(logger.isTraceEnabled()){
@@ -1019,12 +1039,12 @@ public class HttpRequestProxy {
 					}
 
 					responseBody = httpClient.execute(httpPost, responseHandler);
-					e = getException(  responseHandler,config );
+					e = getException(  responseHandler,httpServiceHosts );
 					break;
 				} catch (HttpHostConnectException ex) {
 					httpAddress.setStatus(1);
 					e = new NoHttpServerException(ex);
-					if (!config.getHttpServiceHosts().reachEnd(triesCount )) {//失败尝试下一个地址
+					if (!httpServiceHosts.reachEnd(triesCount )) {//失败尝试下一个地址
 						triesCount++;
 						continue;
 					} else {
@@ -1034,7 +1054,7 @@ public class HttpRequestProxy {
 				} catch (UnknownHostException ex) {
 					httpAddress.setStatus(1);
 					e = new NoHttpServerException(ex);
-					if (!config.getHttpServiceHosts().reachEnd(triesCount ))  {//失败尝试下一个地址
+					if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
 						triesCount++;
 						continue;
 					} else {
@@ -1045,7 +1065,7 @@ public class HttpRequestProxy {
 				catch (NoRouteToHostException ex) {
 					httpAddress.setStatus(1);
 					e = new NoHttpServerException(ex);
-					if (!config.getHttpServiceHosts().reachEnd(triesCount ))  {//失败尝试下一个地址
+					if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
 						triesCount++;
 						continue;
 					} else {
@@ -1056,7 +1076,7 @@ public class HttpRequestProxy {
 				catch (NoHttpResponseException ex) {
 					httpAddress.setStatus(1);
 					e = new NoHttpServerException(ex);
-					if (!config.getHttpServiceHosts().reachEnd(triesCount ))  {//失败尝试下一个地址
+					if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
 						triesCount++;
 						continue;
 					} else {
@@ -1072,7 +1092,7 @@ public class HttpRequestProxy {
 				catch (ConnectTimeoutException connectTimeoutException){
 					httpAddress.setStatus(1);
 					e = handleConnectionTimeOutException(config,connectTimeoutException);
-					if (!config.getHttpServiceHosts().reachEnd(triesCount )) {//失败尝试下一个地址
+					if (!httpServiceHosts.reachEnd(triesCount )) {//失败尝试下一个地址
 						triesCount++;
 						continue;
 					} else {
@@ -1814,11 +1834,13 @@ public class HttpRequestProxy {
         if(!url.startsWith("http://") && !url.startsWith("https://")) {
             endpoint = url;
             HttpAddress httpAddress = null;
+			HttpServiceHosts httpServiceHosts = config.getHttpServiceHosts();
+            assertCheck(  httpServiceHosts );
             do {
 
                 try {
 
-                    httpAddress = config.getHttpServiceHosts().getHttpAddress();
+                    httpAddress = httpServiceHosts.getHttpAddress();
 
                     url = SimpleStringUtil.getPath(httpAddress.getAddress(), endpoint);
                     if(logger.isTraceEnabled()){
@@ -1837,12 +1859,12 @@ public class HttpRequestProxy {
 
                     }
                     responseBody = httpClient.execute(httpPut, responseHandler);
-                    e = getException(  responseHandler,config );
+                    e = getException(  responseHandler,httpServiceHosts );
                     break;
                 } catch (HttpHostConnectException ex) {
                     httpAddress.setStatus(1);
                     e = new NoHttpServerException(ex);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount )) {//失败尝试下一个地址
+                    if (!httpServiceHosts.reachEnd(triesCount )) {//失败尝试下一个地址
                         triesCount++;
                         continue;
                     } else {
@@ -1852,7 +1874,7 @@ public class HttpRequestProxy {
                 } catch (UnknownHostException ex) {
                     httpAddress.setStatus(1);
                     e = new NoHttpServerException(ex);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount ))  {//失败尝试下一个地址
+                    if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
                         triesCount++;
                         continue;
                     } else {
@@ -1863,7 +1885,7 @@ public class HttpRequestProxy {
                 catch (NoRouteToHostException ex) {
                     httpAddress.setStatus(1);
                     e = new NoHttpServerException(ex);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount ))  {//失败尝试下一个地址
+                    if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
                         triesCount++;
                         continue;
                     } else {
@@ -1874,7 +1896,7 @@ public class HttpRequestProxy {
                 catch (NoHttpResponseException ex) {
                     httpAddress.setStatus(1);
                     e = new NoHttpServerException(ex);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount ))  {//失败尝试下一个地址
+                    if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
                         triesCount++;
                         continue;
                     } else {
@@ -1890,7 +1912,7 @@ public class HttpRequestProxy {
                 catch (ConnectTimeoutException connectTimeoutException){
                     httpAddress.setStatus(1);
                     e = handleConnectionTimeOutException(config,connectTimeoutException);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount )) {//失败尝试下一个地址
+                    if (!httpServiceHosts.reachEnd(triesCount )) {//失败尝试下一个地址
                         triesCount++;
                         continue;
                     } else {
@@ -2181,11 +2203,13 @@ public class HttpRequestProxy {
         if(!url.startsWith("http://") && !url.startsWith("https://")) {
             endpoint = url;
             HttpAddress httpAddress = null;
+			HttpServiceHosts httpServiceHosts = config.getHttpServiceHosts();
+            assertCheck(  httpServiceHosts );
             do {
 
                 try {
 
-                    httpAddress = config.getHttpServiceHosts().getHttpAddress();
+                    httpAddress = httpServiceHosts.getHttpAddress();
 
                     url = SimpleStringUtil.getPath(httpAddress.getAddress(), endpoint);
                     if(logger.isTraceEnabled()){
@@ -2218,12 +2242,12 @@ public class HttpRequestProxy {
                         responseBody = httpClient.execute(httpDelete, responseHandler);
                     }
 
-                    e = getException(  responseHandler,config );
+                    e = getException(  responseHandler,httpServiceHosts );
                     break;
                 } catch (HttpHostConnectException ex) {
                     httpAddress.setStatus(1);
                     e = new NoHttpServerException(ex);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount )) {//失败尝试下一个地址
+                    if (!httpServiceHosts.reachEnd(triesCount )) {//失败尝试下一个地址
                         triesCount++;
                         continue;
                     } else {
@@ -2233,7 +2257,7 @@ public class HttpRequestProxy {
                 } catch (UnknownHostException ex) {
                     httpAddress.setStatus(1);
                     e = new NoHttpServerException(ex);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount ))  {//失败尝试下一个地址
+                    if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
                         triesCount++;
                         continue;
                     } else {
@@ -2244,7 +2268,7 @@ public class HttpRequestProxy {
                 catch (NoRouteToHostException ex) {
                     httpAddress.setStatus(1);
                     e = new NoHttpServerException(ex);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount ))  {//失败尝试下一个地址
+                    if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
                         triesCount++;
                         continue;
                     } else {
@@ -2255,7 +2279,7 @@ public class HttpRequestProxy {
                 catch (NoHttpResponseException ex) {
                     httpAddress.setStatus(1);
                     e = new NoHttpServerException(ex);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount ))  {//失败尝试下一个地址
+                    if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
                         triesCount++;
                         continue;
                     } else {
@@ -2271,7 +2295,7 @@ public class HttpRequestProxy {
                 catch (ConnectTimeoutException connectTimeoutException){
                     httpAddress.setStatus(1);
                     e = handleConnectionTimeOutException(config,connectTimeoutException);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount )) {//失败尝试下一个地址
+                    if (!httpServiceHosts.reachEnd(triesCount )) {//失败尝试下一个地址
                         triesCount++;
                         continue;
                     } else {
@@ -2402,6 +2426,10 @@ public class HttpRequestProxy {
 
         return  sendBodyForList(   poolname, SimpleStringUtil.object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON,  resultType);
     }
+	public static <T> List<T> sendJsonBodyForList(Object requestBody, String url,Class<T> resultType) throws HttpProxyRequestException {
+
+		return  sendBodyForList(   (String) null, SimpleStringUtil.object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON,  resultType);
+	}
     public static <T> Set<T> sendJsonBodyForSet(String poolname,Object requestBody, String url,Class<T> resultType) throws HttpProxyRequestException {
 
         return  sendBodyForSet(   poolname, SimpleStringUtil.object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON,  resultType);
@@ -2498,11 +2526,13 @@ public class HttpRequestProxy {
         if(!url.startsWith("http://") && !url.startsWith("https://")) {
             endpoint = url;
             HttpAddress httpAddress = null;
+			HttpServiceHosts httpServiceHosts = config.getHttpServiceHosts();
+            assertCheck(  httpServiceHosts );
             do {
 
                 try {
 
-                    httpAddress = config.getHttpServiceHosts().getHttpAddress();
+                    httpAddress = httpServiceHosts.getHttpAddress();
 
                     url = SimpleStringUtil.getPath(httpAddress.getAddress(), endpoint);
                     if(logger.isTraceEnabled()){
@@ -2515,12 +2545,12 @@ public class HttpRequestProxy {
                     }
 
                     responseBody = httpClient.execute(httpPost, responseHandler);
-                    e = getException(  responseHandler,config );
+                    e = getException(  responseHandler,httpServiceHosts );
                     break;
                 } catch (HttpHostConnectException ex) {
                     httpAddress.setStatus(1);
                     e = new NoHttpServerException(ex);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount )) {//失败尝试下一个地址
+                    if (!httpServiceHosts.reachEnd(triesCount )) {//失败尝试下一个地址
                         triesCount++;
                         continue;
                     } else {
@@ -2530,7 +2560,7 @@ public class HttpRequestProxy {
                 } catch (UnknownHostException ex) {
                     httpAddress.setStatus(1);
                     e = new NoHttpServerException(ex);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount ))  {//失败尝试下一个地址
+                    if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
                         triesCount++;
                         continue;
                     } else {
@@ -2541,7 +2571,7 @@ public class HttpRequestProxy {
                 catch (NoRouteToHostException ex) {
                     httpAddress.setStatus(1);
                     e = new NoHttpServerException(ex);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount ))  {//失败尝试下一个地址
+                    if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
                         triesCount++;
                         continue;
                     } else {
@@ -2552,7 +2582,7 @@ public class HttpRequestProxy {
                 catch (NoHttpResponseException ex) {
                     httpAddress.setStatus(1);
                     e = new NoHttpServerException(ex);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount ))  {//失败尝试下一个地址
+                    if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
                         triesCount++;
                         continue;
                     } else {
@@ -2568,7 +2598,7 @@ public class HttpRequestProxy {
                 catch (ConnectTimeoutException connectTimeoutException){
                     httpAddress.setStatus(1);
                     e = handleConnectionTimeOutException(config,connectTimeoutException);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount )) {//失败尝试下一个地址
+                    if (!httpServiceHosts.reachEnd(triesCount )) {//失败尝试下一个地址
                         triesCount++;
                         continue;
                     } else {
@@ -2719,11 +2749,13 @@ public class HttpRequestProxy {
         if(!url.startsWith("http://") && !url.startsWith("https://")){
             endpoint = url;
             HttpAddress httpAddress = null;
+			HttpServiceHosts httpServiceHosts = config.getHttpServiceHosts();
+            assertCheck(  httpServiceHosts );
             do {
 
                 try {
 
-                    httpAddress = config.getHttpServiceHosts().getHttpAddress();
+                    httpAddress = httpServiceHosts.getHttpAddress();
 
                     url = SimpleStringUtil.getPath(httpAddress.getAddress(),endpoint);
                     if(logger.isTraceEnabled()){
@@ -2736,12 +2768,12 @@ public class HttpRequestProxy {
                     }
 
                     responseBody = httpClient.execute(httpPost, responseHandler);
-                    e = getException(  responseHandler,config );
+                    e = getException(  responseHandler,httpServiceHosts );
                     break;
                 } catch (HttpHostConnectException ex) {
                     httpAddress.setStatus(1);
                     e = new NoHttpServerException(ex);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount )) {//失败尝试下一个地址
+                    if (!httpServiceHosts.reachEnd(triesCount )) {//失败尝试下一个地址
                         triesCount++;
                         continue;
                     } else {
@@ -2751,7 +2783,7 @@ public class HttpRequestProxy {
                 } catch (UnknownHostException ex) {
                     httpAddress.setStatus(1);
                     e = new NoHttpServerException(ex);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount ))  {//失败尝试下一个地址
+                    if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
                         triesCount++;
                         continue;
                     } else {
@@ -2762,7 +2794,7 @@ public class HttpRequestProxy {
                 catch (NoRouteToHostException ex) {
                     httpAddress.setStatus(1);
                     e = new NoHttpServerException(ex);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount ))  {//失败尝试下一个地址
+                    if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
                         triesCount++;
                         continue;
                     } else {
@@ -2773,7 +2805,7 @@ public class HttpRequestProxy {
                 catch (NoHttpResponseException ex) {
                     httpAddress.setStatus(1);
                     e = new NoHttpServerException(ex);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount ))  {//失败尝试下一个地址
+                    if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
                         triesCount++;
                         continue;
                     } else {
@@ -2789,7 +2821,7 @@ public class HttpRequestProxy {
                 catch (ConnectTimeoutException connectTimeoutException){
                     httpAddress.setStatus(1);
                     e = handleConnectionTimeOutException(config,connectTimeoutException);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount )) {//失败尝试下一个地址
+                    if (!httpServiceHosts.reachEnd(triesCount )) {//失败尝试下一个地址
                         triesCount++;
                         continue;
                     } else {
@@ -3049,7 +3081,16 @@ public class HttpRequestProxy {
         });
 
     }
-    
+    private static void assertCheck(HttpServiceHosts httpServiceHosts ){
+
+
+        if(httpServiceHosts == null){
+            if(logger.isWarnEnabled()){
+                logger.warn("Http Request Proxy is not properly initialized, please refer to the document: https://esdoc.bbossgroups.com/#/httpproxy?id=_32-http负载均衡器配置和启动");
+            }
+            throw new HttpProxyRequestException("Http Request Proxy is not properly initialized, please refer to the document: https://esdoc.bbossgroups.com/#/httpproxy?id=_32-http负载均衡器配置和启动");
+        }
+    }
     public static <T> T putBody(String poolname,String requestBody, String url, Map<String, String> headers,ContentType contentType, ResponseHandler<T> responseHandler) throws HttpProxyRequestException {
         CloseableHttpClient httpClient = null;
         HttpPut httpPost = null;
@@ -3069,11 +3110,13 @@ public class HttpRequestProxy {
         if(!url.startsWith("http://") && !url.startsWith("https://")) {
             endpoint = url;
             HttpAddress httpAddress = null;
+			HttpServiceHosts httpServiceHosts = config.getHttpServiceHosts();
+            assertCheck(  httpServiceHosts );
             do {
 
                 try {
 
-                    httpAddress = config.getHttpServiceHosts().getHttpAddress();
+                    httpAddress = httpServiceHosts.getHttpAddress();
 
                     url = SimpleStringUtil.getPath(httpAddress.getAddress(), endpoint);
                     if(logger.isTraceEnabled()){
@@ -3086,12 +3129,12 @@ public class HttpRequestProxy {
                     }
 
                     responseBody = httpClient.execute(httpPost, responseHandler);
-                    e = getException(  responseHandler,config );
+                    e = getException(  responseHandler,httpServiceHosts );
                     break;
                 } catch (HttpHostConnectException ex) {
                     httpAddress.setStatus(1);
                     e = new NoHttpServerException(ex);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount )) {//失败尝试下一个地址
+                    if (!httpServiceHosts.reachEnd(triesCount )) {//失败尝试下一个地址
                         triesCount++;
                         continue;
                     } else {
@@ -3101,7 +3144,7 @@ public class HttpRequestProxy {
                 } catch (UnknownHostException ex) {
                     httpAddress.setStatus(1);
                     e = new NoHttpServerException(ex);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount ))  {//失败尝试下一个地址
+                    if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
                         triesCount++;
                         continue;
                     } else {
@@ -3112,7 +3155,7 @@ public class HttpRequestProxy {
                 catch (NoRouteToHostException ex) {
                     httpAddress.setStatus(1);
                     e = new NoHttpServerException(ex);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount ))  {//失败尝试下一个地址
+                    if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
                         triesCount++;
                         continue;
                     } else {
@@ -3123,7 +3166,7 @@ public class HttpRequestProxy {
                 catch (NoHttpResponseException ex) {
                     httpAddress.setStatus(1);
                     e = new NoHttpServerException(ex);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount ))  {//失败尝试下一个地址
+                    if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
                         triesCount++;
                         continue;
                     } else {
@@ -3139,7 +3182,7 @@ public class HttpRequestProxy {
                 catch (ConnectTimeoutException connectTimeoutException){
                     httpAddress.setStatus(1);
                     e = handleConnectionTimeOutException(config,connectTimeoutException);
-                    if (!config.getHttpServiceHosts().reachEnd(triesCount )) {//失败尝试下一个地址
+                    if (!httpServiceHosts.reachEnd(triesCount )) {//失败尝试下一个地址
                         triesCount++;
                         continue;
                     } else {

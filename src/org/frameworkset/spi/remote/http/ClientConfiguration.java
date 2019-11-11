@@ -3,6 +3,7 @@
  */
 package org.frameworkset.spi.remote.http;
 
+import com.frameworkset.util.ValueCastUtil;
 import org.apache.http.Consts;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.CredentialsProvider;
@@ -290,82 +291,63 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	}
 
 	private static long _getLongValue(String poolName, String propertyName, GetProperties context, long defaultValue) throws Exception {
-		String _value = null;
+		Object _value = null;
 		if (poolName.equals("default")) {
-			_value = (String) context.getExternalProperty(propertyName);
+			_value =   context.getExternalObjectProperty(propertyName);
 			if (_value == null)
-				_value = (String) context.getExternalProperty(poolName + "." + propertyName);
+				_value =   context.getExternalObjectProperty(poolName + "." + propertyName);
 
 		} else {
-			_value = (String) context.getExternalProperty(poolName + "." + propertyName);
+			_value =  context.getExternalObjectProperty(poolName + "." + propertyName);
 		}
 		if (_value == null) {
 			return defaultValue;
 		}
-		try {
-			long ret = Long.parseLong(_value);
-			return ret;
-		} catch (Exception e) {
-			throw e;
-		}
+		return ValueCastUtil.toLong(_value,defaultValue);
 	}
 
 	private static boolean _getBooleanValue(String poolName, String propertyName, GetProperties context, boolean defaultValue) throws Exception {
-		String _value = null;
+		Object _value = null;
 		if (poolName.equals("default")) {
-			_value = (String) context.getExternalProperty(propertyName);
+			_value =   context.getExternalObjectProperty(propertyName);
 			if (_value == null)
-				_value = (String) context.getExternalProperty(poolName + "." + propertyName);
+				_value =  context.getExternalObjectProperty(poolName + "." + propertyName);
 
 		} else {
-			_value = (String) context.getExternalProperty(poolName + "." + propertyName);
+			_value =   context.getExternalObjectProperty(poolName + "." + propertyName);
 		}
 		if (_value == null) {
 			return defaultValue;
 		}
-		try {
-			boolean ret = Boolean.parseBoolean(_value);
-			return ret;
-		} catch (Exception e) {
-			throw e;
-		}
+		return ValueCastUtil.toBoolean(_value,defaultValue);
 	}
 
 	private static int _getIntValue(String poolName, String propertyName, GetProperties context, int defaultValue) throws Exception {
-		String _value = null;
+		Object _value = null;
 		if (poolName.equals("default")) {
-			_value = (String) context.getExternalProperty(propertyName);
+			_value =  context.getExternalObjectProperty(propertyName);
 			if (_value == null)
-				_value = (String) context.getExternalProperty(poolName + "." + propertyName);
+				_value =  context.getExternalObjectProperty(poolName + "." + propertyName);
 
 		} else {
-			_value = (String) context.getExternalProperty(poolName + "." + propertyName);
+			_value =  context.getExternalObjectProperty(poolName + "." + propertyName);
 		}
-		if (_value == null) {
-			return defaultValue;
-		}
-		try {
-			int ret = Integer.parseInt(_value);
-			return ret;
-		} catch (Exception e) {
-			throw e;
-		}
+
+		return ValueCastUtil.toInt(_value,defaultValue);
+
 	}
 
 	private static String _getStringValue(String poolName, String propertyName, GetProperties context, String defaultValue) throws Exception {
-		String _value = null;
+		Object _value = null;
 		if (poolName.equals("default")) {
-			_value = (String) context.getExternalProperty(propertyName);
+			_value = context.getExternalProperty(propertyName);
 			if (_value == null)
-				_value = (String) context.getExternalProperty(poolName + "." + propertyName);
+				_value =  context.getExternalProperty(poolName + "." + propertyName);
 
 		} else {
-			_value = (String) context.getExternalProperty(poolName + "." + propertyName);
+			_value =  context.getExternalProperty(poolName + "." + propertyName);
 		}
-		if (_value == null) {
-			return defaultValue;
-		}
-		return _value;
+		return ValueCastUtil.toString(_value,defaultValue);
 	}
 
 	private static Object _getObjectValue(String poolName, String propertyName, GetProperties context, Object defaultValue) throws Exception {

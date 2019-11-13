@@ -14,7 +14,6 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.FileBody;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.io.EmptyInputStream;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.BasicHttpParams;
@@ -2510,7 +2509,7 @@ public class HttpRequestProxy {
         return  sendBody( poolname, requestBody,   url,   headers,ContentType.APPLICATION_JSON, responseHandler);
     }
     public static <T> T sendBody(String poolname,String requestBody, String url, Map<String, String> headers,ContentType contentType, ResponseHandler<T> responseHandler) throws HttpProxyRequestException {
-        CloseableHttpClient httpClient = null;
+        HttpClient httpClient = null;
         HttpPost httpPost = null;
 
 
@@ -2731,7 +2730,7 @@ public class HttpRequestProxy {
 
     public static <T> T sendBody(String poolname,String requestBody, String url, Map<String, String> headers,ContentType contentType,
                                  ResponseHandler<T> responseHandler,String action) throws HttpProxyRequestException {
-        CloseableHttpClient httpClient = null;
+        HttpClient httpClient = null;
         HttpEntityEnclosingRequestBase httpPost = null;
 
 
@@ -3092,7 +3091,7 @@ public class HttpRequestProxy {
         }
     }
     public static <T> T putBody(String poolname,String requestBody, String url, Map<String, String> headers,ContentType contentType, ResponseHandler<T> responseHandler) throws HttpProxyRequestException {
-        CloseableHttpClient httpClient = null;
+        HttpClient httpClient = null;
         HttpPut httpPost = null;
 
 

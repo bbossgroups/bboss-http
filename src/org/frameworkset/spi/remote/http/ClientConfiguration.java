@@ -165,7 +165,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 
 	public static HttpClient getDefaultHttpclient() {
 		loadClientConfiguration();
-		return getDefaultClientConfiguration().getHttpclient();
+		return getDefaultClientConfiguration()._getHttpclient();
 	}
 
 	public static ClientConfiguration getDefaultClientConfiguration() {
@@ -1024,7 +1024,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		}
 	}
 
-	public HttpClient getHttpclient() {
+	public HttpClient _getHttpclient() {
 		return httpclient;
 	}
 

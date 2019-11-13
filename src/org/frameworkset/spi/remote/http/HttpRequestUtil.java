@@ -18,7 +18,6 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.FileBody;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
@@ -60,11 +59,8 @@ public class HttpRequestUtil {
     public static void startHttpPools(Map<String,Object>  configs){
         ClientConfiguration.startHttpPools(  configs);
     }
-    static HttpClient getHttpClient() throws Exception {
-        return ClientConfiguration.getDefaultHttpclient();
-    }
 
-    static CloseableHttpClient getHttpClient(ClientConfiguration config) throws Exception {
+    static HttpClient getHttpClient(ClientConfiguration config) throws Exception {
         return config.getHttpClient();
     }
 
@@ -1504,7 +1500,7 @@ public class HttpRequestUtil {
         return  sendBody( poolname, requestBody,   url,   headers,ContentType.APPLICATION_JSON, responseHandler);
     }
     public static <T> T sendBody(String poolname,String requestBody, String url, Map<String, String> headers,ContentType contentType, ResponseHandler<T> responseHandler) throws Exception {
-        CloseableHttpClient httpClient = null;
+        HttpClient httpClient = null;
         HttpPost httpPost = null;
 
 
@@ -1614,7 +1610,7 @@ public class HttpRequestUtil {
         throw new java.lang.IllegalArgumentException("not support http action:"+action);
     }
     public static <T> T sendBody(String poolname,String requestBody, String url, Map<String, String> headers,ContentType contentType, ResponseHandler<T> responseHandler,String action) throws Exception {
-        CloseableHttpClient httpClient = null;
+        HttpClient httpClient = null;
         HttpEntityEnclosingRequestBase httpPost = null;
 
 
@@ -1722,7 +1718,7 @@ public class HttpRequestUtil {
     }
     
     public static <T> T putBody(String poolname,String requestBody, String url, Map<String, String> headers,ContentType contentType, ResponseHandler<T> responseHandler) throws Exception {
-        CloseableHttpClient httpClient = null;
+        HttpClient httpClient = null;
         HttpPut httpPost = null;
 
 

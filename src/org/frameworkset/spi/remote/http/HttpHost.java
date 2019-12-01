@@ -43,13 +43,11 @@ import java.util.Map;
 public final class HttpHost implements Cloneable, Serializable {
 
 	private static final long serialVersionUID = -7529410654042457626L;
-
+	private boolean forceRemoved;
 
 	private String origineAddress;
 
-	public String getHostAddress() {
-		return hostAddress;
-	}
+
 
 	protected String hostAddress;
 	protected Map<String,Object> attributes;
@@ -162,4 +160,15 @@ public final class HttpHost implements Cloneable, Serializable {
 		return this.routing;
 	}
 
+	public String getHostAddress() {
+		return hostAddress;
+	}
+
+	public void setForceRemoved(boolean forceRemoved) {
+		this.forceRemoved = forceRemoved;
+	}
+
+	public boolean isForceRemoved() {
+		return forceRemoved;
+	}
 }

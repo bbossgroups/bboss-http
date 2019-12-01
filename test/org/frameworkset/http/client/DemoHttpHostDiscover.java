@@ -54,7 +54,12 @@ public class DemoHttpHostDiscover extends HttpHostDiscover {
 		}
 		else{
 			host = new HttpHost("192.168.137.1:810|shanghai");
+			if(count == 20){ //强制移除节点
+				host.setForceRemoved(true);
+			}
+
 		}
+
 		hosts.add(host);
 		count ++;
 		return hosts;

@@ -141,6 +141,16 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	private long keepAlive = 1000l * 60l * 60l;
 	private String beanName;
 
+	public boolean isEvictExpiredConnections() {
+		return evictExpiredConnections;
+	}
+
+	public void setEvictExpiredConnections(boolean evictExpiredConnections) {
+		this.evictExpiredConnections = evictExpiredConnections;
+	}
+
+	private boolean evictExpiredConnections = true;
+
 	/**
 	 *
 	 */
@@ -654,6 +664,9 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 					}
 				}
 			}
+			boolean evictExpiredConnections = ClientConfiguration._getBooleanValue(name, "http.evictExpiredConnections", context, true);
+			clientConfiguration.setEvictExpiredConnections(evictExpiredConnections);
+			log.append(",http.evictExpiredConnections=").append(evictExpiredConnections);
 //			httpServiceHosts.after();
 			httpServiceHosts.toString(log);
 
@@ -977,8 +990,9 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		if (keepAlive > 0)//设置链接保活策略
 		{
 			HttpConnectionKeepAliveStrategy httpConnectionKeepAliveStrategy = new HttpConnectionKeepAliveStrategy(this.keepAlive);
-			builder
-					.setConnectionManager(connManager)
+			if(evictExpiredConnections)
+				builder.evictExpiredConnections();
+			builder.setConnectionManager(connManager)
 					.setDefaultCookieStore(cookieStore)
 					.setDefaultCredentialsProvider(credentialsProvider)
 					//.setProxy(new HttpHost("myproxy", 8080))
@@ -986,8 +1000,9 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 			buildRetryHandler(builder);
 			httpclient = builder.build();
 		} else {
-			builder
-					.setConnectionManager(connManager)
+			if(evictExpiredConnections)
+				builder.evictExpiredConnections();
+			builder.setConnectionManager(connManager)
 					.setDefaultCookieStore(cookieStore)
 					.setDefaultCredentialsProvider(credentialsProvider)
 					//.setProxy(new HttpHost("myproxy", 8080))

@@ -71,6 +71,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 			"text/html", Consts.UTF_8);
 	private final static int TIMEOUT_CONNECTION = 20000;
 	private final static int TIMEOUT_SOCKET = 20000;
+	private final static int DEFAULT_validateAfterInactivity = -1;
 	private final static int RETRY_TIME = 3;
 	private static final DefaultHttpRequestRetryHandler defaultHttpRequestRetryHandler = new ConnectionResetHttpRequestRetryHandler();
 	private static Logger logger = LoggerFactory.getLogger(ClientConfiguration.class);
@@ -95,6 +96,10 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	private Boolean soReuseAddress = false;
 	private String hostnameVerifierString;
 	private GetProperties contextProperties;
+	/**
+	 * 单位毫秒：
+	 */
+	private int maxIdleTime = -1;
 
 	public HttpServiceHosts getHttpServiceHosts() {
 		return httpServiceHosts;
@@ -109,7 +114,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	 * 每隔多少毫秒校验空闲connection，自动释放无效链接
 	 * -1 或者0不检查
 	 */
-	private int validateAfterInactivity = 2000;
+	private int validateAfterInactivity = DEFAULT_validateAfterInactivity;
 	/**
 	 * 每次获取connection时校验连接，true，校验，false不校验，有性能开销，推荐采用
 	 * validateAfterInactivity来控制连接是否有效
@@ -254,7 +259,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 					clientConfiguration.setMaxTotal(500);
 					clientConfiguration.setDefaultMaxPerRoute(100);
 					clientConfiguration.setStaleConnectionCheckEnabled(false);
-					clientConfiguration.setValidateAfterInactivity(2000);
+					clientConfiguration.setValidateAfterInactivity(DEFAULT_validateAfterInactivity);
 					clientConfiguration.setCustomHttpRequestRetryHandler(null);
 					clientConfiguration.setBeanName(name);
 
@@ -285,7 +290,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 					clientConfiguration.setMaxTotal(500);
 					clientConfiguration.setDefaultMaxPerRoute(50);
 					clientConfiguration.setStaleConnectionCheckEnabled(false);
-					clientConfiguration.setValidateAfterInactivity(5000);
+					clientConfiguration.setValidateAfterInactivity(DEFAULT_validateAfterInactivity);
 					clientConfiguration.setCustomHttpRequestRetryHandler(null);
 					clientConfiguration.setBeanName(name);
 					clientConfiguration.afterPropertiesSet();
@@ -556,7 +561,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 			log.append(",http.defaultMaxPerRoute=").append(defaultMaxPerRoute);
 			clientConfiguration.setDefaultMaxPerRoute(defaultMaxPerRoute);
 
-			int validateAfterInactivity = ClientConfiguration._getIntValue(name, "http.validateAfterInactivity", context, 2000);
+			int validateAfterInactivity = ClientConfiguration._getIntValue(name, "http.validateAfterInactivity", context, DEFAULT_validateAfterInactivity);
 			log.append(",http.validateAfterInactivity=").append(validateAfterInactivity);
 			clientConfiguration.setValidateAfterInactivity(validateAfterInactivity);
 

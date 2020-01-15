@@ -17,13 +17,11 @@ import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.*;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.impl.conn.SystemDefaultDnsResolver;
 import org.apache.http.ssl.SSLContextBuilder;
-import org.apache.http.ssl.SSLContexts;
 import org.apache.http.ssl.TrustStrategy;
 import org.frameworkset.spi.*;
 import org.frameworkset.spi.assemble.GetProperties;
@@ -32,12 +30,11 @@ import org.frameworkset.spi.assemble.PropertiesContainer;
 import org.frameworkset.spi.remote.http.proxy.ExceptionWare;
 import org.frameworkset.spi.remote.http.proxy.HttpHostDiscover;
 import org.frameworkset.spi.remote.http.proxy.HttpServiceHosts;
+import org.frameworkset.spi.remote.http.ssl.SSLHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
-import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -131,14 +128,16 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	private String customHttpRequestRetryHandler;
 	private int timeToLive = 3600000;
 	private String keystore;
+	private String keystoreAlias;
 	private String keyPassword;
 
 	private String truststore;
+	private String trustAlias;
 	private String trustPassword;
 	private String supportedProtocols;
 	private String[] _supportedProtocols;
 	private transient HostnameVerifier hostnameVerifier;
-	private String[] defaultSupportedProtocols = new String[]{"TLSv1"};
+	private String[] defaultSupportedProtocols = new String[]{"TLSv1.2", "TLSv1.1", "TLSv1"};
 	/**
 	 * 默认保活1小时
 
@@ -254,9 +253,12 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 					clientConfiguration.setConnectionRequestTimeout(50000);
 					clientConfiguration.setRetryTime(-1);
 					clientConfiguration.setRetryInterval(-1);
+					clientConfiguration.setTimeToLive(3600000);
+					clientConfiguration.setEvictExpiredConnections(true);
 					clientConfiguration.setMaxLineLength(Integer.MAX_VALUE);
 					clientConfiguration.setMaxHeaderCount(Integer.MAX_VALUE);
 					clientConfiguration.setMaxTotal(500);
+
 					clientConfiguration.setDefaultMaxPerRoute(100);
 					clientConfiguration.setStaleConnectionCheckEnabled(false);
 					clientConfiguration.setValidateAfterInactivity(DEFAULT_validateAfterInactivity);
@@ -283,6 +285,8 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 					clientConfiguration.setTimeoutConnection(5000);
 					clientConfiguration.setTimeoutSocket(5000);
 					clientConfiguration.setConnectionRequestTimeout(5000);
+					clientConfiguration.setTimeToLive(3600000);
+					clientConfiguration.setEvictExpiredConnections(true);
 					clientConfiguration.setRetryTime(-1);
 					clientConfiguration.setRetryInterval(-1);
 					clientConfiguration.setMaxLineLength(Integer.MAX_VALUE);
@@ -577,15 +581,37 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 			log.append(",http.keystore=").append(keystore);
 
 			clientConfiguration.setKeystore(keystore);
+			String keystoreAlias = ClientConfiguration._getStringValue(name, "http.keystoreAlias", context, null);
+			log.append(",http.keystoreAlias=").append(keystoreAlias);
+
+			clientConfiguration.setKeystoreAlias(keystoreAlias);
+
 			String keyPassword = ClientConfiguration._getStringValue(name, "http.keyPassword", context, null);
 			log.append(",http.keyPassword=").append(keyPassword);
 			clientConfiguration.setKeyPassword(keyPassword);
+
+			String truststore = ClientConfiguration._getStringValue(name, "http.truststore", context, null);
+			log.append(",http.truststore=").append(truststore);
+			clientConfiguration.setTruststore(truststore);
+			String truststoreAlias = ClientConfiguration._getStringValue(name, "http.truststoreAlias", context, null);
+			log.append(",http.truststoreAlias=").append(truststoreAlias);
+
+			clientConfiguration.setTrustAlias(truststoreAlias);
+
+			String trustPassword = ClientConfiguration._getStringValue(name, "http.trustPassword", context, null);
+			log.append(",http.trustPassword=").append(trustPassword);
+			clientConfiguration.setTrustPassword(trustPassword);
 
 			String hostnameVerifier = ClientConfiguration._getStringValue(name, "http.hostnameVerifier", context, null);
 			log.append(",http.hostnameVerifier=").append(hostnameVerifier);
 
 			clientConfiguration.setHostnameVerifierString( hostnameVerifier);
 			clientConfiguration.setHostnameVerifier(_getHostnameVerifier(hostnameVerifier));
+
+			String supportedProtocols = ClientConfiguration._getStringValue(name, "http.supportedProtocols", context, "TLSv1.2,TLSv1.1,TLSv1");
+			log.append(",http.supportedProtocols=").append(supportedProtocols);
+
+			clientConfiguration.setSupportedProtocols(supportedProtocols);
 			clientConfiguration.setBeanName(name);
 
 			HttpServiceHosts httpServiceHosts = new HttpServiceHosts();
@@ -836,22 +862,50 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 			return new SSLConnectionSocketFactory(sslContextBuilder.build(), NoopHostnameVerifier.INSTANCE);
 		} else {
 
-			SSLContext sslcontext = SSLContexts.custom()
-					.loadTrustMaterial(new File(keystore), this.keyPassword.toCharArray(),
-							new TrustSelfSignedStrategy())
-//					.loadKeyMaterial(new File(keystore),this.keyPassword.toCharArray(),this.trustPassword.toCharArray())
-					.build();
+//			SSLContext sslcontext = SSLContexts.custom()
+//					.loadTrustMaterial(new File(keystore), this.keyPassword.toCharArray(),
+//							new TrustSelfSignedStrategy())
+////					.loadKeyMaterial(new File(keystore),this.keyPassword.toCharArray(),this.trustPassword.toCharArray())
+//					.build();
 			// Allow TLSv1 protocol only
+
+			/**
+			SSLContextBuilder builder = SSLContexts.custom()
+					.loadTrustMaterial(new File(keystore), this.keyPassword.toCharArray(),
+							new TrustSelfSignedStrategy());
+			if (this.truststore != null && !this.truststore.equals(""))
+				builder.loadKeyMaterial(new File(truststore),this.trustPassword.toCharArray(),this.trustPassword.toCharArray())
+					.build();
 
 			HostnameVerifier hostnameVerifier = this.hostnameVerifier != null ? this.hostnameVerifier :
 					SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER;
 			SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(
-					sslcontext,
+					builder.build(),
 					_supportedProtocols,
 					null, hostnameVerifier
 			);
 //					SSLConnectionSocketFactory.getDefaultHostnameVerifier());
 			return sslsf;
+			 */
+
+			HostnameVerifier hostnameVerifier = this.hostnameVerifier != null ? this.hostnameVerifier :
+					SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER;
+			if(truststore == null || truststore.equals("")) {
+				SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(
+						SSLHelper.initSSLConfig(  keystore,   keyPassword),
+						_supportedProtocols,
+						null, hostnameVerifier
+				);
+				return sslsf;
+			}
+			else{
+				SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(
+						SSLHelper.initSSLConfig("TLS", keystore, "JKS", keyPassword, keystoreAlias, truststore, "JKS", trustPassword, trustAlias),
+						_supportedProtocols,
+						null, hostnameVerifier
+				);
+				return sslsf;
+			}
 		}
 	}
 
@@ -1159,5 +1213,37 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 
 	public void setContextProperties(GetProperties contextProperties) {
 		this.contextProperties = contextProperties;
+	}
+
+	public String getTruststore() {
+		return truststore;
+	}
+
+	public void setTruststore(String truststore) {
+		this.truststore = truststore;
+	}
+
+	public String getTrustPassword() {
+		return trustPassword;
+	}
+
+	public void setTrustPassword(String trustPassword) {
+		this.trustPassword = trustPassword;
+	}
+
+	public String getKeystoreAlias() {
+		return keystoreAlias;
+	}
+
+	public void setKeystoreAlias(String keystoreAlias) {
+		this.keystoreAlias = keystoreAlias;
+	}
+
+	public String getTrustAlias() {
+		return trustAlias;
+	}
+
+	public void setTrustAlias(String trustAlias) {
+		this.trustAlias = trustAlias;
 	}
 }

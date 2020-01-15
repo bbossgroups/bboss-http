@@ -36,6 +36,11 @@ public class HttpRuntimeException extends RuntimeException {
 		this.httpStatusCode = httpStatusCode;
 	}
 
+	public HttpRuntimeException(String message) {
+		super(message);
+	}
+
+
 	public HttpRuntimeException(String message, Throwable cause,int httpStatusCode) {
 		super(message, cause);
 		this.httpStatusCode = httpStatusCode;
@@ -49,6 +54,14 @@ public class HttpRuntimeException extends RuntimeException {
 	public HttpRuntimeException(Throwable cause,int httpStatusCode) {
 		super(cause);
 		this.httpStatusCode = httpStatusCode;
+	}
+
+	public HttpRuntimeException(Throwable cause) {
+		super(cause);
+	}
+
+	public HttpRuntimeException(String message, Throwable cause) {
+		super(message, cause);
 	}
 
 

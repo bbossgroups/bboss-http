@@ -262,81 +262,96 @@ public class SSLHelper {
 
 
 	}
-	public static SSLContext initSSLConfigDefault(String PROTOCOL,String keystoreFilePath,String keystoreType,
-										   String keystorePassword ,String keystoreAlias,
-										   String truststoreFilePath,String truststoreType,String truststorePassword,String truststoreAlias) {
-		//初始化KeyManager
-		KeyManagerFactory keyFactory = null;
-		try {
-			keyFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-			KeyStore keystore = KeyStore.getInstance(keystoreType);
-			keystore.load(new FileInputStream(new File(keystoreFilePath)), null);
-			keyFactory.init(keystore, keystorePassword.toCharArray());
 
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (KeyStoreException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (CertificateException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (UnrecoverableKeyException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		KeyManager[] keyManagers = keyFactory.getKeyManagers();
-		//初始化Trust Manager
-		log.info("keyFactory ="+keyFactory);
-		TrustManagerFactory trustFactory = null;
 
-		try {
-			trustFactory = TrustManagerFactory.getInstance("SunX509");
-		} catch (NoSuchAlgorithmException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+
+
+	/**
+	 * SSLHelper.initSSLConfig("TLS", pemKey, "JKS", this.pemkeyPassword, pemCert, pemtrustedCA),
+	 * @param PROTOCOL
+	 * @param pemKey
+	 * @param pemKeyPassword
+	 * @param pemCert
+	 * @param pemtrustCA
+	 * @return
+	 */
+	public static SSLContext initSSLConfig(String PROTOCOL,String pemKey,
+										   String pemKeyPassword ,String pemCert,String pemtrustCA) {
+
+//			final String rawKeystoreFilePath = settings.get(SSLConfigConstants.SEARCHGUARD_SSL_HTTP_KEYSTORE_FILEPATH, null);
+//			final String rawPemCertFilePath = settings.get(SSLConfigConstants.SEARCHGUARD_SSL_HTTP_PEMCERT_FILEPATH, null);
+//			final ClientAuth httpClientAuthMode = ClientAuth.valueOf(settings.get(SSLConfigConstants.SEARCHGUARD_SSL_HTTP_CLIENTAUTH_MODE, ClientAuth.OPTIONAL.toString()));
+
+		if(pemKey != null) {
+
+//				final String keystoreFilePath = resolve(SSLConfigConstants.SEARCHGUARD_SSL_HTTP_KEYSTORE_FILEPATH, true);
+//				final String keystoreType = settings.get(SSLConfigConstants.SEARCHGUARD_SSL_HTTP_KEYSTORE_TYPE, DEFAULT_STORE_TYPE);
+//				final String keystorePassword = settings.get(SSLConfigConstants.SEARCHGUARD_SSL_HTTP_KEYSTORE_PASSWORD, SSLConfigConstants.DEFAULT_STORE_PASSWORD);
+//				final String keystoreAlias = settings.get(SSLConfigConstants.SEARCHGUARD_SSL_HTTP_KEYSTORE_ALIAS, null);
+
+//				log.info("HTTPS client auth mode {}", httpClientAuthMode);
+
+//				if(settings.get(SSLConfigConstants.SEARCHGUARD_SSL_HTTP_KEYSTORE_FILEPATH, null) == null) {
+//					throw new ElasticsearchException(SSLConfigConstants.SEARCHGUARD_SSL_HTTP_KEYSTORE_FILEPATH
+//							+ " must be set if https is reqested.");
+//				}
+
+//				if (httpClientAuthMode == ClientAuth.REQUIRE) {
+//
+//					if(settings.get(SSLConfigConstants.SEARCHGUARD_SSL_HTTP_TRUSTSTORE_FILEPATH, null) == null) {
+//						throw new ElasticsearchException(SSLConfigConstants.SEARCHGUARD_SSL_HTTP_TRUSTSTORE_FILEPATH
+//								+ " must be set if http ssl and client auth is reqested.");
+//					}
+//
+//				}
+
+			try {
+
+
+				final X509Certificate[] httpKeystoreCert = SSLCertificateHelper.toX509Certificates(new File(pemCert));//SSLCertificateHelper.exportServerCertChain(ks, keystoreAlias);
+				final PrivateKey httpKeystoreKey = SSLCertificateHelper.toPrivateKey(new File(pemKey), pemKeyPassword);//SSLCertificateHelper.exportDecryptedKey(ks, keystoreAlias, (keystorePassword==null || keystorePassword.length() == 0) ? null:keystorePassword.toCharArray());
+
+
+				if(httpKeystoreKey == null) {
+					throw new HttpRuntimeException("No key found in pemKey "+pemKey+" with pemKeyPassword "+pemKeyPassword);
+				}
+
+
+				if(httpKeystoreCert != null && httpKeystoreCert.length > 0) {
+
+					//TODO create sensitive log property
+                        /*for (int i = 0; i < httpKeystoreCert.length; i++) {
+                            X509Certificate x509Certificate = httpKeystoreCert[i];
+
+                            if(x509Certificate != null) {
+                                log.info("HTTP keystore subject DN no. {} {}",i,x509Certificate.getSubjectX500Principal());
+                            }
+                        }*/
+				} else {
+					throw new HttpRuntimeException("No certificates found in pemCert "+pemCert);
+				}
+
+				X509Certificate[] trustedHTTPCertificates = null;
+
+				if(pemtrustCA != null) {
+					trustedHTTPCertificates = SSLCertificateHelper.toX509Certificates(new File(pemtrustCA));
+				}
+
+//					httpSslContext = buildSSLServerContext(httpKeystoreKey, httpKeystoreCert, trustedHTTPCertificates, getEnabledSSLCiphers(this.sslHTTPProvider, true), sslHTTPProvider, httpClientAuthMode);
+				SSLContext sslContext = newSSLContext(PROTOCOL,null,trustedHTTPCertificates,
+						(TrustManagerFactory)null, httpKeystoreCert,
+						httpKeystoreKey, pemKeyPassword, (KeyManagerFactory)null,
+						0l, 0l);
+				return sslContext;
+			} catch (final Exception e) {
+				throw new HttpRuntimeException("Error while initializing HTTP SSL layer: "+e.toString(), e);
+			}
+
+		}
+		else {
+			throw new HttpRuntimeException("Error while initializing HTTP SSL layer: keystoreFilePath is null.");
 		}
 
-		KeyStore tsstore;
-		try {
-			tsstore = KeyStore.getInstance(truststoreType);
-			tsstore.load(new FileInputStream(new File(truststoreFilePath)), truststorePassword.toCharArray());
-			trustFactory.init(tsstore);
-			log.info("tsstore ="+tsstore+"   ||  trustFactory = "+trustFactory);
-		} catch (KeyStoreException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (CertificateException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}   catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		TrustManager[] trustManagers = trustFactory.getTrustManagers();
-		log.info("trustManagers ="+trustManagers);
-		//注册HtpClient
-		SSLContext sslContext = null;
-		try {
-			sslContext = SSLContext.getInstance("TLS");
-			sslContext.init(keyManagers, trustManagers, null);
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (KeyManagementException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		log.info("sslContext ="+sslContext);
-		return sslContext;
 	}
 
 }

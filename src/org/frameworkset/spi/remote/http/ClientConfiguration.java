@@ -127,6 +127,10 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	 */
 	private String customHttpRequestRetryHandler;
 	private int timeToLive = 3600000;
+
+	/**
+	 * Using the keystore- and truststore file
+	 */
 	private String keystore;
 	private String keystoreAlias;
 	private String keyPassword;
@@ -134,6 +138,16 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	private String truststore;
 	private String trustAlias;
 	private String trustPassword;
+
+	/**
+	 * Using PEM certificates
+	 * pem证书配置
+	 */
+	private String pemCert;
+	private String pemtrustedCA;
+	private String pemKey;
+	private String pemkeyPassword;
+
 	private String supportedProtocols;
 	private String[] _supportedProtocols;
 	private transient HostnameVerifier hostnameVerifier;
@@ -602,6 +616,29 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 			log.append(",http.trustPassword=").append(trustPassword);
 			clientConfiguration.setTrustPassword(trustPassword);
 
+			/**
+			 * 	private String pemCert;
+			 * 	private String pemtrustedCA;
+			 * 	private String pemKey;
+			 * 	private String pemkeyPassword;
+			 */
+
+			String pemCert = ClientConfiguration._getStringValue(name, "http.pemCert", context, null);
+			log.append(",http.pemCert=").append(pemCert);
+			clientConfiguration.setPemCert(pemCert);
+
+			String pemtrustedCA = ClientConfiguration._getStringValue(name, "http.pemtrustedCA", context, null);
+			log.append(",http.pemtrustedCA=").append(pemtrustedCA);
+			clientConfiguration.setPemtrustedCA(pemtrustedCA);
+			String pemKey = ClientConfiguration._getStringValue(name, "http.pemKey", context, null);
+			log.append(",http.pemKey=").append(pemKey);
+
+			clientConfiguration.setPemKey(pemKey);
+
+			String pemkeyPassword = ClientConfiguration._getStringValue(name, "http.pemkeyPassword", context, null);
+			log.append(",http.pemkeyPassword=").append(pemkeyPassword);
+			clientConfiguration.setPemkeyPassword(pemkeyPassword);
+
 			String hostnameVerifier = ClientConfiguration._getStringValue(name, "http.hostnameVerifier", context, null);
 			log.append(",http.hostnameVerifier=").append(hostnameVerifier);
 
@@ -850,6 +887,15 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	private SSLConnectionSocketFactory buildSSLConnectionSocketFactory() throws CertificateException, NoSuchAlgorithmException,
 			KeyStoreException, IOException,
 			KeyManagementException, UnrecoverableKeyException {
+		if(pemCert != null && !pemCert.equals("")){
+			SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(
+					SSLHelper.initSSLConfig("TLS", pemKey, this.pemkeyPassword, pemCert, pemtrustedCA),
+					_supportedProtocols,
+					null, hostnameVerifier
+			);
+			return sslsf;
+		}
+
 		// Trust own CA and all self-signed certs
 		if (this.keystore == null || this.keystore.equals("")) {
 			SSLContextBuilder sslContextBuilder = new SSLContextBuilder();
@@ -1245,5 +1291,37 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 
 	public void setTrustAlias(String trustAlias) {
 		this.trustAlias = trustAlias;
+	}
+
+	public String getPemCert() {
+		return pemCert;
+	}
+
+	public void setPemCert(String pemCert) {
+		this.pemCert = pemCert;
+	}
+
+	public String getPemtrustedCA() {
+		return pemtrustedCA;
+	}
+
+	public void setPemtrustedCA(String pemtrustedCA) {
+		this.pemtrustedCA = pemtrustedCA;
+	}
+
+	public String getPemKey() {
+		return pemKey;
+	}
+
+	public void setPemKey(String pemKey) {
+		this.pemKey = pemKey;
+	}
+
+	public String getPemkeyPassword() {
+		return pemkeyPassword;
+	}
+
+	public void setPemkeyPassword(String pemkeyPassword) {
+		this.pemkeyPassword = pemkeyPassword;
 	}
 }

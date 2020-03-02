@@ -16,6 +16,7 @@ package org.frameworkset.spi.remote.http.proxy.route;
  */
 
 import org.frameworkset.spi.remote.http.proxy.HttpAddress;
+import org.frameworkset.spi.remote.http.proxy.HttpServiceHosts;
 import org.frameworkset.spi.remote.http.proxy.RoundRobinList;
 
 import java.util.ArrayList;
@@ -33,6 +34,7 @@ import java.util.Map;
  */
 public class RoutingGroup {
 	protected RoundRobinList serversList;
+	private HttpServiceHosts httpServiceHosts;
 	protected List<HttpAddress> addressList = new ArrayList<HttpAddress>();
 	private Map<String,HttpAddress> addressMap = new HashMap<String, HttpAddress>();
 	public void addHttpAddress(HttpAddress httpAddress){
@@ -40,11 +42,22 @@ public class RoutingGroup {
 		this.addressMap.put(httpAddress.getAddress(),httpAddress);
 
 	}
+	public RoutingGroup(HttpServiceHosts httpServiceHosts){
+		this.httpServiceHosts = httpServiceHosts;
+	}
+	public HttpServiceHosts getHttpServiceHosts() {
+		return httpServiceHosts;
+	}
+
 	public HttpAddress get(){
 		return serversList.getFromRouting();
 	}
+	public HttpAddress getOkOrFailed(){
+		return serversList.getOkOrFailedFromRouting();
+	}
+
 	public void after(){
-		serversList = new RoundRobinList(this.addressList);
+		serversList = new RoundRobinList(httpServiceHosts,this.addressList);
 	}
 	public void after(List<HttpAddress> commonGroup){
 		if(commonGroup != null && commonGroup.size() > 0) {
@@ -53,7 +66,7 @@ public class RoutingGroup {
 				this.addressMap.put(httpAddress.getAddress(),httpAddress);
 			}
 		}
-		serversList = new RoundRobinList(this.addressList);
+		serversList = new RoundRobinList(httpServiceHosts,this.addressList);
 	}
 	public String toString(){
 		if(addressList != null ){

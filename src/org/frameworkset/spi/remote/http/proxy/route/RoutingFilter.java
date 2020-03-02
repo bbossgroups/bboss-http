@@ -17,7 +17,7 @@ package org.frameworkset.spi.remote.http.proxy.route;
 
 
 import org.frameworkset.spi.remote.http.proxy.HttpAddress;
-import org.frameworkset.spi.remote.http.proxy.NoHttpServerException;
+import org.frameworkset.spi.remote.http.proxy.HttpServiceHosts;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,14 +34,16 @@ import java.util.*;
 public class RoutingFilter {
 	private static Logger logger = LoggerFactory.getLogger(RoutingFilter.class);
 	private Map<String,RoutingGroup> routingGroupMap = new HashMap<String, RoutingGroup>();
-	private RoutingGroup currentRoutingGroup = new RoutingGroup();
+	final private RoutingGroup currentRoutingGroup ;
 	private String currentRouting;
 	private List<HttpAddress> addressList;
+	private HttpServiceHosts httpServiceHosts;
 
-	public RoutingFilter(List<HttpAddress> addressList,String currentRouting) {
+	public RoutingFilter(HttpServiceHosts httpServiceHosts,List<HttpAddress> addressList, String currentRouting) {
 		this.currentRouting = currentRouting;
 		this.addressList = addressList;
-
+		this.httpServiceHosts = httpServiceHosts;
+		currentRoutingGroup = new RoutingGroup(httpServiceHosts);
 		grouped( addressList,  currentRouting);
 	}
 
@@ -65,7 +67,7 @@ public class RoutingFilter {
 				RoutingGroup routingGroup = routingGroupMap.get(httpAddress.getRouting());
 
 				if(routingGroup == null){
-					routingGroupMap.put(httpAddress.getRouting(),routingGroup = new RoutingGroup());
+					routingGroupMap.put(httpAddress.getRouting(),routingGroup = new RoutingGroup(httpServiceHosts));
 				}
 				routingGroup.addHttpAddress(httpAddress);
 
@@ -99,10 +101,33 @@ public class RoutingFilter {
 					break;
 			}
 		}
+//		if(httpAddress == null){
+//			String message = new StringBuilder().append("All Http Server ").append(addressList.toString()).append(" can't been connected.").toString();
+//			throw new NoHttpServerException(message);
+//		}
+		return httpAddress;
+	}
+	public String toString(){
+		if(addressList != null)
+			return addressList.toString();
+		return "[]";
+	}
+	public HttpAddress getOkOrFailed(){
+		HttpAddress httpAddress = currentRoutingGroup.get();
+		if(httpAddress == null){
+			Iterator<Map.Entry<String, RoutingGroup>> iterator = routingGroupMap.entrySet().iterator();
+			while (iterator.hasNext()){
+				Map.Entry<String, RoutingGroup> entry = iterator.next();
+				httpAddress = entry.getValue().getOkOrFailed();
+				if(httpAddress != null)
+					break;
+			}
+		}
+		/**
 		if(httpAddress == null){
 			String message = new StringBuilder().append("All Http Server ").append(addressList.toString()).append(" can't been connected.").toString();
 			throw new NoHttpServerException(message);
-		}
+		}*/
 		return httpAddress;
 	}
 	public static boolean access(String[] accessRoutings, HttpAddress httpHost){

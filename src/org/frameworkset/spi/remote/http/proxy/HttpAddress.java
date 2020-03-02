@@ -1,10 +1,14 @@
 package org.frameworkset.spi.remote.http.proxy;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.HashMap;
 import java.util.Map;
 
 public class HttpAddress {
 	private String address;
+	private static Logger logger = LoggerFactory.getLogger(HttpAddress.class);
 
 	public void setOriginAddress(String originAddress) {
 		this.originAddress = originAddress;
@@ -93,6 +97,20 @@ public class HttpAddress {
 		return status;
 	}
 
+	/**
+	 * 没有配置health检查地址的情况下，被动恢复异常状态节点为正常状态
+	 *
+	 */
+	public void recover(){
+		if(status == 1){//failed
+			synchronized (this){
+				if(status == 1){
+					status = 0;
+					logger.info("Recover failed node {} to normal node.",originAddress);
+				}
+			}
+		}
+	}
 	public void setStatus(int status) {
 		synchronized (this) {
 			if(status == 0){
@@ -127,6 +145,9 @@ public class HttpAddress {
 	}
 	public boolean ok(){
 		return this.status == 0;
+	}
+	public boolean okOrFailed(){
+		return this.status == 0 || this.status == 1;
 	}
 
 	public boolean failedCheck(){

@@ -31,12 +31,13 @@ public class RoundRobinList {
 
 	private Iterator<HttpAddress> iterator;
 //	private String message;
+	private HttpServiceHosts httpServiceHosts;
 
-
-	public RoundRobinList(List<HttpAddress> elements) {
+	public RoundRobinList(HttpServiceHosts httpServiceHosts,List<HttpAddress> elements) {
 		this.elements = elements;
 //		message = "All Http Server "+elements.toString()+" can't been connected.";
 		iterator = this.elements.iterator();
+		this.httpServiceHosts = httpServiceHosts;
 	}
 
 
@@ -76,9 +77,92 @@ public class RoundRobinList {
 						break;
 					}
 				}
+				/**
 				if(temp == null) {
 					String message = new StringBuilder().append("All Http Server ").append(elements.toString()).append(" can't been connected.").toString();
 					throw new NoHttpServerException(message);
+				}
+				 */
+				return temp;
+			}
+		}
+		finally {
+			lock.unlock();
+		}
+	}
+	public String toString(){
+		if(elements != null)
+			return elements.toString();
+		return "[]";
+	}
+	public HttpAddress getOkOrFailed(){
+		try {
+			lock.lock();
+			HttpAddress address = null;
+			HttpAddress temp = null;
+			while (iterator.hasNext()) {
+				address = iterator.next();
+				if (address.okOrFailed()){
+					temp = address;
+					break;
+				}
+			}
+			if (temp != null) {
+				return temp;
+
+			} else {
+				iterator = elements.iterator();
+				while (iterator.hasNext()) {
+					address = iterator.next();
+					if (address.okOrFailed()){
+						temp = address;
+						break;
+					}
+				}
+				/**
+				if(temp == null) {
+					String message = new StringBuilder().append("All Http Server ").append(elements.toString()).append(" can't been connected.").toString();
+					throw new NoHttpServerException(message);
+				}
+				 */
+				return temp;
+			}
+		}
+		finally {
+			lock.unlock();
+		}
+	}
+
+	public HttpAddress getOkOrFailedFromRouting(){
+		try {
+			lock.lock();
+			HttpAddress address = null;
+			HttpAddress temp = null;
+
+			while (iterator.hasNext()) {
+
+				address = iterator.next();
+				if (address.okOrFailed()){
+					temp = address;
+					break;
+				}
+			}
+			if (temp != null) {
+				return temp;
+
+			} else {
+				iterator = elements.iterator();
+				while (iterator.hasNext()) {
+					address = iterator.next();
+					if (address.okOrFailed()){
+						temp = address;
+						break;
+					}
+				}
+
+				if(temp == null && logger.isDebugEnabled()) {
+					String message = new StringBuilder().append("All Http Server ").append(elements.toString()).append(" can't been connected.").toString();
+					logger.debug(message);
 				}
 				return temp;
 			}

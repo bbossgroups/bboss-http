@@ -246,6 +246,7 @@ public class HttpRequestProxy {
                         ((URLResponseHandler)responseHandler).setUrl(url);
                     }
                     responseBody = httpClient.execute(httpGet, responseHandler);
+                    httpAddress.recover();
                     e = getException(  responseHandler,httpServiceHosts );
                     break;
                 } catch (HttpHostConnectException ex) {
@@ -461,6 +462,7 @@ public class HttpRequestProxy {
                         ((URLResponseHandler)responseHandler).setUrl(url);
                     }
                     responseBody = httpClient.execute(httpHead, responseHandler);
+                    httpAddress.recover();
                     e = getException(  responseHandler,httpServiceHosts );
                     break;
                 } catch (HttpHostConnectException ex) {
@@ -1052,6 +1054,7 @@ public class HttpRequestProxy {
                         ((URLResponseHandler)responseHandler).setUrl(url);
                     }
 					responseBody = httpClient.execute(httpPost, responseHandler);
+                    httpAddress.recover();
 					e = getException(  responseHandler,httpServiceHosts );
 					break;
 				} catch (HttpHostConnectException ex) {
@@ -1877,6 +1880,7 @@ public class HttpRequestProxy {
                         ((URLResponseHandler)responseHandler).setUrl(url);
                     }
                     responseBody = httpClient.execute(httpPut, responseHandler);
+                    httpAddress.recover();
                     e = getException(  responseHandler,httpServiceHosts );
                     break;
                 } catch (HttpHostConnectException ex) {
@@ -2258,6 +2262,7 @@ public class HttpRequestProxy {
                             ((URLResponseHandler)responseHandler).setUrl(url);
                         }
                         responseBody = httpClient.execute(httpDeleteWithBody, responseHandler);
+                        httpAddress.recover();
                     } else {
                         httpDelete = HttpRequestUtil.getHttpDelete(config, url, cookie, userAgent, headers);
                         if (httpParams != null) {
@@ -2267,6 +2272,7 @@ public class HttpRequestProxy {
                             ((URLResponseHandler)responseHandler).setUrl(url);
                         }
                         responseBody = httpClient.execute(httpDelete, responseHandler);
+                        httpAddress.recover();
                     }
 
                     e = getException(  responseHandler,httpServiceHosts );
@@ -2580,6 +2586,7 @@ public class HttpRequestProxy {
                         ((URLResponseHandler)responseHandler).setUrl(url);
                     }
                     responseBody = httpClient.execute(httpPost, responseHandler);
+                    httpAddress.recover();
                     e = getException(  responseHandler,httpServiceHosts );
                     break;
                 } catch (HttpHostConnectException ex) {
@@ -2807,6 +2814,7 @@ public class HttpRequestProxy {
                         ((URLResponseHandler)responseHandler).setUrl(url);
                     }
                     responseBody = httpClient.execute(httpPost, responseHandler);
+                    httpAddress.recover();
                     e = getException(  responseHandler,httpServiceHosts );
                     break;
                 } catch (HttpHostConnectException ex) {
@@ -3172,6 +3180,7 @@ public class HttpRequestProxy {
                         ((URLResponseHandler)responseHandler).setUrl(url);
                     }
                     responseBody = httpClient.execute(httpPost, responseHandler);
+                    httpAddress.recover();
                     e = getException(  responseHandler,httpServiceHosts );
                     break;
                 } catch (HttpHostConnectException ex) {

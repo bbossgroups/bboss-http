@@ -70,7 +70,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	private final static int TIMEOUT_SOCKET = 20000;
 	private final static int DEFAULT_validateAfterInactivity = -1;
 	private final static int RETRY_TIME = 3;
-	private boolean automaticRetriesDisabled = true;
+	private boolean automaticRetriesDisabled = false;
 	private static final DefaultHttpRequestRetryHandler defaultHttpRequestRetryHandler = new ConnectionResetHttpRequestRetryHandler();
 	private static Logger logger = LoggerFactory.getLogger(ClientConfiguration.class);
 	private static RequestConfig defaultRequestConfig;
@@ -550,7 +550,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 			int retryTime = ClientConfiguration._getIntValue(name, "http.retryTime", context, -1);
 			log.append(",http.retryTime=").append(retryTime);
 			clientConfiguration.setRetryTime(retryTime);
-			boolean automaticRetriesDisabled = ClientConfiguration._getBooleanValue(name, "http.automaticRetriesDisabled", context, true);
+			boolean automaticRetriesDisabled = ClientConfiguration._getBooleanValue(name, "http.automaticRetriesDisabled", context, false);
 			log.append(",http.automaticRetriesDisabled=").append(automaticRetriesDisabled);
 			clientConfiguration.setAutomaticRetriesDisabled(automaticRetriesDisabled);
 			long retryInterval = ClientConfiguration._getLongValue(name, "http.retryInterval", context, -1);

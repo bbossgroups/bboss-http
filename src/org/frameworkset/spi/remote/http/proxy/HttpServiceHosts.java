@@ -63,18 +63,40 @@ public class HttpServiceHosts {
 	public HttpServiceHosts(){
 		httpServiceHostsConfig = new HttpServiceHostsConfig();
 	}
+
+	/**
+	 * 如果没有启动health健康检查机制，将启用被动自恢复机制
+	 */
+	private boolean healthCheckStarted;
+	public boolean healthCheckStarted(){
+		return healthCheckStarted;
+	}
 	public HttpAddress getHttpAddress(){
-		if(!hasRouting)
-			return serversList.get();
+		HttpAddress httpAddress = null;
+		if(!hasRouting) {
+			httpAddress = serversList.get();
+			if(httpAddress == null && !this.healthCheckStarted){
+				httpAddress = serversList.getOkOrFailed();
+			}
+
+		}
 		else{
 			try {
 				routingFilterReadLock.lock();
-				return this.routingFilter.get();
+				httpAddress = this.routingFilter.get();
+				if(httpAddress == null && !this.healthCheckStarted){
+					httpAddress = this.routingFilter.getOkOrFailed();
+				}
+				if(httpAddress == null) {
+					String message = new StringBuilder().append("All Http Server ").append(routingFilter.toString()).append(" can't been connected.").toString();
+					throw new NoHttpServerException(message);
+				}
 			}
 			finally {
 				routingFilterReadLock.unlock();
 			}
 		}
+		return httpAddress;
 	}
 
 	public boolean reachEnd(int tryCount){
@@ -111,7 +133,7 @@ public class HttpServiceHosts {
 			//第一次强制分组
 			routingGroup(false);
 		}
-		serversList = new RoundRobinList(addressList);
+		serversList = new RoundRobinList(this,addressList);
 		if (httpServiceHostsConfig.getAuthAccount() != null && !httpServiceHostsConfig.getAuthAccount().equals("")) {
 			authHeaders = new HashMap<String, String>();
 			authHeaders.put("Authorization", getHeader(httpServiceHostsConfig.getAuthAccount(), httpServiceHostsConfig.getAuthPassword()));
@@ -143,6 +165,7 @@ public class HttpServiceHosts {
 			}
 			healthCheck = new HealthCheck(httpPoolName,addressList, httpServiceHostsConfig.getHealthCheckInterval(),authHeaders);
 			healthCheck.run();
+			healthCheckStarted = true;
 		}
 		else {
 			if(logger.isInfoEnabled()) {
@@ -252,9 +275,9 @@ public class HttpServiceHosts {
 			return;
 		}
 		if(!changed)
-			this.routingFilter = new RoutingFilter(this.addressList,routing);
+			this.routingFilter = new RoutingFilter(this,this.addressList,routing);
 		else{
-			RoutingFilter temp = new RoutingFilter(this.addressList,routing);
+			RoutingFilter temp = new RoutingFilter(this,this.addressList,routing);
 			try {
 				routingFilterWriteLock.lock();
 				routingFilter = temp;

@@ -15,6 +15,8 @@ package org.frameworkset.spi.remote.http.proxy;
  * limitations under the License.
  */
 
+import org.frameworkset.spi.remote.http.HttpRuntimeException;
+
 /**
  * <p>Description: </p>
  * <p></p>
@@ -23,7 +25,7 @@ package org.frameworkset.spi.remote.http.proxy;
  * @author biaoping.yin
  * @version 1.0
  */
-public class HttpProxyRequestException extends RuntimeException {
+public class HttpProxyRequestException extends HttpRuntimeException {
 	public HttpProxyRequestException() {
 	}
 

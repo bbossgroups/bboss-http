@@ -3,13 +3,11 @@ package org.frameworkset.spi.remote.http;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.ResponseHandler;
-import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
 import java.util.Map;
 
-public class MapResponseHandler extends BaseResponseHandler implements ResponseHandler<Map> {
+public class MapResponseHandler extends BaseResponseHandler implements URLResponseHandler<Map> {
 
 	public MapResponseHandler() {
 		// TODO Auto-generated constructor stub
@@ -32,14 +30,14 @@ public class MapResponseHandler extends BaseResponseHandler implements ResponseH
 			 //return entity != null ? EntityUtils.toString(entity) : null;
          } else {
              HttpEntity entity = response.getEntity();
-             if (entity != null )
-//            	 return SimpleStringUtil.json2Object(entity.getContent(), Map.class);
-				 throw new HttpRuntimeException(EntityUtils.toString(entity),status);
-             else
-                 throw new HttpRuntimeException("Unexpected response status: " + status,status);
+//             if (entity != null )
+////            	 return SimpleStringUtil.json2Object(entity.getContent(), Map.class);
+//				 throw new HttpRuntimeException(EntityUtils.toString(entity),status);
+//             else
+//                 throw new HttpRuntimeException("Unexpected response status: " + status,status);
+			 throw super.throwException(status,entity);
          }
      }
-	
-	
+
 
 }

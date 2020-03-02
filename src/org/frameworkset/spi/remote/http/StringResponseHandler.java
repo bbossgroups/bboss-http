@@ -3,12 +3,11 @@ package org.frameworkset.spi.remote.http;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.ResponseHandler;
 import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
 
-public class StringResponseHandler extends StatusResponseHandler implements ResponseHandler<String> {
+public class StringResponseHandler extends StatusResponseHandler implements URLResponseHandler<String> {
 
 	public StringResponseHandler() {
 		// TODO Auto-generated constructor stub
@@ -25,10 +24,11 @@ public class StringResponseHandler extends StatusResponseHandler implements Resp
              return entity != null ? EntityUtils.toString(entity) : null;
          } else {
              HttpEntity entity = response.getEntity();
-             if (entity != null )
-                 throw new HttpRuntimeException(EntityUtils.toString(entity),status);
-             else
-                 throw new HttpRuntimeException("Unexpected response status: " + status,status);
+//             if (entity != null )
+//                 throw new HttpRuntimeException(EntityUtils.toString(entity),status);
+//             else
+//                 throw new HttpRuntimeException("Unexpected response status: " + status,status);
+             throw super.throwException(status,entity);
          }
      }
 

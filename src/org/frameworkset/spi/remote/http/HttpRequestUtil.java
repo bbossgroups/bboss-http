@@ -22,6 +22,7 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
+import org.frameworkset.spi.remote.http.proxy.HttpProxyRequestException;
 
 import java.io.File;
 import java.io.IOException;
@@ -389,6 +390,9 @@ public class HttpRequestUtil {
             try {
                 httpClient = getHttpClient(config);
                 httpGet = getHttpGet(config, url, cookie, userAgent, headers);
+                if(responseHandler != null && responseHandler instanceof URLResponseHandler){
+                    ((URLResponseHandler)responseHandler).setUrl(url);
+                }
                 responseBody = httpClient.execute(httpGet, responseHandler);
 //                break;
 //            } catch (ClientProtocolException e) {
@@ -546,6 +550,9 @@ public class HttpRequestUtil {
 //                    }
 //
 //                };
+                if(responseHandler != null && responseHandler instanceof URLResponseHandler){
+                    ((URLResponseHandler)responseHandler).setUrl(url);
+                }
                 responseBody = httpClient.execute(httpHead, responseHandler);
 //                break;
 //            } catch (ClientProtocolException e) {
@@ -836,7 +843,9 @@ public class HttpRequestUtil {
                     httpPost.setEntity(entity);
 
                 }
-
+                if(responseHandler != null && responseHandler instanceof URLResponseHandler){
+                    ((URLResponseHandler)responseHandler).setUrl(url);
+                }
                 responseBody = httpClient.execute(httpPost, responseHandler);
 //                break;
 //            } catch (ClientProtocolException e) {
@@ -1102,6 +1111,9 @@ public class HttpRequestUtil {
 //                    }
 //
 //                };
+                if(responseHandler != null && responseHandler instanceof URLResponseHandler){
+                    ((URLResponseHandler)responseHandler).setUrl(url);
+                }
                 responseBody = httpClient.execute(httpPut, responseHandler);
 //                break;
 //            } catch (ClientProtocolException e) {
@@ -1375,12 +1387,18 @@ public class HttpRequestUtil {
 
                         httpDeleteWithBody.setParams(httpParams);
                     }
+                    if(responseHandler != null && responseHandler instanceof URLResponseHandler){
+                        ((URLResponseHandler)responseHandler).setUrl(url);
+                    }
                     responseBody = httpClient.execute(httpDeleteWithBody, responseHandler);
                 }
                 else {
                     httpDelete = getHttpDelete(config, url, cookie, userAgent, headers);
                     if(httpParams != null) {
                         httpDelete.setParams(httpParams);
+                    }
+                    if(responseHandler != null && responseHandler instanceof URLResponseHandler){
+                        ((URLResponseHandler)responseHandler).setUrl(url);
                     }
                     responseBody = httpClient.execute(httpDelete, responseHandler);
                 }
@@ -1539,6 +1557,9 @@ public class HttpRequestUtil {
 //                    }
 //
 //                };
+                if(responseHandler != null && responseHandler instanceof URLResponseHandler){
+                    ((URLResponseHandler)responseHandler).setUrl(url);
+                }
                 responseBody = httpClient.execute(httpPost,responseHandler);
 //                break;
 //            } catch (ClientProtocolException e) {
@@ -1649,6 +1670,9 @@ public class HttpRequestUtil {
 //                    }
 //
 //                };
+                if(responseHandler != null && responseHandler instanceof URLResponseHandler){
+                    ((URLResponseHandler)responseHandler).setUrl(url);
+                }
                 responseBody = httpClient.execute(httpPost,responseHandler);
 //                break;
 //            } catch (ClientProtocolException e) {
@@ -1694,7 +1718,7 @@ public class HttpRequestUtil {
     }
     
     public static String sendBody(String poolname,String requestBody, String url, Map<String, String> headers,ContentType contentType) throws Exception {
-    	return sendBody(  poolname,  requestBody,   url, headers,  contentType, new ResponseHandler<String>() {
+    	return sendBody(  poolname,  requestBody,   url, headers,  contentType, new BaseURLResponseHandler<String>() {
 
             @Override
             public String handleResponse(final HttpResponse response)
@@ -1706,10 +1730,16 @@ public class HttpRequestUtil {
                     return entity != null ? EntityUtils.toString(entity) : null;
                 } else {
                     HttpEntity entity = response.getEntity();
+//                    if (entity != null )
+//                        return EntityUtils.toString(entity);
+//                    else
+//                        throw new ClientProtocolException("Unexpected response status: " + status);
                     if (entity != null )
-                        return EntityUtils.toString(entity);
+                        throw new HttpProxyRequestException( new StringBuilder().append("SendBody request url:").append(url)
+                                        .append(",").append(EntityUtils.toString(entity)).toString());
                     else
-                        throw new ClientProtocolException("Unexpected response status: " + status);
+                        throw new HttpProxyRequestException(new StringBuilder().append("SendBody request url:").append(url)
+                                        .append(",Unexpected response status: " ).append( status).toString());
                 }
             }
 
@@ -1736,7 +1766,9 @@ public class HttpRequestUtil {
                 if (httpEntity != null) {
                     httpPost.setEntity(httpEntity);
                 }
-
+                if(responseHandler != null && responseHandler instanceof URLResponseHandler){
+                    ((URLResponseHandler)responseHandler).setUrl(url);
+                }
                 responseBody = httpClient.execute(httpPost,responseHandler);
 //                break;
 //            } catch (ClientProtocolException e) {
@@ -1782,7 +1814,7 @@ public class HttpRequestUtil {
     }
     
     public static String putBody(String poolname,String requestBody, String url, Map<String, String> headers,ContentType contentType) throws Exception {
-    	return putBody(  poolname,  requestBody,   url, headers,  contentType, new ResponseHandler<String>() {
+    	return putBody(  poolname,  requestBody,   url, headers,  contentType, new BaseURLResponseHandler<String>() {
 
             @Override
             public String handleResponse(final HttpResponse response)
@@ -1794,10 +1826,16 @@ public class HttpRequestUtil {
                     return entity != null ? EntityUtils.toString(entity) : null;
                 } else {
                     HttpEntity entity = response.getEntity();
+//                    if (entity != null )
+//                        return EntityUtils.toString(entity);
+//                    else
+//                        throw new ClientProtocolException("Unexpected response status: " + status);
                     if (entity != null )
-                        return EntityUtils.toString(entity);
+                        throw new HttpProxyRequestException( new StringBuilder().append("PutBody request url:").append(url)
+                                .append(",").append(EntityUtils.toString(entity)).toString());
                     else
-                        throw new ClientProtocolException("Unexpected response status: " + status);
+                        throw new HttpProxyRequestException(new StringBuilder().append("PutBody request url:").append(url)
+                                .append(",Unexpected response status: " ).append( status).toString());
                 }
             }
 

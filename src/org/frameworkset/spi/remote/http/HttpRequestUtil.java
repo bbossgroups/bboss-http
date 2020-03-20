@@ -23,6 +23,8 @@ import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 import org.frameworkset.spi.remote.http.proxy.HttpProxyRequestException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,6 +40,7 @@ import java.util.Map.Entry;
  * @Date:2016-11-20 11:39:59
  */
 public class HttpRequestUtil {
+    private static Logger logger = LoggerFactory.getLogger(HttpRequestProxy.class);
     public static final String HTTP_GET = "get";
     public static final String HTTP_POST = "post";
     public static final String HTTP_DELETE = "delete";
@@ -1734,9 +1737,12 @@ public class HttpRequestUtil {
 //                        return EntityUtils.toString(entity);
 //                    else
 //                        throw new ClientProtocolException("Unexpected response status: " + status);
-                    if (entity != null )
-                        throw new HttpProxyRequestException( new StringBuilder().append("SendBody request url:").append(url)
-                                        .append(",").append(EntityUtils.toString(entity)).toString());
+                    if (entity != null ) {
+                        if (logger.isDebugEnabled()) {
+                            logger.debug(new StringBuilder().append("SendBody Request url:").append(url).append(",status:").append(status).toString());
+                        }
+                        throw new HttpProxyRequestException(EntityUtils.toString(entity));
+                    }
                     else
                         throw new HttpProxyRequestException(new StringBuilder().append("SendBody request url:").append(url)
                                         .append(",Unexpected response status: " ).append( status).toString());
@@ -1746,7 +1752,7 @@ public class HttpRequestUtil {
         });
         
     }
-    
+
     public static <T> T putBody(String poolname,String requestBody, String url, Map<String, String> headers,ContentType contentType, ResponseHandler<T> responseHandler) throws Exception {
         HttpClient httpClient = null;
         HttpPut httpPost = null;
@@ -1830,9 +1836,12 @@ public class HttpRequestUtil {
 //                        return EntityUtils.toString(entity);
 //                    else
 //                        throw new ClientProtocolException("Unexpected response status: " + status);
-                    if (entity != null )
-                        throw new HttpProxyRequestException( new StringBuilder().append("PutBody request url:").append(url)
-                                .append(",").append(EntityUtils.toString(entity)).toString());
+                    if (entity != null ) {
+                        if (logger.isDebugEnabled()) {
+                            logger.debug(new StringBuilder().append("Put Body Request url:").append(url).append(",status:").append(status).toString());
+                        }
+                        throw new HttpProxyRequestException(EntityUtils.toString(entity));
+                    }
                     else
                         throw new HttpProxyRequestException(new StringBuilder().append("PutBody request url:").append(url)
                                 .append(",Unexpected response status: " ).append( status).toString());

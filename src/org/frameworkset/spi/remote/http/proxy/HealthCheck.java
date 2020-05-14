@@ -4,6 +4,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.ResponseHandler;
 import org.frameworkset.spi.BaseApplicationContext;
+import org.frameworkset.spi.remote.http.ClientConfiguration;
 import org.frameworkset.spi.remote.http.HttpRequestUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,13 +24,15 @@ public class HealthCheck implements Runnable{
 	private static Logger logger = LoggerFactory.getLogger(HealthCheck.class);
 	private long checkInterval = 5000;
 	private List<HCRunable> checkThreads ;
-	private Map<String, String> headers;
+//	private Map<String, String> headers;
 	private String poolName;
-	public HealthCheck(String poolName,List<HttpAddress> esAddresses, long checkInterval, Map<String, String> headers){
+	private String healthPoolName;
+	public HealthCheck(String poolName,List<HttpAddress> esAddresses, long checkInterval){
 		this.esAddresses = esAddresses;
 		this.checkInterval = checkInterval;
-		this.headers = headers;
+//		this.headers = headers;
 		this.poolName = poolName;
+		healthPoolName = ClientConfiguration.getHealthPoolName(poolName);
 
 	}
 	public void stopCheck(){
@@ -58,7 +61,9 @@ public class HealthCheck implements Runnable{
 			address.setHealthCheck(this);
 			this.address = address;
 		}
-		public void stopRun(){
+		public synchronized void stopRun(){
+			if(stop )
+				return;
 			this.stop = true;
 			this.interrupt();
 		}
@@ -71,7 +76,7 @@ public class HealthCheck implements Runnable{
 			 		 try {		
 			 			 if(logger.isDebugEnabled())
 			 				 logger.debug(new StringBuilder().append("Check downed Http pool[").append(poolName).append( "] server[").append(address.toString()).append("] status.").toString());
-						 HttpRequestUtil.httpGet(ProxyConstants.healthCheckHttpPool,address.getHealthPath(),headers,new ResponseHandler<Void>(){
+						 HttpRequestUtil.httpGet(healthPoolName,address.getHealthPath(),(Map<String,String>)null,new ResponseHandler<Void>(){
 	
 							 @Override
 							 public Void handleResponse(HttpResponse response) throws ClientProtocolException, IOException {

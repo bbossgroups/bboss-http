@@ -5,10 +5,11 @@ package org.frameworkset.spi.remote.http;
 
 import com.frameworkset.util.ValueCastUtil;
 import org.apache.http.Consts;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.config.AuthSchemes;
 import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.config.*;
@@ -27,10 +28,12 @@ import org.frameworkset.spi.*;
 import org.frameworkset.spi.assemble.GetProperties;
 import org.frameworkset.spi.assemble.MapGetProperties;
 import org.frameworkset.spi.assemble.PropertiesContainer;
+import org.frameworkset.spi.remote.http.callback.HttpClientBuilderCallback;
 import org.frameworkset.spi.remote.http.proxy.ExceptionWare;
 import org.frameworkset.spi.remote.http.proxy.HttpHostDiscover;
 import org.frameworkset.spi.remote.http.proxy.HttpServiceHosts;
 import org.frameworkset.spi.remote.http.ssl.SSLHelper;
+import org.frameworkset.util.ClassUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +48,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -69,6 +71,11 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	private final static int TIMEOUT_CONNECTION = 20000;
 	private final static int TIMEOUT_SOCKET = 20000;
 	private final static int DEFAULT_validateAfterInactivity = -1;
+	public static final String http_authAccount = "http.authAccount";
+	public static final String http_authPassword = "http.authPassword";
+	public static final String http_healthCheck_prex = "__healthCheck_";
+
+
 	private final static int RETRY_TIME = 3;
 	private boolean automaticRetriesDisabled = false;
 	private static final DefaultHttpRequestRetryHandler defaultHttpRequestRetryHandler = new ConnectionResetHttpRequestRetryHandler();
@@ -76,6 +83,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	private static RequestConfig defaultRequestConfig;
 	private static HttpClient defaultHttpclient;
 	private static Map<String, ClientConfiguration> clientConfigs = new HashMap<String, ClientConfiguration>();
+	private static Map<String, ClientConfiguration> healthClientConfigs = new HashMap<String, ClientConfiguration>();
 	private static BaseApplicationContext context;
 	private static boolean emptyContext;
 	private static ClientConfiguration defaultClientConfiguration;
@@ -94,6 +102,34 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	private Boolean soReuseAddress = false;
 	private String hostnameVerifierString;
 	private GetProperties contextProperties;
+
+	public Object getHttpClientBuilderCallback() {
+		return httpClientBuilderCallback;
+	}
+
+	public void setHttpClientBuilderCallback(Object httpClientBuilderCallback) {
+		this.httpClientBuilderCallback = httpClientBuilderCallback;
+	}
+
+	private Object httpClientBuilderCallback;
+	public String getAuthAccount() {
+		return authAccount;
+	}
+
+	public void setAuthAccount(String authAccount) {
+		this.authAccount = authAccount;
+	}
+
+	public String getAuthPassword() {
+		return authPassword;
+	}
+
+	public void setAuthPassword(String authPassword) {
+		this.authPassword = authPassword;
+	}
+
+	private String authAccount;
+	private String authPassword;
 	/**
 	 * 单位毫秒：
 	 */
@@ -152,6 +188,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	private String supportedProtocols;
 	private String[] _supportedProtocols;
 	private transient HostnameVerifier hostnameVerifier;
+
 	private String[] defaultSupportedProtocols = new String[]{"TLSv1.2", "TLSv1.1", "TLSv1"};
 	/**
 	 * 默认保活1小时
@@ -213,19 +250,27 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		return defaultClientConfiguration;
 	}
 
-	private static ClientConfiguration _getDefaultClientConfiguration(GetProperties context) {
-//		loadClientConfiguration();
-		if (defaultClientConfiguration != null)
+	private static ClientConfiguration _getDefaultClientConfiguration(String healthPoolname,GetProperties context) {
+		if(healthPoolname != null){
+			try {
+				return makeDefualtClientConfiguration(healthPoolname,"default", context);
+			} catch (Exception e) {
+				throw new ConfigHttpRuntimeException("Get Default healthcheck ClientConfiguration["+healthPoolname+"] failed:", e);
+			}
+		}
+		else if (defaultClientConfiguration != null) {
 			return defaultClientConfiguration;
-		{
+		}
+		else{
 
 			try {
-				defaultClientConfiguration = makeDefualtClientConfiguration("default", context);
+				defaultClientConfiguration = makeDefualtClientConfiguration(healthPoolname,"default", context);
+				return defaultClientConfiguration;
 			} catch (Exception e) {
 				throw new ConfigHttpRuntimeException("Get DefaultClientConfiguration[default] failed:", e);
 			}
 		}
-		return defaultClientConfiguration;
+
 	}
 
 	private static ClientConfiguration makeDefualtClientConfiguration(String name) throws Exception {
@@ -244,7 +289,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 					clientConfiguration = context.getTBeanObject(name, ClientConfiguration.class);
 				} catch (SPIException e) {
 					if(logger.isWarnEnabled()) {
-						if(!name.startsWith("HealthCheck_")) {
+						if(!name.startsWith(http_healthCheck_prex)) {
 							logger.warn(new StringBuilder().append("Make ClientConfiguration [").append(name).append("] failed,an internal http pool will been constructed:").append(e.getMessage()).toString());
 						}
 					}
@@ -252,7 +297,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 
 			}
 			if (clientConfiguration == null) {
-				if(!name.startsWith("HealthCheck_")) {//Health check pool
+				if(!name.startsWith(http_healthCheck_prex)) {//Health check pool
 					clientConfiguration = new ClientConfiguration();
 					/**
 					 * f:timeoutConnection = "20000"
@@ -273,7 +318,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 					clientConfiguration.setMaxLineLength(Integer.MAX_VALUE);
 					clientConfiguration.setMaxHeaderCount(Integer.MAX_VALUE);
 					clientConfiguration.setMaxTotal(500);
-
+					clientConfiguration.setAutomaticRetriesDisabled(true);
 					clientConfiguration.setDefaultMaxPerRoute(100);
 					clientConfiguration.setStaleConnectionCheckEnabled(false);
 					clientConfiguration.setValidateAfterInactivity(DEFAULT_validateAfterInactivity);
@@ -374,12 +419,12 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	private static String _getStringValue(String poolName, String propertyName, GetProperties context, String defaultValue) throws Exception {
 		Object _value = null;
 		if (poolName.equals("default")) {
-			_value = context.getExternalProperty(propertyName);
+			_value = context.getExternalPropertyWithNS(poolName,propertyName);
 			if (_value == null)
-				_value =  context.getExternalProperty(poolName + "." + propertyName);
+				_value =  context.getExternalPropertyWithNS(poolName,poolName + "." + propertyName);
 
 		} else {
-			_value =  context.getExternalProperty(poolName + "." + propertyName);
+			_value =  context.getExternalPropertyWithNS(poolName,poolName + "." + propertyName);
 		}
 		return ValueCastUtil.toString(_value,defaultValue);
 	}
@@ -427,7 +472,11 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		if(poolNames == null){
 			//load default http pool config
 			try {
-				makeDefualtClientConfiguration("default", propertiesContainer);
+				makeDefualtClientConfiguration(null,"default", propertiesContainer);
+				String health = ClientConfiguration._getStringValue("default", "http.health", propertiesContainer, null);
+				if(health != null && !health.equals("")){
+					makeDefualtClientConfiguration(getHealthPoolName(null),"default", propertiesContainer);
+				}
 			}
 			catch (Exception e){
 				if(logger.isErrorEnabled()) {
@@ -445,7 +494,11 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 					poolName = "default";
 				}
 				try {
-					makeDefualtClientConfiguration(poolName, propertiesContainer);
+					makeDefualtClientConfiguration(null,poolName, propertiesContainer);
+					String health = ClientConfiguration._getStringValue(poolName, "http.health", propertiesContainer, null);
+					if(health != null && !health.equals("")){
+						makeDefualtClientConfiguration(getHealthPoolName(poolName),poolName, propertiesContainer);
+					}
 				}
 				catch (Exception e){
 					if(logger.isErrorEnabled()) {
@@ -473,7 +526,11 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		String poolNames = propertiesContainer.getExternalProperty("http.poolNames");
 		if(poolNames == null){
 			try {
-				makeDefualtClientConfiguration("default", propertiesContainer);
+				makeDefualtClientConfiguration(null,"default", propertiesContainer);
+				String health = ClientConfiguration._getStringValue("default", "http.health", propertiesContainer, null);
+				if(health != null && !health.equals("")){
+					makeDefualtClientConfiguration(getHealthPoolName("default"),"default", propertiesContainer);
+				}
 			}
 			catch (Exception e){
 				if(logger.isErrorEnabled()) {
@@ -491,7 +548,11 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 					poolName = "default";
 				}
 				try {
-					makeDefualtClientConfiguration(poolName, propertiesContainer);
+					makeDefualtClientConfiguration(null,poolName, propertiesContainer);
+					String health = ClientConfiguration._getStringValue(poolName, "http.health", propertiesContainer, null);
+					if(health != null && !health.equals("")){
+						makeDefualtClientConfiguration(getHealthPoolName(poolName),poolName, propertiesContainer);
+					}
 				}
 				catch (Exception e){
 					if(logger.isErrorEnabled()) {
@@ -504,17 +565,35 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		}
 	}
 
-	static ClientConfiguration makeDefualtClientConfiguration(String name, GetProperties context) throws Exception {
+	static ClientConfiguration _get(String healthPoolname,String name){
+		ClientConfiguration clientConfiguration = null;
+		if(healthPoolname != null){
+			clientConfiguration = clientConfigs.get(healthPoolname);
+		}
+		else{
+			clientConfiguration = clientConfigs.get(name);
+		}
+		return clientConfiguration;
+	}
+	static String rname(String healthPoolname,String name){
+		if(healthPoolname != null){
+			return healthPoolname;
+		}
+		else{
+			return name;
+		}
+	}
+	static ClientConfiguration makeDefualtClientConfiguration(String healthPoolname,String name, GetProperties context) throws Exception {
+		ClientConfiguration clientConfiguration = _get(  healthPoolname,  name);
 
-		ClientConfiguration clientConfiguration = clientConfigs.get(name);
 		if (clientConfiguration != null) {
 			if(logger.isInfoEnabled()) {
-				logger.info("Ignore MakeDefualtClientConfiguration and return existed Http Pool[{}].", name);
+				logger.info("Ignore MakeDefualtClientConfiguration and return existed Http Pool[{}].", rname(  healthPoolname,  name));
 			}
 			return clientConfiguration;
 		}
 		synchronized (ClientConfiguration.class) {
-			clientConfiguration = clientConfigs.get(name);
+			clientConfiguration = _get(  healthPoolname,  name);
 			if (clientConfiguration != null) {
 				return clientConfiguration;
 			}
@@ -538,6 +617,15 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 			 * http.keepAlive = 3600000
 			 */
 			StringBuilder log = new StringBuilder();
+			String authAccount = ClientConfiguration._getStringValue(name, "http.authAccount", context, null);
+			if(authAccount != null && !authAccount.equals("")){
+				clientConfiguration.setAuthAccount(authAccount);
+			}
+//			httpServiceHosts.setAuthAccount(authAccount);
+			String authPassword = ClientConfiguration._getStringValue(name, "http.authPassword", context, null);
+			if(authPassword != null && !authPassword.equals("")){
+				clientConfiguration.setAuthPassword(authPassword);
+			}
 			int timeoutConnection = ClientConfiguration._getIntValue(name, "http.timeoutConnection", context, 50000);
 			log.append("http.timeoutConnection=").append(timeoutConnection);
 			clientConfiguration.setTimeoutConnection(timeoutConnection);
@@ -651,107 +739,106 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 
 			String supportedProtocols = ClientConfiguration._getStringValue(name, "http.supportedProtocols", context, "TLSv1.2,TLSv1.1,TLSv1");
 			log.append(",http.supportedProtocols=").append(supportedProtocols);
-
+			Object httpClientBuilderCallback = ClientConfiguration._getObjectValue(name,"http.httpClientBuilderCallback",context,null);
+			log.append(",http.httpClientBuilderCallback=").append(httpClientBuilderCallback);
+			if(httpClientBuilderCallback != null){
+				clientConfiguration.setHttpClientBuilderCallback(httpClientBuilderCallback);
+			}
 			clientConfiguration.setSupportedProtocols(supportedProtocols);
-			clientConfiguration.setBeanName(name);
-
-			HttpServiceHosts httpServiceHosts = new HttpServiceHosts();
-			httpServiceHosts.setClientConfiguration(clientConfiguration);
-			String authAccount = ClientConfiguration._getStringValue(name, "http.authAccount", context, null);
-
-			httpServiceHosts.setAuthAccount(authAccount);
-			String authPassword = ClientConfiguration._getStringValue(name, "http.authPassword", context, null);
-
-			httpServiceHosts.setAuthPassword(authPassword);
-
-			String routing = ClientConfiguration._getStringValue(name, "http.routing", context, null);
-
-			httpServiceHosts.setRouting(routing);
-
-			String health = ClientConfiguration._getStringValue(name, "http.health", context, null);
-
-			httpServiceHosts.setHealth(health);
-			Object discoverService = ClientConfiguration._getObjectValue(name, "http.discoverService", context, null);
-			if(discoverService != null) {
-				if(discoverService instanceof String)
-					httpServiceHosts.setDiscoverService((String)discoverService);
-				else if(discoverService instanceof HttpHostDiscover){
-					httpServiceHosts.setHostDiscover((HttpHostDiscover)discoverService);
-				}
-			}
-
-			Object exceptionWare = ClientConfiguration._getObjectValue(name, "http.exceptionWare", context, null);
-			if(exceptionWare != null) {
-				if(exceptionWare instanceof String)
-					httpServiceHosts.setExceptionWare((String)exceptionWare);
-				else if(exceptionWare instanceof ExceptionWare){
-					httpServiceHosts.setExceptionWareBean((ExceptionWare)exceptionWare);
-				}
-
-			}
-			String hosts = ClientConfiguration._getStringValue(name, "http.hosts", context, null);
-
-			httpServiceHosts.setHosts(hosts);
-
-			String healthCheckInterval_ = ClientConfiguration._getStringValue(name, "http.healthCheckInterval", context, null);
-			if(healthCheckInterval_ == null){
-				httpServiceHosts.setHealthCheckInterval(3000l);
-			}
-			else{
-				try {
-					httpServiceHosts.setHealthCheckInterval(Long.parseLong(healthCheckInterval_));
-				}
-				catch (Exception e){
-					if(logger.isErrorEnabled()) {
-						logger.error("Parse Long healthCheckInterval parameter failed:" + healthCheckInterval_, e);
-					}
-				}
-			}
-			String discoverServiceInterval_ = ClientConfiguration._getStringValue(name, "http.discoverServiceInterval", context, null);
-			if(discoverServiceInterval_ == null){
-				httpServiceHosts.setDiscoverServiceInterval(10000l);
-			}
-			else{
-				try {
-					httpServiceHosts.setDiscoverServiceInterval(Long.parseLong(discoverServiceInterval_));
-				}
-				catch (Exception e){
-					if(logger.isErrorEnabled()) {
-						logger.error("Parse Long discoverServiceInterval parameter failed:" + discoverServiceInterval_, e);
-					}
-				}
-			}
-
-			String handleNullOrEmptyHostsByDiscovery_ = ClientConfiguration._getStringValue(name, "http.handleNullOrEmptyHostsByDiscovery", context, null);
-			if(handleNullOrEmptyHostsByDiscovery_ == null){
-				httpServiceHosts.setHandleNullOrEmptyHostsByDiscovery(false);
-			}
-			else{
-				try {
-					httpServiceHosts.setHandleNullOrEmptyHostsByDiscovery(Boolean.parseBoolean(handleNullOrEmptyHostsByDiscovery_));
-				}
-				catch (Exception e){
-					if(logger.isErrorEnabled()) {
-						logger.error("Parse Boolean handleNullOrEmptyHostsByDiscovery_ parameter failed:" + handleNullOrEmptyHostsByDiscovery_, e);
-					}
-				}
-			}
 			boolean evictExpiredConnections = ClientConfiguration._getBooleanValue(name, "http.evictExpiredConnections", context, true);
 			clientConfiguration.setEvictExpiredConnections(evictExpiredConnections);
 			log.append(",http.evictExpiredConnections=").append(evictExpiredConnections);
-//			httpServiceHosts.after();
-			httpServiceHosts.toString(log);
+			clientConfiguration.setBeanName(rname(healthPoolname,name));
+			HttpServiceHosts httpServiceHosts = null;
+			if(healthPoolname == null) {
+				httpServiceHosts = new HttpServiceHosts();
+				httpServiceHosts.setClientConfiguration(clientConfiguration);
 
-			clientConfiguration.httpServiceHosts = httpServiceHosts;
+
+//			httpServiceHosts.setAuthPassword(authPassword);
+
+				String routing = ClientConfiguration._getStringValue(name, "http.routing", context, null);
+
+				httpServiceHosts.setRouting(routing);
+
+				String health = ClientConfiguration._getStringValue(name, "http.health", context, null);
+
+				httpServiceHosts.setHealth(health);
+				Object discoverService = ClientConfiguration._getObjectValue(name, "http.discoverService", context, null);
+				if (discoverService != null) {
+					if (discoverService instanceof String)
+						httpServiceHosts.setDiscoverService((String) discoverService);
+					else if (discoverService instanceof HttpHostDiscover) {
+						httpServiceHosts.setHostDiscover((HttpHostDiscover) discoverService);
+					}
+				}
+
+				Object exceptionWare = ClientConfiguration._getObjectValue(name, "http.exceptionWare", context, null);
+				if (exceptionWare != null) {
+					if (exceptionWare instanceof String)
+						httpServiceHosts.setExceptionWare((String) exceptionWare);
+					else if (exceptionWare instanceof ExceptionWare) {
+						httpServiceHosts.setExceptionWareBean((ExceptionWare) exceptionWare);
+					}
+
+				}
+				String hosts = ClientConfiguration._getStringValue(name, "http.hosts", context, null);
+
+				httpServiceHosts.setHosts(hosts);
+
+				String healthCheckInterval_ = ClientConfiguration._getStringValue(name, "http.healthCheckInterval", context, null);
+				if (healthCheckInterval_ == null) {
+					httpServiceHosts.setHealthCheckInterval(3000l);
+				} else {
+					try {
+						httpServiceHosts.setHealthCheckInterval(Long.parseLong(healthCheckInterval_));
+					} catch (Exception e) {
+						if (logger.isErrorEnabled()) {
+							logger.error("Parse Long healthCheckInterval parameter failed:" + healthCheckInterval_, e);
+						}
+					}
+				}
+				String discoverServiceInterval_ = ClientConfiguration._getStringValue(name, "http.discoverServiceInterval", context, null);
+				if (discoverServiceInterval_ == null) {
+					httpServiceHosts.setDiscoverServiceInterval(10000l);
+				} else {
+					try {
+						httpServiceHosts.setDiscoverServiceInterval(Long.parseLong(discoverServiceInterval_));
+					} catch (Exception e) {
+						if (logger.isErrorEnabled()) {
+							logger.error("Parse Long discoverServiceInterval parameter failed:" + discoverServiceInterval_, e);
+						}
+					}
+				}
+
+				String handleNullOrEmptyHostsByDiscovery_ = ClientConfiguration._getStringValue(name, "http.handleNullOrEmptyHostsByDiscovery", context, null);
+				if (handleNullOrEmptyHostsByDiscovery_ == null) {
+					httpServiceHosts.setHandleNullOrEmptyHostsByDiscovery(false);
+				} else {
+					try {
+						httpServiceHosts.setHandleNullOrEmptyHostsByDiscovery(Boolean.parseBoolean(handleNullOrEmptyHostsByDiscovery_));
+					} catch (Exception e) {
+						if (logger.isErrorEnabled()) {
+							logger.error("Parse Boolean handleNullOrEmptyHostsByDiscovery_ parameter failed:" + handleNullOrEmptyHostsByDiscovery_, e);
+						}
+					}
+				}
+			}
+
+			if(healthPoolname == null && httpServiceHosts != null) {
+				httpServiceHosts.toString(log);
+
+				clientConfiguration.httpServiceHosts = httpServiceHosts;
+			}
 			if(logger.isInfoEnabled()){
-					logger.info("Http Pool[{}] config:{}", name, log.toString());
+					logger.info("Http Pool[{}] config:{}", rname(healthPoolname,name), log.toString());
 			}
 			clientConfiguration.afterPropertiesSet();
 			//初始化http发现服务组件
-			if(httpServiceHosts != null)
+			if(healthPoolname == null && httpServiceHosts != null)
 				httpServiceHosts.after(name,context);
 
-			clientConfigs.put(name, clientConfiguration);
+			clientConfigs.put(rname(healthPoolname,name), clientConfiguration);
 
 		}
 		return clientConfiguration;
@@ -761,21 +848,81 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	public static void bootClientConfiguations(String[] serverNames, GetProperties context) {
 		//初始化Http连接池
 		for (String serverName : serverNames) {
-			ClientConfiguration.configClientConfiguation(serverName, context);
+			ClientConfiguration.configClientConfiguation(null,serverName, context);
 		}
 	}
 
-	private static ClientConfiguration configClientConfiguation(String poolname, GetProperties context) {
+	public static ClientConfiguration stopHttpClient(String poolName){
+		if(poolName == null){
+			poolName = "default";
+		}
+		String healthPool = getHealthPoolName(poolName);
+		boolean r = false;
+		ClientConfiguration clientConfiguration = getClientConfigurationAndRemove( poolName);
+		if(clientConfiguration != null){
+			clientConfiguration.close();
+		}
+		ClientConfiguration healthclientConfiguration = getClientConfigurationAndRemove( healthPool);
+		if(healthclientConfiguration != null){
+			healthclientConfiguration.close();
+		}
+		return clientConfiguration;
+
+	}
+	public void close(){
+		if(httpServiceHosts != null){
+			httpServiceHosts.close();
+			httpServiceHosts = null;
+		}
+		if(this.httpclient != null){
+			try {
+				httpclient.close();
+				httpclient = null;
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
+		}
+
+	}
+	public static void bootHealthCheckClientConfiguations(String[] serverNames, GetProperties context) {
+		//初始化Http连接池
+		HealthCheckGetProperties healthCheckGetProperties = new HealthCheckGetProperties(context);
+		for (String serverName : serverNames) {
+			ClientConfiguration.configClientConfiguation(getHealthPoolName(serverName),serverName, healthCheckGetProperties);
+		}
+	}
+
+	private static ClientConfiguration configClientConfiguation(String healthPoolname,String poolname, GetProperties context) {
 //		loadClientConfiguration();
 		if (poolname == null || poolname.equals("default"))
-			return _getDefaultClientConfiguration(context);
+			return _getDefaultClientConfiguration(healthPoolname,context);
 		try {
-			return makeDefualtClientConfiguration(poolname, context);
+			return makeDefualtClientConfiguration(healthPoolname,poolname, context);
 		} catch (Exception e) {
-			throw new ConfigHttpRuntimeException("makeDefualtClientConfiguration [" + poolname + "] failed:", e);
+			throw new ConfigHttpRuntimeException("Build ClientConfiguration [" + healthPoolname + poolname + "] failed:", e);
 		}
 	}
+	public static String getHealthPoolName(String httpPool){
+		String healthPool = httpPool != null ?ClientConfiguration.http_healthCheck_prex + httpPool:ClientConfiguration.http_healthCheck_prex + "default";
+		return healthPool;
+	}
 
+
+	public static ClientConfiguration getClientConfigurationAndRemove(String poolname) {
+
+		if (poolname == null)
+			poolname ="default";
+		return clientConfigs.remove(poolname);
+
+	}
+	public static ClientConfiguration getClientConfigurationOnly(String poolname) {
+
+		if (poolname == null)
+			poolname ="default";
+		return clientConfigs.get(poolname);
+
+	}
 	public static ClientConfiguration getClientConfiguration(String poolname) {
 		loadClientConfiguration();
 		if (poolname == null)
@@ -912,31 +1059,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 			return new SSLConnectionSocketFactory(sslContextBuilder.build(), NoopHostnameVerifier.INSTANCE);
 		} else {
 
-//			SSLContext sslcontext = SSLContexts.custom()
-//					.loadTrustMaterial(new File(keystore), this.keyPassword.toCharArray(),
-//							new TrustSelfSignedStrategy())
-////					.loadKeyMaterial(new File(keystore),this.keyPassword.toCharArray(),this.trustPassword.toCharArray())
-//					.build();
-			// Allow TLSv1 protocol only
 
-			/**
-			SSLContextBuilder builder = SSLContexts.custom()
-					.loadTrustMaterial(new File(keystore), this.keyPassword.toCharArray(),
-							new TrustSelfSignedStrategy());
-			if (this.truststore != null && !this.truststore.equals(""))
-				builder.loadKeyMaterial(new File(truststore),this.trustPassword.toCharArray(),this.trustPassword.toCharArray())
-					.build();
-
-			HostnameVerifier hostnameVerifier = this.hostnameVerifier != null ? this.hostnameVerifier :
-					SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER;
-			SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(
-					builder.build(),
-					_supportedProtocols,
-					null, hostnameVerifier
-			);
-//					SSLConnectionSocketFactory.getDefaultHostnameVerifier());
-			return sslsf;
-			 */
 
 			HostnameVerifier hostnameVerifier = this.hostnameVerifier != null ? this.hostnameVerifier :
 					SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER;
@@ -963,52 +1086,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		if (httpclient != null)
 			return httpclient;
 
-//	    HttpMessageParserFactory<HttpResponse> responseParserFactory = new DefaultHttpResponseParserFactory() {
-//
-//	        @Override
-//	        public HttpMessageParser<HttpResponse> create(
-//	            SessionInputBuffer buffer, MessageConstraints constraints) {
-//	            LineParser lineParser = new BasicLineParser() {
-//
-//	                @Override
-//	                public Header parseHeader(final CharArrayBuffer buffer) {
-//	                    try {
-//	                        return super.parseHeader(buffer);
-//	                    } catch (ParseException ex) {
-//	                        return new BasicHeader(buffer.toString(), null);
-//	                    }
-//	                }
-//
-//	            };
-//	            return new DefaultHttpResponseParser(
-//	                buffer, lineParser, DefaultHttpResponseFactory.INSTANCE, constraints) {
-//
-//	                @Override
-//	                protected boolean reject(final CharArrayBuffer line, int count) {
-//	                    // try to ignore all garbage preceding a status line infinitely
-//	                    return false;
-//	                }
-//
-//	            };
-//	        }
-//
-//	    };
-//	    HttpMessageWriterFactory<HttpRequest> requestWriterFactory = new DefaultHttpRequestWriterFactory();
-//
-//	    // Use a custom connection factory to customize the process of
-//	    // initialization of outgoing HTTP connections. Beside standard connection
-//	    // configuration parameters HTTP connection factory can define message
-//	    // parser / writer routines to be employed by individual connections.
-//	    HttpConnectionFactory<HttpRoute, ManagedHttpClientConnection> connFactory = new ManagedHttpClientConnectionFactory(
-//	            requestWriterFactory, responseParserFactory);
 
-		// Client HTTP connection objects when fully initialized can be bound to
-		// an arbitrary network socket. The process of network socket initialization,
-		// its connection to a remote address and binding to a local one is controlled
-		// by a connection socket factory.
-
-		// SSL context for secure connections can be created either based on
-		// system or application specific properties.
 		SSLConnectionSocketFactory SSLConnectionSocketFactory = this.buildSSLConnectionSocketFactory();//SSLContexts.createSystemDefault();
 
 		// Create a registry of custom connection socket factories for supported
@@ -1032,9 +1110,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 
 		};
 
-		// Create a connection manager with custom configuration.
-//	    PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager(
-//	            socketFactoryRegistry, connFactory, dnsResolver);
+
 
 		PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager(socketFactoryRegistry, null, null, dnsResolver,
 				this.timeToLive, TimeUnit.MILLISECONDS);
@@ -1081,29 +1157,34 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		CookieStore cookieStore = new BasicCookieStore();
 
 		// Use custom credentials provider if necessary.
-		CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+
 		// Create global request configuration
 		RequestConfig requestConfig = RequestConfig.custom()
 				.setCookieSpec(CookieSpecs.DEFAULT)
 				.setExpectContinueEnabled(true)
-				.setTargetPreferredAuthSchemes(Arrays.asList(AuthSchemes.NTLM, AuthSchemes.DIGEST))
-				.setProxyPreferredAuthSchemes(Arrays.asList(AuthSchemes.BASIC))
-				.setConnectTimeout(this.timeoutConnection).setConnectionRequestTimeout(connectionRequestTimeout)
+//				.setTargetPreferredAuthSchemes(Arrays.asList(AuthSchemes.NTLM, AuthSchemes.DIGEST))
+//				.setProxyPreferredAuthSchemes(Arrays.asList(AuthSchemes.BASIC))
+				.setConnectTimeout(this.timeoutConnection)
+				.setConnectionRequestTimeout(connectionRequestTimeout)
 				.setSocketTimeout(this.timeoutSocket)
 				.setStaleConnectionCheckEnabled(staleConnectionCheckEnabled)
-
 				.build();
 
 		// Create an HttpClient with the given custom dependencies and configuration.
 		HttpClientBuilder builder = HttpClients.custom();
+		customizeHttpBuilder( builder );
+
+		initCredentialsProvider(  builder );
 		if (keepAlive > 0)//设置链接保活策略
 		{
 			HttpConnectionKeepAliveStrategy httpConnectionKeepAliveStrategy = new HttpConnectionKeepAliveStrategy(this.keepAlive);
 			if(evictExpiredConnections)
 				builder.evictExpiredConnections();
+
+
 			builder.setConnectionManager(connManager)
 					.setDefaultCookieStore(cookieStore)
-					.setDefaultCredentialsProvider(credentialsProvider)
+
 					//.setProxy(new HttpHost("myproxy", 8080))
 					.setDefaultRequestConfig(requestConfig).setKeepAliveStrategy(httpConnectionKeepAliveStrategy);
 			buildRetryHandler(builder);
@@ -1111,9 +1192,9 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		} else {
 			if(evictExpiredConnections)
 				builder.evictExpiredConnections();
+
 			builder.setConnectionManager(connManager)
 					.setDefaultCookieStore(cookieStore)
-					.setDefaultCredentialsProvider(credentialsProvider)
 					//.setProxy(new HttpHost("myproxy", 8080))
 					.setDefaultRequestConfig(requestConfig);
 			buildRetryHandler(builder);
@@ -1124,12 +1205,46 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 			defaultHttpclient = httpclient;
 		}
 		clientConfigs.put(beanName, this);
-
+		BaseApplicationContext.addShutdownHook(new Runnable() {
+			@Override
+			public void run() {
+				close();
+			}
+		});
 		return httpclient;
 
 
 	}
+	private void customizeHttpBuilder(HttpClientBuilder builder ) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
+		HttpClientBuilderCallback _httpClientBuilderCallback = null;
+		if(this.getHttpClientBuilderCallback() != null){
+			if(httpClientBuilderCallback instanceof String) {
+				_httpClientBuilderCallback = (HttpClientBuilderCallback) Class.forName((String)this.httpClientBuilderCallback).newInstance();
 
+			}
+			else if(httpClientBuilderCallback instanceof HttpClientBuilderCallback) {
+				_httpClientBuilderCallback = (HttpClientBuilderCallback) httpClientBuilderCallback;
+
+			}
+
+		}
+		if(_httpClientBuilderCallback != null){
+			_httpClientBuilderCallback.customizeHttpClient(builder,this);
+		}
+	}
+	private void initCredentialsProvider(HttpClientBuilder builder ){
+		if(this.getAuthAccount() != null) {
+			CredentialsProvider credentialsProvider = null;
+			ClassUtil.ClassInfo classInfo = ClassUtil.getClassInfo(builder.getClass());
+			credentialsProvider = (CredentialsProvider) classInfo.getPropertyValue(builder,"credentialsProvider");
+			if(credentialsProvider == null) {
+				credentialsProvider = new BasicCredentialsProvider();
+				credentialsProvider.setCredentials(AuthScope.ANY,
+						new UsernamePasswordCredentials(this.getAuthAccount(), this.getAuthPassword()));
+				builder.setDefaultCredentialsProvider(credentialsProvider);
+			}
+		}
+	}
 	private void buildRetryHandler(HttpClientBuilder builder) {
 		if (getRetryTime() > 0) {
 			CustomHttpRequestRetryHandler customHttpRequestRetryHandler = null;
@@ -1339,4 +1454,5 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	public void setAutomaticRetriesDisabled(boolean automaticRetriesDisabled) {
 		this.automaticRetriesDisabled = automaticRetriesDisabled;
 	}
+
 }

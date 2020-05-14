@@ -24,21 +24,21 @@ package org.frameworkset.spi.remote.http.proxy;
  * @version 1.0
  */
 public class HttpServiceHostsConfig {
-	public String getAuthAccount() {
-		return authAccount;
-	}
-
-	public void setAuthAccount(String authAccount) {
-		this.authAccount = authAccount;
-	}
-
-	public String getAuthPassword() {
-		return authPassword;
-	}
-
-	public void setAuthPassword(String authPassword) {
-		this.authPassword = authPassword;
-	}
+//	public String getAuthAccount() {
+//		return authAccount;
+//	}
+//
+//	public void setAuthAccount(String authAccount) {
+//		this.authAccount = authAccount;
+//	}
+//
+//	public String getAuthPassword() {
+//		return authPassword;
+//	}
+//
+//	public void setAuthPassword(String authPassword) {
+//		this.authPassword = authPassword;
+//	}
 
 	public String getHealth() {
 		return health;
@@ -80,8 +80,8 @@ public class HttpServiceHostsConfig {
 		this.hosts = hosts;
 	}
 
-	private String authAccount;
-	private String authPassword;
+//	private String authAccount;
+//	private String authPassword;
 	private String health;
 	private long healthCheckInterval = -1l;
 	private String discoverService;
@@ -90,8 +90,8 @@ public class HttpServiceHostsConfig {
 	private long discoverServiceInterval = 10000l;
 	private Boolean handleNullOrEmptyHostsByDiscovery;
 	public void toString(StringBuilder log, ExceptionWare exceptionWareBean, HttpHostDiscover httpHostDiscover){
-		log.append(",http.authAccount=").append(authAccount);
-		log.append(",http.authPassword=").append(authPassword);
+//		log.append(",http.authAccount=").append(authAccount);
+//		log.append(",http.authPassword=").append(authPassword);
 		log.append(",http.hosts=").append(hosts);
 		log.append(",http.health=").append(health);
 		log.append(",http.healthCheckInterval=").append(healthCheckInterval);

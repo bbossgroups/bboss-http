@@ -441,12 +441,16 @@ public class HttpServiceHosts {
 		this.routing = routing;
 		hasRouting = this.routing != null && !this.routing.equals("");
 	}
-
-	public void close() {
+	private boolean closed = false;
+	public synchronized void close() {
+		if(closed)
+			return;
+		closed = true;
 		if(hostDiscover != null) {
 			hostDiscover.stopCheck();
 			hostDiscover = null;
 		}
+
 		if(healthCheck != null) {
 			healthCheck.stopCheck();
 			healthCheck = null;

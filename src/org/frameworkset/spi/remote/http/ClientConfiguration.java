@@ -869,10 +869,20 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		return clientConfiguration;
 
 	}
-	public void close(){
+	private boolean closed = false;
+	public synchronized void close(){
+		if(closed)
+			return;
+		closed = true;
 		if(httpServiceHosts != null){
 			httpServiceHosts.close();
 			httpServiceHosts = null;
+		}
+		try {
+			Thread.sleep(100);
+		}
+		catch (InterruptedException e){
+
 		}
 		if(this.httpclient != null){
 			try {
@@ -1172,14 +1182,15 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 
 		// Create an HttpClient with the given custom dependencies and configuration.
 		HttpClientBuilder builder = HttpClients.custom();
-		customizeHttpBuilder( builder );
+
 
 		initCredentialsProvider(  builder );
+		if(evictExpiredConnections)
+			builder.evictExpiredConnections();
 		if (keepAlive > 0)//设置链接保活策略
 		{
 			HttpConnectionKeepAliveStrategy httpConnectionKeepAliveStrategy = new HttpConnectionKeepAliveStrategy(this.keepAlive);
-			if(evictExpiredConnections)
-				builder.evictExpiredConnections();
+
 
 
 			builder.setConnectionManager(connManager)
@@ -1187,19 +1198,21 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 
 					//.setProxy(new HttpHost("myproxy", 8080))
 					.setDefaultRequestConfig(requestConfig).setKeepAliveStrategy(httpConnectionKeepAliveStrategy);
-			buildRetryHandler(builder);
-			httpclient = builder.build();
+
+
 		} else {
-			if(evictExpiredConnections)
-				builder.evictExpiredConnections();
+
 
 			builder.setConnectionManager(connManager)
 					.setDefaultCookieStore(cookieStore)
 					//.setProxy(new HttpHost("myproxy", 8080))
 					.setDefaultRequestConfig(requestConfig);
-			buildRetryHandler(builder);
-			httpclient = builder.build();
+
+
 		}
+		buildRetryHandler(builder);
+		customizeHttpBuilder( builder );
+		httpclient = builder.build();
 		if (this.beanName.equals("default")) {
 			defaultRequestConfig = requestConfig;
 			defaultHttpclient = httpclient;

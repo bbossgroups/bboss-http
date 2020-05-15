@@ -7,19 +7,22 @@ import com.frameworkset.util.ValueCastUtil;
 import org.apache.http.Consts;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CookieStore;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
-import org.apache.http.config.*;
+import org.apache.http.config.Registry;
+import org.apache.http.config.RegistryBuilder;
+import org.apache.http.config.SocketConfig;
 import org.apache.http.conn.DnsResolver;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.entity.ContentType;
-import org.apache.http.impl.client.*;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.impl.conn.SystemDefaultDnsResolver;
 import org.apache.http.ssl.SSLContextBuilder;
@@ -41,7 +44,6 @@ import javax.net.ssl.HostnameVerifier;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.nio.charset.CodingErrorAction;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -1106,6 +1108,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 				.register("https", SSLConnectionSocketFactory)
 				.build();
 
+
 		// Use custom DNS resolver to override the system DNS resolution.
 		DnsResolver dnsResolver = new SystemDefaultDnsResolver() {
 
@@ -1139,7 +1142,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		// Validate connections after 1 sec of inactivity
 		connManager.setValidateAfterInactivity(validateAfterInactivity);
 
-
+		/**
 		// Create message constraints
 		MessageConstraints messageConstraints = MessageConstraints.custom()
 				.setMaxHeaderCount(this.maxHeaderCount)
@@ -1152,9 +1155,11 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 				.setCharset(Consts.UTF_8)
 				.setMessageConstraints(messageConstraints)
 				.build();
+
 		// Configure the connection manager to use connection configuration either
 		// by default or for a specific host.
 		connManager.setDefaultConnectionConfig(connectionConfig);
+		 */
 		//	        connManager.setConnectionConfig(new HttpHost("localhost", 80), ConnectionConfig.DEFAULT);
 
 		// Configure total max or per route limits for persistent connections
@@ -1164,14 +1169,14 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		//	        connManager.setMaxPerRoute(new HttpRoute(new HttpHost("localhost", 80)), 20);
 
 		// Use custom cookie store if necessary.
-		CookieStore cookieStore = new BasicCookieStore();
+//		CookieStore cookieStore = new BasicCookieStore();
 
 		// Use custom credentials provider if necessary.
 
 		// Create global request configuration
 		RequestConfig requestConfig = RequestConfig.custom()
-				.setCookieSpec(CookieSpecs.DEFAULT)
-				.setExpectContinueEnabled(true)
+//				.setCookieSpec(CookieSpecs.DEFAULT)
+//				.setExpectContinueEnabled(true)
 //				.setTargetPreferredAuthSchemes(Arrays.asList(AuthSchemes.NTLM, AuthSchemes.DIGEST))
 //				.setProxyPreferredAuthSchemes(Arrays.asList(AuthSchemes.BASIC))
 				.setConnectTimeout(this.timeoutConnection)
@@ -1183,7 +1188,6 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		// Create an HttpClient with the given custom dependencies and configuration.
 		HttpClientBuilder builder = HttpClients.custom();
 
-
 		initCredentialsProvider(  builder );
 		if(evictExpiredConnections)
 			builder.evictExpiredConnections();
@@ -1194,7 +1198,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 
 
 			builder.setConnectionManager(connManager)
-					.setDefaultCookieStore(cookieStore)
+//					.setDefaultCookieStore(cookieStore)
 
 					//.setProxy(new HttpHost("myproxy", 8080))
 					.setDefaultRequestConfig(requestConfig).setKeepAliveStrategy(httpConnectionKeepAliveStrategy);
@@ -1204,7 +1208,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 
 
 			builder.setConnectionManager(connManager)
-					.setDefaultCookieStore(cookieStore)
+//					.setDefaultCookieStore(cookieStore)
 					//.setProxy(new HttpHost("myproxy", 8080))
 					.setDefaultRequestConfig(requestConfig);
 

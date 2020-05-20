@@ -624,10 +624,12 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 				clientConfiguration.setAuthAccount(authAccount);
 			}
 //			httpServiceHosts.setAuthAccount(authAccount);
+			log.append("http.authAccount=").append(authAccount);
 			String authPassword = ClientConfiguration._getStringValue(name, "http.authPassword", context, null);
 			if(authPassword != null && !authPassword.equals("")){
 				clientConfiguration.setAuthPassword(authPassword);
 			}
+			log.append("http.authPassword=").append(authPassword);
 			int timeoutConnection = ClientConfiguration._getIntValue(name, "http.timeoutConnection", context, 50000);
 			log.append("http.timeoutConnection=").append(timeoutConnection);
 			clientConfiguration.setTimeoutConnection(timeoutConnection);

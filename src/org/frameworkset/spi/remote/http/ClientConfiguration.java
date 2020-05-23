@@ -4,7 +4,9 @@
 package org.frameworkset.spi.remote.http;
 
 import com.frameworkset.util.ValueCastUtil;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Consts;
+import org.apache.http.Header;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
@@ -25,6 +27,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.impl.conn.SystemDefaultDnsResolver;
+import org.apache.http.message.BasicHeader;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.TrustStrategy;
 import org.frameworkset.spi.*;
@@ -44,14 +47,14 @@ import javax.net.ssl.HostnameVerifier;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.charset.Charset;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -104,6 +107,12 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	private Boolean soReuseAddress = false;
 	private String hostnameVerifierString;
 	private GetProperties contextProperties;
+	/**
+	 * 向后兼容的basic安全签名机制，v6.1.2以及之后的版本采用http组件内置的basic签名认证机制，但是有些http服务端对安全认证
+	 * 的实现不是很规范，会导致http basic security机制不能正常工作，因此设置这个向老版本兼容的配置
+	 * true:向老版本兼容，false，不向老版本兼容
+	 */
+	private boolean backoffAuth = false;
 
 	public Object getHttpClientBuilderCallback() {
 		return httpClientBuilderCallback;
@@ -645,6 +654,9 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 			boolean automaticRetriesDisabled = ClientConfiguration._getBooleanValue(name, "http.automaticRetriesDisabled", context, false);
 			log.append(",http.automaticRetriesDisabled=").append(automaticRetriesDisabled);
 			clientConfiguration.setAutomaticRetriesDisabled(automaticRetriesDisabled);
+			boolean backoffAuth = ClientConfiguration._getBooleanValue(name, "http.backoffAuth", context, false);
+			log.append(",http.backoffAuth=").append(backoffAuth);
+			clientConfiguration.setBackoffAuth(backoffAuth);
 			long retryInterval = ClientConfiguration._getLongValue(name, "http.retryInterval", context, -1);
 			log.append(",http.retryInterval=").append(retryInterval);
 			clientConfiguration.setRetryInterval(retryInterval);
@@ -1252,17 +1264,32 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		}
 	}
 	private void initCredentialsProvider(HttpClientBuilder builder ){
+
 		if(this.getAuthAccount() != null) {
-			CredentialsProvider credentialsProvider = null;
-			ClassUtil.ClassInfo classInfo = ClassUtil.getClassInfo(builder.getClass());
-			credentialsProvider = (CredentialsProvider) classInfo.getPropertyValue(builder,"credentialsProvider");
-			if(credentialsProvider == null) {
-				credentialsProvider = new BasicCredentialsProvider();
-				credentialsProvider.setCredentials(AuthScope.ANY,
-						new UsernamePasswordCredentials(this.getAuthAccount(), this.getAuthPassword()));
-				builder.setDefaultCredentialsProvider(credentialsProvider);
+			if(!this.isBackoffAuth()) {
+				CredentialsProvider credentialsProvider = null;
+				ClassUtil.ClassInfo classInfo = ClassUtil.getClassInfo(builder.getClass());
+				credentialsProvider = (CredentialsProvider) classInfo.getPropertyValue(builder, "credentialsProvider");
+				if (credentialsProvider == null) {
+					credentialsProvider = new BasicCredentialsProvider();
+					credentialsProvider.setCredentials(AuthScope.ANY,
+							new UsernamePasswordCredentials(this.getAuthAccount(), this.getAuthPassword()));
+					builder.setDefaultCredentialsProvider(credentialsProvider);
+				}
+			}
+			else{
+				BasicHeader header =  new BasicHeader("Authorization", getHeader(this.getAuthAccount(), this.getAuthPassword()));
+//				headers.put("Authorization", getHeader(this.getAuthAccount(), this.getAuthPassword()));
+				List<Header> headers = new ArrayList<Header>();
+				headers.add(header);
+				builder.setDefaultHeaders(headers);
 			}
 		}
+	}
+	public static String getHeader(String user, String password) {
+		String auth = user + ":" + password;
+		byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(Charset.forName("US-ASCII")));
+		return "Basic " + new String(encodedAuth);
 	}
 	private void buildRetryHandler(HttpClientBuilder builder) {
 		if (getRetryTime() > 0) {
@@ -1474,4 +1501,11 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		this.automaticRetriesDisabled = automaticRetriesDisabled;
 	}
 
+	public boolean isBackoffAuth() {
+		return backoffAuth;
+	}
+
+	public void setBackoffAuth(boolean backoffAuth) {
+		this.backoffAuth = backoffAuth;
+	}
 }

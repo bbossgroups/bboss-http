@@ -654,7 +654,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 			boolean automaticRetriesDisabled = ClientConfiguration._getBooleanValue(name, "http.automaticRetriesDisabled", context, false);
 			log.append(",http.automaticRetriesDisabled=").append(automaticRetriesDisabled);
 			clientConfiguration.setAutomaticRetriesDisabled(automaticRetriesDisabled);
-			boolean backoffAuth = ClientConfiguration._getBooleanValue(name, "http.backoffAuth", context, false);
+			boolean backoffAuth = ClientConfiguration._getBooleanValue(name, "http.backoffAuth", context, true);
 			log.append(",http.backoffAuth=").append(backoffAuth);
 			clientConfiguration.setBackoffAuth(backoffAuth);
 			long retryInterval = ClientConfiguration._getLongValue(name, "http.retryInterval", context, -1);

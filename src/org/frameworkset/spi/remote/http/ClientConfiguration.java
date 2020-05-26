@@ -107,6 +107,16 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	private Boolean soReuseAddress = false;
 	private String hostnameVerifierString;
 	private GetProperties contextProperties;
+
+	public String getEncodedAuthCharset() {
+		return encodedAuthCharset;
+	}
+
+	public void setEncodedAuthCharset(String encodedAuthCharset) {
+		this.encodedAuthCharset = encodedAuthCharset;
+	}
+
+	private String encodedAuthCharset = "US-ASCII";
 	/**
 	 * 向后兼容的basic安全签名机制，v6.1.2以及之后的版本采用http组件内置的basic签名认证机制，但是有些http服务端对安全认证
 	 * 的实现不是很规范，会导致http basic security机制不能正常工作，因此设置这个向老版本兼容的配置
@@ -632,13 +642,21 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 			if(authAccount != null && !authAccount.equals("")){
 				clientConfiguration.setAuthAccount(authAccount);
 			}
+
 //			httpServiceHosts.setAuthAccount(authAccount);
 			log.append("http.authAccount=").append(authAccount);
+
 			String authPassword = ClientConfiguration._getStringValue(name, "http.authPassword", context, null);
 			if(authPassword != null && !authPassword.equals("")){
 				clientConfiguration.setAuthPassword(authPassword);
 			}
 			log.append("http.authPassword=").append(authPassword);
+
+			String encodedAuthCharset = ClientConfiguration._getStringValue(name, "http.encodedAuthCharset", context, "US-ASCII");
+			if(encodedAuthCharset != null && !encodedAuthCharset.equals("")){
+				clientConfiguration.setEncodedAuthCharset(encodedAuthCharset);
+			}
+			log.append("http.encodedAuthCharset=").append(encodedAuthCharset);
 			int timeoutConnection = ClientConfiguration._getIntValue(name, "http.timeoutConnection", context, 50000);
 			log.append("http.timeoutConnection=").append(timeoutConnection);
 			clientConfiguration.setTimeoutConnection(timeoutConnection);
@@ -654,7 +672,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 			boolean automaticRetriesDisabled = ClientConfiguration._getBooleanValue(name, "http.automaticRetriesDisabled", context, false);
 			log.append(",http.automaticRetriesDisabled=").append(automaticRetriesDisabled);
 			clientConfiguration.setAutomaticRetriesDisabled(automaticRetriesDisabled);
-			boolean backoffAuth = ClientConfiguration._getBooleanValue(name, "http.backoffAuth", context, true);
+			boolean backoffAuth = ClientConfiguration._getBooleanValue(name, "http.backoffAuth", context, false);
 			log.append(",http.backoffAuth=").append(backoffAuth);
 			clientConfiguration.setBackoffAuth(backoffAuth);
 			long retryInterval = ClientConfiguration._getLongValue(name, "http.retryInterval", context, -1);
@@ -1278,7 +1296,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 				}
 			}
 			else{
-				BasicHeader header =  new BasicHeader("Authorization", getHeader(this.getAuthAccount(), this.getAuthPassword()));
+				BasicHeader header =  new BasicHeader("Authorization", getHeader(encodedAuthCharset,this.getAuthAccount(), this.getAuthPassword()));
 //				headers.put("Authorization", getHeader(this.getAuthAccount(), this.getAuthPassword()));
 				List<Header> headers = new ArrayList<Header>();
 				headers.add(header);
@@ -1286,10 +1304,16 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 			}
 		}
 	}
-	public static String getHeader(String user, String password) {
+	public static String getHeader(String encodedAuthCharset ,String user, String password) {
 		String auth = user + ":" + password;
-		byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(Charset.forName("US-ASCII")));
-		return "Basic " + new String(encodedAuth);
+		if(encodedAuthCharset != null && !encodedAuthCharset.equals("")) {
+			byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(Charset.forName(encodedAuthCharset)));
+			return "Basic " + new String(encodedAuth);
+		}
+		else{
+			byte[] encodedAuth = Base64.encodeBase64(auth.getBytes());
+			return "Basic " + new String(encodedAuth);
+		}
 	}
 	private void buildRetryHandler(HttpClientBuilder builder) {
 		if (getRetryTime() > 0) {

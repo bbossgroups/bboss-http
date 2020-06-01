@@ -650,15 +650,15 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 			if(authPassword != null && !authPassword.equals("")){
 				clientConfiguration.setAuthPassword(authPassword);
 			}
-			log.append("http.authPassword=").append(authPassword);
+			log.append(",http.authPassword=").append(authPassword);
 
 			String encodedAuthCharset = ClientConfiguration._getStringValue(name, "http.encodedAuthCharset", context, "US-ASCII");
 			if(encodedAuthCharset != null && !encodedAuthCharset.equals("")){
 				clientConfiguration.setEncodedAuthCharset(encodedAuthCharset);
 			}
-			log.append("http.encodedAuthCharset=").append(encodedAuthCharset);
+			log.append(",http.encodedAuthCharset=").append(encodedAuthCharset);
 			int timeoutConnection = ClientConfiguration._getIntValue(name, "http.timeoutConnection", context, 50000);
-			log.append("http.timeoutConnection=").append(timeoutConnection);
+			log.append(",http.timeoutConnection=").append(timeoutConnection);
 			clientConfiguration.setTimeoutConnection(timeoutConnection);
 			int timeoutSocket = ClientConfiguration._getIntValue(name, "http.timeoutSocket", context, 50000);
 			log.append(",http.timeoutSocket=").append(timeoutSocket);

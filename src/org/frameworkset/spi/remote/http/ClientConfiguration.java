@@ -368,7 +368,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 					clientConfiguration.setConnectionRequestTimeout(5000);
 					clientConfiguration.setTimeToLive(3600000);
 					clientConfiguration.setEvictExpiredConnections(true);
-					clientConfiguration.setRetryTime(-1);
+					clientConfiguration.setRetryTime(3);
 					clientConfiguration.setRetryInterval(-1);
 					clientConfiguration.setMaxLineLength(Integer.MAX_VALUE);
 					clientConfiguration.setMaxHeaderCount(Integer.MAX_VALUE);

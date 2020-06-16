@@ -42,6 +42,7 @@ public class HealthCheckGetProperties implements GetProperties {
 
 	@Override
 	public Object getExternalObjectProperty(String property) {
+		/**
 		if(property.endsWith("http.automaticRetriesDisabled") || property.endsWith("http.evictExpiredConnections"))
 			return true;
 		else if(property.endsWith("http.staleConnectionCheckEnabled")){
@@ -51,8 +52,8 @@ public class HealthCheckGetProperties implements GetProperties {
 				|| property.endsWith("http.retryInterval")
 				|| property.endsWith("http.validateAfterInactivity")){
 			return -1;
-		}
-		else if(property.endsWith("http.defaultMaxPerRoute"))
+		}*/
+		if(property.endsWith("http.defaultMaxPerRoute"))
 			return 50;
 		else if(property.endsWith("http.maxTotal")){
 			return 500;
@@ -67,15 +68,15 @@ public class HealthCheckGetProperties implements GetProperties {
 
 	@Override
 	public String getExternalPropertyWithNS(String namespace, String property) {
-		if(property.endsWith("http.customHttpRequestRetryHandler"))
-			return null;
+//		if(property.endsWith("http.customHttpRequestRetryHandler"))
+//			return null;
 		return context.getExternalPropertyWithNS(namespace,property);
 	}
 
 	@Override
 	public String getExternalPropertyWithNS(String namespace, String property, String defaultValue) {
-		if(property.endsWith("http.customHttpRequestRetryHandler"))
-			return null;
+//		if(property.endsWith("http.customHttpRequestRetryHandler"))
+//			return null;
 		return context.getExternalPropertyWithNS(namespace,property,defaultValue);
 	}
 

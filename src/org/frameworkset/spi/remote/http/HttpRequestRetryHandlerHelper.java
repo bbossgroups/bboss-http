@@ -15,7 +15,6 @@ package org.frameworkset.spi.remote.http;
  * limitations under the License.
  */
 
-import org.apache.http.client.HttpRequestRetryHandler;
 import org.apache.http.protocol.HttpContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,19 +29,52 @@ import java.io.IOException;
  * @author biaoping.yin
  * @version 1.0
  */
-public class HttpRequestRetryHandlerHelper implements HttpRequestRetryHandler {
+public class HttpRequestRetryHandlerHelper extends org.apache.http.impl.client.DefaultHttpRequestRetryHandler {
 	private static Logger logger = LoggerFactory.getLogger(DefaultHttpRequestRetryHandler.class);
 	private CustomHttpRequestRetryHandler httpRequestRetryHandler;
 	private ClientConfiguration configuration ;
 	public HttpRequestRetryHandlerHelper(CustomHttpRequestRetryHandler httpRequestRetryHandler,ClientConfiguration configuration){
+		super(configuration.getRetryTime(),false);
 		this.httpRequestRetryHandler = httpRequestRetryHandler;
 		this.configuration = configuration;
 	}
 
 	@Override
 	public boolean retryRequest(IOException exception, int executionCount, HttpContext context) {
+		if(httpRequestRetryHandler != null){
+			if (executionCount > configuration.getRetryTime()) {
+//			logger.warn("Maximum tries[" + configuration.getRetryTime() + "] reached for client http pool ");
+				return false;
+			}
+			if(httpRequestRetryHandler.retryRequest(exception,executionCount,context,configuration)) {
+				if (configuration.getRetryInterval() > 0) {
+					try {
+						Thread.sleep(configuration.getRetryInterval());
+					} catch (InterruptedException e1) {
+						return false;
+					}
+				}
+//			if(logger.isWarnEnabled())
+//				logger.warn(new StringBuilder().append(exception.getClass().getName()).append(" on ")
+//					.append(executionCount).append(" call").toString());
+				return true;
+			}
+			return false;
+		}
+		else if(super.retryRequest(exception,executionCount,context)){
+			if (configuration.getRetryInterval() > 0) {
+				try {
+					Thread.sleep(configuration.getRetryInterval());
+				} catch (InterruptedException e1) {
+					return false;
+				}
+			}
+			return true;
+		}
+		return false;
+		/**
 		if (executionCount > configuration.getRetryTime()) {
-			logger.warn("Maximum tries[" + configuration.getRetryTime() + "] reached for client http pool ");
+//			logger.warn("Maximum tries[" + configuration.getRetryTime() + "] reached for client http pool ");
 			return false;
 		}
 		if(httpRequestRetryHandler.retryRequest(exception,executionCount,context,configuration)) {
@@ -53,10 +85,13 @@ public class HttpRequestRetryHandlerHelper implements HttpRequestRetryHandler {
 					return false;
 				}
 			}
-			logger.warn(new StringBuilder().append(exception.getClass().getName()).append(" on ")
-					.append(executionCount).append(" call").toString());
+//			if(logger.isWarnEnabled())
+//				logger.warn(new StringBuilder().append(exception.getClass().getName()).append(" on ")
+//					.append(executionCount).append(" call").toString());
 			return true;
 		}
 		return false;
+		 */
+//		return false;
 	}
 }

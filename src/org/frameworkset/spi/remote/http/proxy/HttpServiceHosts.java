@@ -101,12 +101,12 @@ public class HttpServiceHosts {
 
 	public boolean reachEnd(int tryCount){
 		if(!hasRouting) {
-			return tryCount >= serversList.size();
+			return tryCount >= serversList.size() - 1;
 		}
 		else{
 			try {
 				routingFilterReadLock.lock();
-				return tryCount >= routingFilter.size();
+				return tryCount >= routingFilter.size() - 1;
 			}
 			finally {
 				routingFilterReadLock.unlock();

@@ -17,11 +17,8 @@ package org.frameworkset.spi.remote.http;
 
 import org.apache.http.protocol.HttpContext;
 
-import javax.net.ssl.SSLException;
 import java.io.IOException;
-import java.io.InterruptedIOException;
-import java.net.ConnectException;
-import java.net.UnknownHostException;
+import java.net.SocketException;
 
 /**
  * <p>Description: </p>
@@ -31,7 +28,7 @@ import java.net.UnknownHostException;
  * @author biaoping.yin
  * @version 1.0
  */
-public class DefaultHttpRequestRetryHandler implements CustomHttpRequestRetryHandler {
+public class SocketExceptionHttpRequestRetryHandler extends DefaultHttpRequestRetryHandler{
 
 
 	/**
@@ -44,30 +41,14 @@ public class DefaultHttpRequestRetryHandler implements CustomHttpRequestRetryHan
 	 * otherwise
 	 */
 	public boolean retryRequest(IOException exception, int executionCount, HttpContext context, ClientConfiguration configuration) {
+		if (super.retryRequest(  exception,   executionCount,   context,   configuration)) {
+			return true;
+		}
+		else if(exception instanceof SocketException){
 
-		/**
-		 * Arrays.asList(
-		 *                 InterruptedIOException.class,
-		 *                 UnknownHostException.class,
-		 *                 ConnectException.class,
-		 *                 SSLException.class));
-		 */
-		if(exception instanceof InterruptedIOException ||
-			exception instanceof UnknownHostException||
-			exception instanceof ConnectException ||
-			exception instanceof SSLException)
-			return false;
+				return true;
 
-//		if (exception instanceof HttpHostConnectException     //NoHttpResponseException 重试
-//				|| exception instanceof ConnectTimeoutException //连接超时重试
-//				|| exception instanceof UnknownHostException
-//				|| exception instanceof NoHttpResponseException
-////              || exception instanceof SocketTimeoutException    //响应超时不重试，避免造成业务数据不一致
-//		) {
-//
-//			return true;
-//		}
-
-		return true;
+		}
+		return false;
 	}
 }

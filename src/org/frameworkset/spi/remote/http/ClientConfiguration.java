@@ -1316,24 +1316,25 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		}
 	}
 	private void buildRetryHandler(HttpClientBuilder builder) {
-		if (getRetryTime() > 0) {
+		if(automaticRetriesDisabled) {
+			builder.disableAutomaticRetries();
+			return ;
+		}
+
+		if (getRetryTime() > 0 ) {
 			CustomHttpRequestRetryHandler customHttpRequestRetryHandler = null;
 			if (this.customHttpRequestRetryHandler != null && !this.customHttpRequestRetryHandler.trim().equals("")) {
 				try {
 					customHttpRequestRetryHandler = (CustomHttpRequestRetryHandler) Class.forName(this.customHttpRequestRetryHandler).newInstance();
 				} catch (Exception e) {
 					logger.error("Create CustomHttpRequestRetryHandler[" + this.customHttpRequestRetryHandler + "] failed:", e);
-					customHttpRequestRetryHandler = defaultHttpRequestRetryHandler;
+					customHttpRequestRetryHandler = null;
 				}
-			} else {
-				customHttpRequestRetryHandler = defaultHttpRequestRetryHandler;
 			}
 			HttpRequestRetryHandlerHelper httpRequestRetryHandlerHelper = new HttpRequestRetryHandlerHelper(customHttpRequestRetryHandler, this);
 			builder.setRetryHandler(httpRequestRetryHandlerHelper);
 		}
-		else if(automaticRetriesDisabled){
-			builder.disableAutomaticRetries();
-		}
+
 	}
 
 	public HttpClient _getHttpclient() {

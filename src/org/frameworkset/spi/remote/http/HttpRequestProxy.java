@@ -534,8 +534,18 @@ public class HttpRequestProxy {
                     break;
                 }
                 catch (ClientProtocolException ex){
-                    throw new HttpProxyRequestException(new StringBuilder().append("Head Request[").append(url)
+                    httpAddress.setStatus(1);
+                    e = ex;
+                    if(logger.isErrorEnabled())
+                        logger.error(new StringBuilder().append("Head Request[").append(url)
                             .append("] handle failed: must use http/https protocol port such as 9200,do not use other transport such as 9300.").toString(),ex);
+                    if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
+                        triesCount++;
+                        continue;
+                    } else {
+                        break;
+                    }
+
                 }
 
                 catch (Exception ex) {
@@ -1126,8 +1136,19 @@ public class HttpRequestProxy {
 					break;
 				}
 				catch (ClientProtocolException ex){
-					throw new HttpProxyRequestException(new StringBuilder().append("Post Request[").append(url)
+                    httpAddress.setStatus(1);
+                    e = ex;
+                    if(logger.isErrorEnabled())
+                        logger.error(new StringBuilder().append("Post Request[").append(url)
 							.append("] handle failed: must use http/https protocol port such as 9200,do not use other transport such as 9300.").toString(),ex);
+                    if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
+                        triesCount++;
+                        continue;
+                    } else {
+                        break;
+                    }
+//					throw new HttpProxyRequestException(new StringBuilder().append("Post Request[").append(url)
+//							.append("] handle failed: must use http/https protocol port such as 9200,do not use other transport such as 9300.").toString(),ex);
 				}
 
 				catch (Exception ex) {
@@ -1952,8 +1973,19 @@ public class HttpRequestProxy {
                     break;
                 }
                 catch (ClientProtocolException ex){
-                    throw new HttpProxyRequestException(new StringBuilder().append("Put request[").append(url)
-                            .append("] handle failed: must use http/https protocol port such as 9200,do not use other transport such as 9300.").toString(),ex);
+                    httpAddress.setStatus(1);
+                    e = ex;
+                    if(logger.isErrorEnabled())
+                        logger.error(new StringBuilder().append("Put request[").append(url)
+                                .append("] handle failed: must use http/https protocol port such as 9200,do not use other transport such as 9300.").toString(),ex);
+                    if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
+                        triesCount++;
+                        continue;
+                    } else {
+                        break;
+                    }
+//					throw new HttpProxyRequestException(new StringBuilder().append("Put request[").append(url)
+//                            .append("] handle failed: must use http/https protocol port such as 9200,do not use other transport such as 9300.").toString(),ex);
                 }
 
                 catch (Exception ex) {
@@ -2346,8 +2378,19 @@ public class HttpRequestProxy {
                     break;
                 }
                 catch (ClientProtocolException ex){
-                    throw new HttpProxyRequestException(new StringBuilder().append("Delete Request[").append(url)
-                            .append("] handle failed: must use http/https protocol port such as 9200,do not use other transport such as 9300.").toString(),ex);
+                    httpAddress.setStatus(1);
+                    e = ex;
+                    if(logger.isErrorEnabled())
+                        logger.error(new StringBuilder().append("Delete request[").append(url)
+                                .append("] handle failed: must use http/https protocol port such as 9200,do not use other transport such as 9300.").toString(),ex);
+                    if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
+                        triesCount++;
+                        continue;
+                    } else {
+                        break;
+                    }
+//                    throw new HttpProxyRequestException(new StringBuilder().append("Delete Request[").append(url)
+//                            .append("] handle failed: must use http/https protocol port such as 9200,do not use other transport such as 9300.").toString(),ex);
                 }
 
                 catch (Exception ex) {
@@ -2658,8 +2701,19 @@ public class HttpRequestProxy {
                     break;
                 }
                 catch (ClientProtocolException ex){
-                    throw new HttpProxyRequestException(new StringBuilder().append("Post Request[").append(url)
-                            .append("] handle failed: must use http/https protocol port such as 9200,do not use other transport such as 9300.").toString(),ex);
+                    httpAddress.setStatus(1);
+                    e = ex;
+                    if(logger.isErrorEnabled())
+                        logger.error(new StringBuilder().append("Post request[").append(url)
+                                .append("] handle failed: must use http/https protocol port such as 9200,do not use other transport such as 9300.").toString(),ex);
+                    if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
+                        triesCount++;
+                        continue;
+                    } else {
+                        break;
+                    }
+//                    throw new HttpProxyRequestException(new StringBuilder().append("Post Request[").append(url)
+//                            .append("] handle failed: must use http/https protocol port such as 9200,do not use other transport such as 9300.").toString(),ex);
                 }
 
                 catch (Exception ex) {
@@ -2886,8 +2940,19 @@ public class HttpRequestProxy {
                     break;
                 }
                 catch (ClientProtocolException ex){
-                    throw new HttpProxyRequestException(new StringBuilder().append("Post Request[").append(url)
-                            .append("] handle failed: must use http/https protocol port such as 9200,do not use other transport such as 9300.").toString(),ex);
+                    httpAddress.setStatus(1);
+                    e = ex;
+                    if(logger.isErrorEnabled())
+                        logger.error(new StringBuilder().append("Post request[").append(url)
+                                .append("] handle failed: must use http/https protocol port such as 9200,do not use other transport such as 9300.").toString(),ex);
+                    if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
+                        triesCount++;
+                        continue;
+                    } else {
+                        break;
+                    }
+//                    throw new HttpProxyRequestException(new StringBuilder().append("Post Request[").append(url)
+//                            .append("] handle failed: must use http/https protocol port such as 9200,do not use other transport such as 9300.").toString(),ex);
                 }
 
                 catch (Exception ex) {

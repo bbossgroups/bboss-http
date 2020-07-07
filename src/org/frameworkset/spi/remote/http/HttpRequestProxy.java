@@ -33,6 +33,8 @@ import java.nio.charset.Charset;
 import java.util.*;
 import java.util.Map.Entry;
 
+import static org.frameworkset.spi.remote.http.HttpRequestUtil.object2json;
+
 /**
  * @author yinbp
  * @Date:2016-11-20 11:39:59
@@ -2496,30 +2498,30 @@ public class HttpRequestProxy {
     }
     public static String sendJsonBody(String poolname,Object requestBody, String url) throws HttpProxyRequestException {
 
-        return  sendBody(   poolname, SimpleStringUtil.object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON);
+        return  sendBody(   poolname, object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON);
     }
 
     public static <T> T sendJsonBody(String poolname,Object requestBody, String url,Class<T> resultType) throws HttpProxyRequestException {
 
-        return  sendBody(   poolname, SimpleStringUtil.object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON,  resultType);
+        return  sendBody(   poolname, object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON,  resultType);
     }
 
     public static <T> List<T> sendJsonBodyForList(String poolname,Object requestBody, String url,Class<T> resultType) throws HttpProxyRequestException {
 
-        return  sendBodyForList(   poolname, SimpleStringUtil.object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON,  resultType);
+        return  sendBodyForList(   poolname, object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON,  resultType);
     }
 	public static <T> List<T> sendJsonBodyForList(Object requestBody, String url,Class<T> resultType) throws HttpProxyRequestException {
 
-		return  sendBodyForList(   (String) null, SimpleStringUtil.object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON,  resultType);
+		return  sendBodyForList(   (String) null, object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON,  resultType);
 	}
     public static <T> Set<T> sendJsonBodyForSet(String poolname,Object requestBody, String url,Class<T> resultType) throws HttpProxyRequestException {
 
-        return  sendBodyForSet(   poolname, SimpleStringUtil.object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON,  resultType);
+        return  sendBodyForSet(   poolname, object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON,  resultType);
     }
 
     public static <K,T> Map<K,T> sendJsonBodyForMap(String poolname,Object requestBody, String url,Class<K> keyType,Class<T> resultType) throws HttpProxyRequestException {
 
-        return  sendBodyForMap(   poolname, SimpleStringUtil.object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON, keyType, resultType);
+        return  sendBodyForMap(   poolname, object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON, keyType, resultType);
     }
     public static String sendStringBody(String poolname,String requestBody, String url) throws HttpProxyRequestException {
         return  sendBody(  poolname,  requestBody,   url,   null,ContentType.create(
@@ -2529,7 +2531,7 @@ public class HttpRequestProxy {
 
     public static String sendJsonBody(String poolname, Object requestBody, String url, Map<String, String> headers) throws HttpProxyRequestException {
 
-        return  sendBody(  poolname, SimpleStringUtil.object2json(requestBody),   url,   headers,ContentType.APPLICATION_JSON);
+        return  sendBody(  poolname, object2json(requestBody),   url,   headers,ContentType.APPLICATION_JSON);
     }
     public static String sendJsonBody(String poolname, String requestBody, String url, Map<String, String> headers) throws HttpProxyRequestException {
 
@@ -2560,13 +2562,14 @@ public class HttpRequestProxy {
 
     public static String sendJsonBody(Object requestBody, String url) throws HttpProxyRequestException {
 
-        return  sendBody( "default", SimpleStringUtil.object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON);
+        return  sendBody( "default", object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON);
     }
 
     public static <T> T sendJsonBody(Object requestBody, String url,Class<T> resultType) throws HttpProxyRequestException {
 
-        return  sendBody( "default", SimpleStringUtil.object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON,resultType);
+        return  sendBody( "default", object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON,resultType);
     }
+
 
     public static String sendStringBody(String requestBody, String url) throws HttpProxyRequestException {
         return  sendBody("default",  requestBody,   url,   null,ContentType.create(

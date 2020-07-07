@@ -1462,10 +1462,21 @@ public class HttpRequestUtil {
 
         return  sendBody(   poolname, requestBody,   url,   null,ContentType.APPLICATION_JSON);
     }
+    public static String object2json(Object data){
+        if(data == null){
+            return null;
+        }
+        if(data instanceof String){
+            return (String)data;
+        }
+        else{
+            return SimpleStringUtil.object2json(data);
+        }
 
+    }
     public static String sendJsonBody(String poolname,Object requestBody, String url) throws Exception {
 
-        return  sendBody(   poolname, SimpleStringUtil.object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON);
+        return  sendBody(   poolname, object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON);
     }
 
     public static String sendStringBody(String poolname,String requestBody, String url) throws Exception {
@@ -1476,7 +1487,7 @@ public class HttpRequestUtil {
 
     public static String sendJsonBody(String poolname, Object requestBody, String url, Map<String, String> headers) throws Exception {
 
-        return  sendBody(  poolname, SimpleStringUtil.object2json(requestBody),   url,   headers,ContentType.APPLICATION_JSON);
+        return  sendBody(  poolname, object2json(requestBody),   url,   headers,ContentType.APPLICATION_JSON);
     }
     public static String sendJsonBody(String poolname, String requestBody, String url, Map<String, String> headers) throws Exception {
 
@@ -1494,7 +1505,7 @@ public class HttpRequestUtil {
 
     public static String sendJsonBody(Object requestBody, String url) throws Exception {
 
-        return  sendBody( "default", SimpleStringUtil.object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON);
+        return  sendBody( "default", object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON);
     }
 
     public static String sendStringBody(String requestBody, String url) throws Exception {

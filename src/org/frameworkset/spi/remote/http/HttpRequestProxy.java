@@ -3050,7 +3050,7 @@ public class HttpRequestProxy {
     public static <T> List<T> converJson2List(HttpEntity entity, Class<T> clazz) throws IOException {
         InputStream inputStream = null;
 
-        List<T> var4;
+        List<T> var4 = null;
         try {
             inputStream = entity.getContent();
             var4 = SimpleStringUtil.json2ListObject(inputStream, clazz);

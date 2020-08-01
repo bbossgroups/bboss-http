@@ -17,6 +17,8 @@ package org.frameworkset.spi.remote.http;
 
 import org.frameworkset.spi.assemble.GetProperties;
 
+import java.util.Map;
+
 /**
  * <p>Description: </p>
  * <p></p>
@@ -33,6 +35,11 @@ public class HealthCheckGetProperties implements GetProperties {
 	@Override
 	public String getExternalProperty(String property) {
 		return context.getExternalProperty(property);
+	}
+
+	@Override
+	public String getSystemEnvProperty(String property) {
+		return context.getSystemEnvProperty(property);
 	}
 
 	@Override
@@ -67,6 +74,11 @@ public class HealthCheckGetProperties implements GetProperties {
 	}
 
 	@Override
+	public boolean getExternalBooleanProperty(String property, boolean defaultValue) {
+		return context.getExternalBooleanProperty(property, defaultValue);
+	}
+
+	@Override
 	public String getExternalPropertyWithNS(String namespace, String property) {
 //		if(property.endsWith("http.customHttpRequestRetryHandler"))
 //			return null;
@@ -88,5 +100,10 @@ public class HealthCheckGetProperties implements GetProperties {
 	@Override
 	public Object getExternalObjectPropertyWithNS(String namespace, String property, Object defaultValue) {
 		return context.getExternalObjectPropertyWithNS(namespace,property,defaultValue);
+	}
+
+	@Override
+	public Map getAllExternalProperties() {
+		return context.getAllExternalProperties();
 	}
 }

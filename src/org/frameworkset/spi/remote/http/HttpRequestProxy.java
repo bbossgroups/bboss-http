@@ -49,6 +49,10 @@ public class HttpRequestProxy {
         HttpRequestUtil.startHttpPools(configs);
     }
 
+    public static void startHttpPoolsFromApollo(String namespaces){
+        HttpRequestUtil.startHttpPoolsFromApollo(namespaces);
+    }
+
 
 
 

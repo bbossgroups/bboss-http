@@ -476,6 +476,61 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		else
 			return org.apache.http.conn.ssl.SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER;
 	}
+	public static void startHttpPoolsFromApollo(String namespaces){
+		if(namespaces == null || namespaces.equals(""))
+		{
+			if(logger.isWarnEnabled()) {
+				StringBuilder message = new StringBuilder();
+				message.append("Ignore start HttpPools from Apollo: namespaces is empty!");
+				logger.warn(message.toString());
+			}
+			return;
+		}
+		PropertiesContainer propertiesContainer = new PropertiesContainer();
+		propertiesContainer.addConfigPropertiesFromApollo(namespaces);
+		//http.poolNames = scedule,elastisearch
+		String poolNames = propertiesContainer.getProperty("http.poolNames");
+		if(poolNames == null){
+			//load default http pool config
+			try {
+				makeDefualtClientConfiguration(null,"default", propertiesContainer);
+				String health = ClientConfiguration._getStringValue("default", "http.health", propertiesContainer, null);
+				if(health != null && !health.equals("")){
+					makeDefualtClientConfiguration(getHealthPoolName(null),"default", propertiesContainer);
+				}
+			}
+			catch (Exception e){
+				if(logger.isErrorEnabled()) {
+					StringBuilder message = new StringBuilder();
+					message.append("Start HttpPools from Apollo[").append(namespaces).append("] failed:");
+					logger.error(message.toString(), e);
+				}
+			}
+		}
+		else{
+			String[] poolNames_ = poolNames.split(",");
+			for(String poolName:poolNames_){
+				poolName = poolName.trim();
+				if(poolName.equals("")){
+					poolName = "default";
+				}
+				try {
+					makeDefualtClientConfiguration(null,poolName, propertiesContainer);
+					String health = ClientConfiguration._getStringValue(poolName, "http.health", propertiesContainer, null);
+					if(health != null && !health.equals("")){
+						makeDefualtClientConfiguration(getHealthPoolName(poolName),poolName, propertiesContainer);
+					}
+				}
+				catch (Exception e){
+					if(logger.isErrorEnabled()) {
+						StringBuilder message = new StringBuilder();
+						message.append("Start HttpPools from Apollo[").append(namespaces).append("] failed:");
+						logger.error(message.toString(), e);
+					}
+				}
+			}
+		}
+	}
 	public static void startHttpPools(String configFile){
 		if(configFile == null || configFile.equals(""))
 		{

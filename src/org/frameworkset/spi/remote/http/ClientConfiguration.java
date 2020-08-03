@@ -477,6 +477,9 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 			return org.apache.http.conn.ssl.SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER;
 	}
 	public static void startHttpPoolsFromApollo(String namespaces){
+		startHttpPoolsFromApollo(namespaces,(String) null);
+	}
+	public static void startHttpPoolsFromApollo(String namespaces,String configChangeListener){
 		if(namespaces == null || namespaces.equals(""))
 		{
 			if(logger.isWarnEnabled()) {
@@ -487,7 +490,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 			return;
 		}
 		PropertiesContainer propertiesContainer = new PropertiesContainer();
-		propertiesContainer.addConfigPropertiesFromApollo(namespaces);
+		propertiesContainer.addConfigPropertiesFromApollo(namespaces,configChangeListener);
 		//http.poolNames = scedule,elastisearch
 		String poolNames = propertiesContainer.getProperty("http.poolNames");
 		if(poolNames == null){

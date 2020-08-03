@@ -64,6 +64,10 @@ public class HttpRequestUtil {
         ClientConfiguration.startHttpPoolsFromApollo(namespaces);
     }
 
+    public static void startHttpPoolsFromApollo(String namespaces,String configChangeListener){
+        ClientConfiguration.startHttpPoolsFromApollo(namespaces,configChangeListener);
+    }
+
     public static void startHttpPools(Map<String,Object>  configs){
         ClientConfiguration.startHttpPools(  configs);
     }

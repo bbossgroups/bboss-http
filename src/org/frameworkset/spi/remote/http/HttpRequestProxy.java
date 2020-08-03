@@ -52,7 +52,9 @@ public class HttpRequestProxy {
     public static void startHttpPoolsFromApollo(String namespaces){
         HttpRequestUtil.startHttpPoolsFromApollo(namespaces);
     }
-
+    public static void startHttpPoolsFromApollo(String namespaces,String configChangeListener){
+        HttpRequestUtil.startHttpPoolsFromApollo(namespaces,configChangeListener);
+    }
 
 
 

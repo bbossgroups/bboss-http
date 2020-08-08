@@ -23,7 +23,10 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 
 /**
- * <p>Description: 从外部服务注册中心监听服务地址变更后调用本组件handleDiscoverHosts方法刷新负载组件地址清单</p>
+ * <p>Description:
+ * 1.从外部服务注册中心监听服务地址变更后调用本组件handleDiscoverHosts方法刷新负载组件地址清单
+ * 2.切换路由组，例如主备切换，灰度生产切换
+ * </p>
  * <p></p>
  * <p>Copyright (c) 2018</p>
  * @Date 2019/6/20 12:47
@@ -32,13 +35,56 @@ import java.util.List;
  */
 public class HttpProxyUtil {
 	private static Logger logger = LoggerFactory.getLogger(HttpProxyUtil.class);
+	public static void changeRouting(String poolName,String newCurrentRounte){
+		if(newCurrentRounte == null)
+			return;
+		if(poolName == null)
+			poolName = "default";
+		try {
+			ClientConfiguration clientConfiguration = ClientConfiguration.getClientConfiguration(poolName);
+			if (clientConfiguration != null) {
+				HttpHostDiscover httpHostDiscover = null;
+				HttpServiceHosts httpServiceHosts = clientConfiguration.getHttpServiceHosts();
+				httpHostDiscover = httpServiceHosts.getHostDiscover();
+				if (httpHostDiscover == null) {
+					if (logger.isInfoEnabled()) {//Registry default HttpHostDiscover
+						logger.info("Registry default HttpHostDiscover to httppool[{}]", poolName);
+					}
+					synchronized (HttpProxyUtil.class) {
+						httpHostDiscover = httpServiceHosts.getHostDiscover();
+						if (httpHostDiscover == null) {
+							httpHostDiscover = new DefaultHttpHostDiscover();
+							httpHostDiscover.setHttpServiceHosts(httpServiceHosts);
+							httpServiceHosts.setHostDiscover(httpHostDiscover);
+						}
+					}
+				}
+				if (httpHostDiscover != null) {
 
+					httpHostDiscover.changeRouting(newCurrentRounte);
+				}
+			}
+		} catch (Exception e) {
+			if (logger.isInfoEnabled())
+				logger.info(new StringBuilder().append("Change Routing ")
+						.append(poolName).append(", new routing[").append(newCurrentRounte).append("]  failed:").toString(),e);
+		}
+	}
 	/**
 	 *
-	 * @param poolName
-	 * @param hosts
+	 * @param poolName 服务组名称
+	 * @param hosts 新的主机节点信息
 	 */
 	public static void handleDiscoverHosts(String poolName, List<HttpHost> hosts){
+		handleDiscoverHosts(  poolName,  hosts,(String)null);
+	}
+	/**
+	 *
+	 * @param poolName 服务组名称
+	 * @param hosts 新的主机节点信息
+	 * @param newCurrentRounte 新的路由组
+	 */
+	public static void handleDiscoverHosts(String poolName, List<HttpHost> hosts,String newCurrentRounte){
 		if(poolName == null)
 			poolName = "default";
 		try {
@@ -74,25 +120,25 @@ public class HttpProxyUtil {
 								return;
 							}
 						}
-						httpHostDiscover.handleDiscoverHosts(hosts);
+						httpHostDiscover.handleDiscoverHosts(hosts,newCurrentRounte);
 					}
 				}
 			}
 		} catch (Exception e) {
-			if (logger.isInfoEnabled())
-				logger.info(new StringBuilder().append("Discovery ")
-						.append(poolName).append(" servers failed:").toString(),e);
+			if (logger.isInfoEnabled()) {
+				StringBuilder message = new StringBuilder();
+				if(newCurrentRounte != null) {
+					message.append("Change Routing ")
+							.append(poolName).append(", new routing[").append(newCurrentRounte).append("] and ");
+				}
+				message.append("Discovery ")
+						.append(poolName).append(" servers failed:");
+				logger.info(message.toString(), e);
+			}
 		}
 
 
 	}
-//	public static HttpHostDiscover getHttpHostDiscover(String poolName){
-//		ClientConfiguration clientConfiguration = ClientConfiguration.getClientConfiguration(poolName);
-//		if (clientConfiguration != null){
-//			HttpServiceHosts httpServiceHosts = clientConfiguration.getHttpServiceHosts();
-//			return httpServiceHosts != null?httpServiceHosts.getHostDiscover():null;
-//		}
-//		return null;
-//	}
+
 
 }

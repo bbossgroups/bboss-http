@@ -131,7 +131,7 @@ public class HttpServiceHosts {
 				addressMap.put(esAddress.getAddress(), esAddress);
 			}
 			//第一次强制分组
-			routingGroup(false);
+			routingGroup(false,null);
 		}
 		serversList = new RoundRobinList(this,addressList);
 //		if (httpServiceHostsConfig.getAuthAccount() != null && !httpServiceHostsConfig.getAuthAccount().equals("")) {
@@ -270,14 +270,18 @@ public class HttpServiceHosts {
 		}
 	}
 
-	public void routingGroup(boolean changed){
+	public void routingGroup(boolean changed, String newCurrentRounte){
 		if(this.routing == null || this.routing.equals("")){
 			return;
 		}
 		if(!changed)
-			this.routingFilter = new RoutingFilter(this,this.addressList,routing);
+			if(newCurrentRounte == null)
+				this.routingFilter = new RoutingFilter(this,this.addressList,routing);
+			else
+				this.routingFilter = new RoutingFilter(this,this.addressList,newCurrentRounte);
+
 		else{
-			RoutingFilter temp = new RoutingFilter(this,this.addressList,routing);
+			RoutingFilter temp = new RoutingFilter(this,this.addressList,newCurrentRounte == null?routing:newCurrentRounte);
 			try {
 				routingFilterWriteLock.lock();
 				routingFilter = temp;

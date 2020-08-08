@@ -40,6 +40,21 @@ public abstract class HttpHostDiscover extends Thread{
 	 * @param _hosts
 	 */
 	public synchronized void handleDiscoverHosts(List<HttpHost> _hosts){
+		handleDiscoverHosts( _hosts,(String)null);
+	}
+
+	/**
+	 * 路由组发生变化时，切换路由组
+	 * @param newCurrentRounte
+	 */
+	public synchronized void changeRouting(String newCurrentRounte){
+		httpServiceHosts.routingGroup(false,newCurrentRounte);
+	}
+	/**
+	 * 主动定时服务发现和被动服务发现api
+	 * @param _hosts
+	 */
+	public synchronized void handleDiscoverHosts(List<HttpHost> _hosts,String newCurrentRounte){
 		List<HttpHost> hosts = null;
 		if(_hosts != null && _hosts.size() > 0)
 			hosts = new ArrayList<HttpHost>(_hosts);
@@ -55,8 +70,8 @@ public abstract class HttpHostDiscover extends Thread{
 		for(int i = 0; hosts !=null && i < hosts.size();i ++){
 			httpHost = hosts.get(i);
 			HttpAddress address = new HttpAddress(httpHost.getOrigineAddress(),
-					                              httpHost.getHostAddress(),
-					                              httpHost.getRouting(),health);
+					httpHost.getHostAddress(),
+					httpHost.getRouting(),health);
 //			if(address.getRouting() == null || address.getRouting().equals(""))
 //				address.setRouting(httpHost.getRouting());
 			address.setAttributes(httpHost.getAttributes());
@@ -78,7 +93,10 @@ public abstract class HttpHostDiscover extends Thread{
 		httpServiceHosts.handleRemoved( hosts);
 		//如果数据有变化，则根据routing规则对地址进行重新分组
 		if(changed) {
-			httpServiceHosts.routingGroup(true);
+			httpServiceHosts.routingGroup(true,newCurrentRounte);
+		}
+		else if(newCurrentRounte != null){
+			httpServiceHosts.routingGroup(false,newCurrentRounte);
 		}
 	}
 	protected abstract List<HttpHost> discover(HttpServiceHostsConfig httpServiceHostsConfig, ClientConfiguration configuration, GetProperties context);

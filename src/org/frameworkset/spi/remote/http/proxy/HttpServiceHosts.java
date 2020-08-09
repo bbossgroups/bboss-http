@@ -270,8 +270,13 @@ public class HttpServiceHosts {
 		}
 	}
 
+	/**
+	 * routing必须在配置文件中指定，否则中间不允许切换
+	 * @param changed
+	 * @param newCurrentRounte
+	 */
 	public void routingGroup(boolean changed, String newCurrentRounte){
-		if(this.routing == null || this.routing.equals("")){
+		if(this.routing == null || this.routing.equals("")){//routing必须在配置文件中指定，否则中间不允许切换
 			return;
 		}
 		if(!changed)

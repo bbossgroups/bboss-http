@@ -44,6 +44,7 @@ public abstract class HttpHostDiscover extends Thread{
 	}
 
 	/**
+	 * routing必须在配置文件中指定，否则中间不允许切换
 	 * 路由组发生变化时，切换路由组
 	 * @param newCurrentRounte
 	 */

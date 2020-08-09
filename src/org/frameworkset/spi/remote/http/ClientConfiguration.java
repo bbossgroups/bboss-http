@@ -54,7 +54,10 @@ import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -476,6 +479,27 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		else
 			return org.apache.http.conn.ssl.SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER;
 	}
+	public static void startHttpPoolsFromApolloAwaredChange(String namespaces){
+		String apolloAwaredChangeListener = "org.frameworkset.apollo.HttpProxyConfigChangeListener";
+		try {
+			Class t = Class.forName(apolloAwaredChangeListener);
+		} catch (ClassNotFoundException e) {
+			StringBuilder msg = new StringBuilder();
+
+
+			msg.append("Start HttpPools From Apollo by AwaredChange failed: Please add compile dependency to build.gradle in gralde project: \r\ncompile \"com.bbossgroups.plugins:bboss-plugin-httpproxy-apollo:5.7.7\"")
+					.append(" \r\nor Add compile dependency to pom.xml in maven project: \r\n    " )
+					.append( "    <dependency>\n"  )
+					.append("            <groupId>com.bbossgroups.plugins</groupId>\n"  )
+					.append("            <artifactId>bboss-plugin-httpproxy-apollo</artifactId>\n"  )
+					.append("            <version>5.7.7</version>\n"  )
+					.append("        </dependency>");
+			logger.error(msg.toString(),e);
+			throw new IllegalArgumentException(msg.toString(),e);
+		}
+
+		startHttpPoolsFromApollo(namespaces,apolloAwaredChangeListener);
+	}
 	public static void startHttpPoolsFromApollo(String namespaces){
 		startHttpPoolsFromApollo(namespaces,(String) null);
 	}
@@ -491,6 +515,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		}
 		PropertiesContainer propertiesContainer = new PropertiesContainer();
 		propertiesContainer.addConfigPropertiesFromApollo(namespaces,configChangeListener);
+		propertiesContainer.afterLoaded(propertiesContainer);
 		//http.poolNames = scedule,elastisearch
 		String poolNames = propertiesContainer.getProperty("http.poolNames");
 		if(poolNames == null){

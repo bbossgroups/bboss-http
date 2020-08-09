@@ -33,7 +33,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * <p>Description: </p>
  * <p></p>
  * <p>Copyright (c) 2018</p>
- * @Date 2019/6/17 19:08
+ * date 2019/6/17 19:08
  * @author biaoping.yin
  * @version 1.0
  */
@@ -277,14 +277,27 @@ public class HttpServiceHosts {
 		if(!changed)
 			if(newCurrentRounte == null)
 				this.routingFilter = new RoutingFilter(this,this.addressList,routing);
-			else
-				this.routingFilter = new RoutingFilter(this,this.addressList,newCurrentRounte);
+			else {
+				RoutingFilter routingFilter = new RoutingFilter(this, this.addressList, newCurrentRounte);
+				try {
+					routingFilterWriteLock.lock();
+					this.routing = newCurrentRounte;
+					this.routingFilter = routingFilter;
+				}
+				finally {
+					routingFilterWriteLock.unlock();
+				}
+			}
 
 		else{
 			RoutingFilter temp = new RoutingFilter(this,this.addressList,newCurrentRounte == null?routing:newCurrentRounte);
 			try {
 				routingFilterWriteLock.lock();
+
 				routingFilter = temp;
+				if(newCurrentRounte != null){
+					routing = newCurrentRounte;
+				}
 			}
 			finally {
 				routingFilterWriteLock.unlock();

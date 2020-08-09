@@ -32,6 +32,12 @@ public class HealthCheckGetProperties implements GetProperties {
 	public HealthCheckGetProperties(GetProperties context){
 		this.context = context;
 	}
+
+	@Override
+	public void reset() {
+		this.context.reset();
+	}
+
 	@Override
 	public String getExternalProperty(String property) {
 		return context.getExternalProperty(property);

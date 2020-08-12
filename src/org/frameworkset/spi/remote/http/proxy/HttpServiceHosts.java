@@ -78,7 +78,10 @@ public class HttpServiceHosts {
 			if(httpAddress == null && !this.healthCheckStarted){
 				httpAddress = serversList.getOkOrFailed();
 			}
-
+			if(httpAddress == null) {
+				String message = new StringBuilder().append("All Http Server ").append(serversList.toString()).append(" can't been connected.").toString();
+				throw new NoHttpServerException(message);
+			}
 		}
 		else{
 			try {

@@ -3017,25 +3017,30 @@ public class HttpRequestProxy {
         }
         return responseBody;
     }
-    
+    public static String handleStringResponse(String url,HttpResponse response)
+            throws ClientProtocolException, IOException {
+        int status = response.getStatusLine().getStatusCode();
+
+        if (status >= 200 && status < 300) {
+            HttpEntity entity = response.getEntity();
+            return entity != null ? EntityUtils.toString(entity) : null;
+        } else {
+            HttpEntity entity = response.getEntity();
+            if (entity != null )
+                throw new HttpProxyRequestException(new StringBuilder().append("send request to ")
+                                                            .append(url).append(" failed:")
+                                                            .append(EntityUtils.toString(entity)).toString());
+            else
+                throw new HttpProxyRequestException(new StringBuilder().append("send request to ").append(url).append(",Unexpected response status: " ).append( status).toString());
+        }
+    }
     public static String sendBody(String poolname,String requestBody, String url, Map<String, String> headers,ContentType contentType) throws HttpProxyRequestException {
     	return sendBody(  poolname,  requestBody,   url, headers,  contentType, new BaseURLResponseHandler<String>() {
 
             @Override
             public String handleResponse(final HttpResponse response)
                     throws ClientProtocolException, IOException {
-                int status = response.getStatusLine().getStatusCode();
-
-                if (status >= 200 && status < 300) {
-                    HttpEntity entity = response.getEntity();
-                    return entity != null ? EntityUtils.toString(entity) : null;
-                } else {
-                    HttpEntity entity = response.getEntity();
-                    if (entity != null )
-                        return EntityUtils.toString(entity);
-                    else
-                        throw new HttpProxyRequestException(new StringBuilder().append("Post request url:").append(url).append(",Unexpected response status: " ).append( status).toString());
-                }
+                return handleStringResponse(url, response);
             }
 
         });
@@ -3117,6 +3122,8 @@ public class HttpRequestProxy {
                 throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append( status).toString());
         }
     }
+
+
     public static <T> List<T> handleListResponse(String url,HttpResponse response, Class<T> resultType)
             throws ClientProtocolException, IOException {
         int status = response.getStatusLine().getStatusCode();

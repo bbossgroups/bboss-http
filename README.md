@@ -1,6 +1,5 @@
 
-
-# bboss http工程
+# bboss httpproxy
  bboss http  project.
  包含的功能有：
 
@@ -19,6 +18,8 @@
  3.服务容灾故障恢复
 
  4.服务自动发现（zk，etcd，consul，eureka，db，其他第三方注册中心）
+ 
+ 5.路由规则动态切换
 
  5.分组服务管理
 
@@ -38,7 +39,9 @@
 
  负载均衡器主备功能开发，如果主节点全部挂掉，请求转发到可用的备用节点，如果备用节点也挂了，就抛出异常，如果主节点恢复正常，那么请求重新发往主节点 
 
+# 开发文档
 
+https://esdoc.bbossgroups.com/#/httpproxy
 
 # 工程gradle构建运行说明：
 构建发布版本：gradle publish

@@ -43,6 +43,12 @@
 
 https://esdoc.bbossgroups.com/#/httpproxy
 
+httpproxy 案例：基于apollo进行配置管理、节点自动发现、路由规则自动切换，源码地址如下
+
+     https://gitee.com/bboss/httpproxy-apollo 
+
+     https://github.com/bbossgroups/httpproxy-apollo
+
 # 工程gradle构建运行说明：
 构建发布版本：gradle publish
 

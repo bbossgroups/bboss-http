@@ -141,7 +141,20 @@ public class HttpRequestProxy {
 
         });
     }
+    public static <D,T> D httpGetforTypeObject(String url,final Class<D> containType,final Class<T> resultType) throws HttpProxyRequestException {
+        return httpGetforTypeObject("default", url, containType, resultType);
+    }
+    public static <D,T> D httpGetforTypeObject(String poolName,String url,final Class<D> containType,final Class<T> resultType) throws HttpProxyRequestException {
+        return httpGetforString(  poolName,url, (String) null, (String) null, (Map<String, String>) null, new BaseURLResponseHandler<D>() {
 
+            @Override
+            public D handleResponse(final HttpResponse response)
+                    throws ClientProtocolException, IOException {
+                return HttpRequestProxy.handleResponse( url, response,containType, resultType);
+            }
+
+        });
+    }
     public static <K,T> Map<K,T> httpGetforMap(String poolName,String url,final Class<K> keyType,final Class<T> resultType) throws HttpProxyRequestException {
         return httpGetforString(  poolName,url, (String) null, (String) null, (Map<String, String>) null, new BaseURLResponseHandler<Map<K,T> >() {
 
@@ -2580,6 +2593,11 @@ public class HttpRequestProxy {
         return  sendBody( "default", object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON,resultType);
     }
 
+    public static <D,T> D sendJsonBody(Object requestBody, String url,Class<D> containType,Class<T> resultType) throws HttpProxyRequestException {
+
+        return  sendBody( "default", object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON,containType,resultType);
+    }
+
 
     public static String sendStringBody(String requestBody, String url) throws HttpProxyRequestException {
         return  sendBody("default",  requestBody,   url,   null,ContentType.create(
@@ -3062,6 +3080,22 @@ public class HttpRequestProxy {
         return var4;
     }
 
+    public static <D,T> D converJson(HttpEntity entity, Class<D> containType ,Class<T> clazz) throws IOException {
+        InputStream inputStream = null;
+
+        D var4;
+        try {
+            inputStream = entity.getContent();
+            if(inputStream instanceof EmptyInputStream)
+                return null;
+            var4 = SimpleStringUtil.json2TypeObject(inputStream,containType, clazz);
+        } finally {
+            inputStream.close();
+        }
+
+        return var4;
+    }
+
     public static <T> List<T> converJson2List(HttpEntity entity, Class<T> clazz) throws IOException {
         InputStream inputStream = null;
 
@@ -3181,6 +3215,26 @@ public class HttpRequestProxy {
                 throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append( status).toString());
         }
     }
+
+    public static <D,T> D handleResponse(String url,HttpResponse response,Class<D> containType, Class<T> resultType)
+            throws ClientProtocolException, IOException {
+        int status = response.getStatusLine().getStatusCode();
+
+        if (status >= 200 && status < 300) {
+            HttpEntity entity = response.getEntity();
+            return entity != null ? converJson(  entity, containType, resultType) : null;
+        } else {
+            HttpEntity entity = response.getEntity();
+            if (entity != null ) {
+                if (logger.isDebugEnabled()) {
+                    logger.debug(new StringBuilder().append("Request url:").append(url).append(",status:").append(status).toString());
+                }
+                throw new HttpProxyRequestException(EntityUtils.toString(entity));
+            }
+            else
+                throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append( status).toString());
+        }
+    }
     public static <T> T sendBody(String poolname,String requestBody, String url, Map<String, String> headers,ContentType contentType,final Class<T> resultType) throws HttpProxyRequestException {
         return sendBody(  poolname,  requestBody,   url, headers,  contentType, new BaseURLResponseHandler<T>() {
 
@@ -3192,6 +3246,36 @@ public class HttpRequestProxy {
 
         });
 
+    }
+
+    public static <D,T> D sendBody(String poolname,String requestBody, String url, Map<String, String> headers,ContentType contentType,final Class<D> containType,final Class<T> resultType) throws HttpProxyRequestException {
+        return sendBody(  poolname,  requestBody,   url, headers,  contentType, new BaseURLResponseHandler<D>() {
+
+            @Override
+            public D handleResponse(final HttpResponse response)
+                    throws ClientProtocolException, IOException {
+                return HttpRequestProxy.handleResponse( url, response, containType,resultType);
+            }
+
+        });
+
+    }
+    public static <D,T> D httpPostForTypeObject(String url, Map<String, Object> params, final Class<D> containType, final Class<T> resultType) throws HttpProxyRequestException {
+        return httpPostForTypeObject("default", url, params,  containType, resultType);
+//        return httpPostforString(  poolName,url, params, (Map<String, String>) null);
+    }
+    public static <D,T> D httpPostForTypeObject(String poolName,String url, Map<String, Object> params, final Class<D> containType, final Class<T> resultType) throws HttpProxyRequestException {
+        HttpOption httpOption = new HttpOption();
+
+        httpOption.params = params;
+
+        return httpPost(  poolName,   url,  httpOption, new BaseURLResponseHandler<D>() {
+            @Override
+            public D handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                return HttpRequestProxy.handleResponse(url,response,containType,resultType);
+            }
+        });
+//        return httpPostforString(  poolName,url, params, (Map<String, String>) null);
     }
     public static <T> List<T> sendBodyForList(String poolname,String requestBody, String url, Map<String, String> headers,ContentType contentType,final Class<T> resultType) throws HttpProxyRequestException {
         return sendBody(  poolname,  requestBody,   url, headers,  contentType, new BaseURLResponseHandler<List<T>>() {

@@ -3064,14 +3064,28 @@ public class HttpRequestProxy {
         });
         
     }
+    public static boolean entityEmpty(HttpEntity entity,InputStream inputStream) throws IOException {
+//        long contentLength = entity.getContentLength();
+//        if(contentLength <= 0){
+//            return true;
+//        }
+
+         if(inputStream instanceof EmptyInputStream)
+            return true;
+         return false;
+
+    }
     public static <T> T converJson(HttpEntity entity, Class<T> clazz) throws IOException {
         InputStream inputStream = null;
 
         T var4;
         try {
+
             inputStream = entity.getContent();
-            if(inputStream instanceof EmptyInputStream)
+            if(entityEmpty(entity,inputStream)){
                 return null;
+            }
+
             var4 = SimpleStringUtil.json2Object(inputStream, clazz);
         } finally {
             inputStream.close();
@@ -3085,9 +3099,11 @@ public class HttpRequestProxy {
 
         D var4;
         try {
+
             inputStream = entity.getContent();
-            if(inputStream instanceof EmptyInputStream)
+            if(entityEmpty(entity,inputStream)){
                 return null;
+            }
             var4 = SimpleStringUtil.json2TypeObject(inputStream,containType, clazz);
         } finally {
             inputStream.close();
@@ -3101,10 +3117,15 @@ public class HttpRequestProxy {
 
         List<T> var4 = null;
         try {
+
             inputStream = entity.getContent();
+            if(entityEmpty(entity,inputStream)){
+                return null;
+            }
             var4 = SimpleStringUtil.json2ListObject(inputStream, clazz);
         } finally {
-            inputStream.close();
+            if(inputStream != null)
+                inputStream.close();
         }
 
         return var4;
@@ -3115,7 +3136,11 @@ public class HttpRequestProxy {
 
         Set<T> var4;
         try {
+
             inputStream = entity.getContent();
+            if(entityEmpty(entity,inputStream)){
+                return null;
+            }
             var4 = SimpleStringUtil.json2LSetObject(inputStream, clazz);
         } finally {
             inputStream.close();
@@ -3129,7 +3154,11 @@ public class HttpRequestProxy {
 
         Map<K,T> var4;
         try {
+
             inputStream = entity.getContent();
+            if(entityEmpty(entity,inputStream)){
+                return null;
+            }
             var4 = SimpleStringUtil.json2LHashObject(inputStream,  keyType, beanType);
         } finally {
             inputStream.close();

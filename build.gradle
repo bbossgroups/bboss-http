@@ -176,7 +176,7 @@ sourceSets {
 }
 
 dependencies {
-	testCompile 'junit:junit:4.12'
+	testCompile 'junit:junit:4.13.1'
     compile (
              //[group: 'commons-httpclient', name: 'commons-httpclient', version: '3.1', transitive: false],
 			[group: 'com.bbossgroups', name: 'bboss-core', version: "${BBOSS_VERSION}", transitive: true],

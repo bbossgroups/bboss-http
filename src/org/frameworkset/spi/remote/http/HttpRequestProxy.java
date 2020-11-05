@@ -319,12 +319,12 @@ public class HttpRequestProxy {
                 }
                 catch (ConnectionPoolTimeoutException ex){//连接池获取connection超时，直接抛出
 
-                    e = handleConnectionPoolTimeOutException( config,ex);
+                    e = handleConnectionPoolTimeOutException( poolname,url,config,ex);
                     break;
                 }
                 catch (ConnectTimeoutException connectTimeoutException){
                     httpAddress.setStatus(1);
-                    e = handleConnectionTimeOutException(config,connectTimeoutException);
+                    e = handleConnectionTimeOutException(poolname,url,config,connectTimeoutException);
                     if (!httpServiceHosts.reachEnd(triesCount )) {//失败尝试下一个地址
                         triesCount++;
                         continue;
@@ -334,7 +334,7 @@ public class HttpRequestProxy {
                 }
 
                 catch (SocketTimeoutException ex) {
-                    e = handleSocketTimeoutException(config, ex);
+                    e = handleSocketTimeoutException(poolname,url,config, ex);
                     break;
                 }
                 catch (NoHttpServerException ex){
@@ -535,12 +535,12 @@ public class HttpRequestProxy {
                 }
                 catch (ConnectionPoolTimeoutException ex){//连接池获取connection超时，直接抛出
 
-                    e = handleConnectionPoolTimeOutException( config,ex);
+                    e = handleConnectionPoolTimeOutException( poolname,url,config,ex);
                     break;
                 }
                 catch (ConnectTimeoutException connectTimeoutException){
                     httpAddress.setStatus(1);
-                    e = handleConnectionTimeOutException(config,connectTimeoutException);
+                    e = handleConnectionTimeOutException(poolname,url,config,connectTimeoutException);
                     if (!httpServiceHosts.reachEnd(triesCount )) {//失败尝试下一个地址
                         triesCount++;
                         continue;
@@ -550,7 +550,7 @@ public class HttpRequestProxy {
                 }
 
                 catch (SocketTimeoutException ex) {
-                    e = handleSocketTimeoutException(config, ex);
+                    e = handleSocketTimeoutException(poolname,url,config, ex);
                     break;
                 }
                 catch (NoHttpServerException ex){
@@ -1137,12 +1137,12 @@ public class HttpRequestProxy {
 				}
 				catch (ConnectionPoolTimeoutException ex){//连接池获取connection超时，直接抛出
 
-					e = handleConnectionPoolTimeOutException( config,ex);
+					e = handleConnectionPoolTimeOutException( poolname,url,config,ex);
 					break;
 				}
 				catch (ConnectTimeoutException connectTimeoutException){
 					httpAddress.setStatus(1);
-					e = handleConnectionTimeOutException(config,connectTimeoutException);
+					e = handleConnectionTimeOutException(poolname,url,config,connectTimeoutException);
 					if (!httpServiceHosts.reachEnd(triesCount )) {//失败尝试下一个地址
 						triesCount++;
 						continue;
@@ -1152,7 +1152,7 @@ public class HttpRequestProxy {
 				}
 
 				catch (SocketTimeoutException ex) {
-					e = handleSocketTimeoutException(config, ex);
+					e = handleSocketTimeoutException(poolname,url,config, ex);
 					break;
 				}
 				catch (NoHttpServerException ex){
@@ -1974,12 +1974,12 @@ public class HttpRequestProxy {
                 }
                 catch (ConnectionPoolTimeoutException ex){//连接池获取connection超时，直接抛出
 
-                    e = handleConnectionPoolTimeOutException( config,ex);
+                    e = handleConnectionPoolTimeOutException( poolname,url,config,ex);
                     break;
                 }
                 catch (ConnectTimeoutException connectTimeoutException){
                     httpAddress.setStatus(1);
-                    e = handleConnectionTimeOutException(config,connectTimeoutException);
+                    e = handleConnectionTimeOutException(poolname,url,config,connectTimeoutException);
                     if (!httpServiceHosts.reachEnd(triesCount )) {//失败尝试下一个地址
                         triesCount++;
                         continue;
@@ -1989,7 +1989,7 @@ public class HttpRequestProxy {
                 }
 
                 catch (SocketTimeoutException ex) {
-                    e = handleSocketTimeoutException(config, ex);
+                    e = handleSocketTimeoutException(poolname,url,config, ex);
                     break;
                 }
                 catch (NoHttpServerException ex){
@@ -2379,12 +2379,12 @@ public class HttpRequestProxy {
                 }
                 catch (ConnectionPoolTimeoutException ex){//连接池获取connection超时，直接抛出
 
-                    e = handleConnectionPoolTimeOutException( config,ex);
+                    e = handleConnectionPoolTimeOutException( poolname,url,config,ex);
                     break;
                 }
                 catch (ConnectTimeoutException connectTimeoutException){
                     httpAddress.setStatus(1);
-                    e = handleConnectionTimeOutException(config,connectTimeoutException);
+                    e = handleConnectionTimeOutException(poolname,url,config,connectTimeoutException);
                     if (!httpServiceHosts.reachEnd(triesCount )) {//失败尝试下一个地址
                         triesCount++;
                         continue;
@@ -2394,7 +2394,7 @@ public class HttpRequestProxy {
                 }
 
                 catch (SocketTimeoutException ex) {
-                    e = handleSocketTimeoutException(config, ex);
+                    e = handleSocketTimeoutException(poolname,url,config, ex);
                     break;
                 }
                 catch (NoHttpServerException ex){
@@ -2708,12 +2708,12 @@ public class HttpRequestProxy {
                 }
                 catch (ConnectionPoolTimeoutException ex){//连接池获取connection超时，直接抛出
 
-                    e = handleConnectionPoolTimeOutException( config,ex);
+                    e = handleConnectionPoolTimeOutException(poolname,url, config,ex);
                     break;
                 }
                 catch (ConnectTimeoutException connectTimeoutException){
                     httpAddress.setStatus(1);
-                    e = handleConnectionTimeOutException(config,connectTimeoutException);
+                    e = handleConnectionTimeOutException(poolname,url,config,connectTimeoutException);
                     if (!httpServiceHosts.reachEnd(triesCount )) {//失败尝试下一个地址
                         triesCount++;
                         continue;
@@ -2723,7 +2723,7 @@ public class HttpRequestProxy {
                 }
 
                 catch (SocketTimeoutException ex) {
-                    e = handleSocketTimeoutException(config, ex);
+                    e = handleSocketTimeoutException(poolname,url,config, ex);
                     break;
                 }
                 catch (NoHttpServerException ex){
@@ -2822,37 +2822,43 @@ public class HttpRequestProxy {
         }
         throw new IllegalArgumentException("not support http action:"+action);
     }
-    private static HttpProxyRequestException handleSocketTimeoutException(ClientConfiguration configuration,SocketTimeoutException ex){
+    private static HttpProxyRequestException handleSocketTimeoutException(String poolName,String url,ClientConfiguration configuration,SocketTimeoutException ex){
         if(configuration == null){
-            return new HttpProxyRequestException(ex);
+            StringBuilder builder = new StringBuilder();
+            builder.append("Send request to url[").append(url).append("] socket Timeout with http pool[").append(poolName).append("].");
+            return new HttpProxyRequestException(builder.toString(),ex);
         }
         else{
             StringBuilder builder = new StringBuilder();
-            builder.append("Socket Timeout for ").append(configuration.getTimeoutSocket()).append("ms.");
+            builder.append("Send request to url[").append(url).append("]  socket Timeout for ").append(configuration.getTimeoutSocket()).append("ms with http pool[").append(poolName).append("].");
 
             return new HttpProxyRequestException(builder.toString(),ex);
         }
     }
 
-    private static HttpProxyRequestException handleConnectionPoolTimeOutException(ClientConfiguration configuration,ConnectionPoolTimeoutException ex){
+    private static HttpProxyRequestException handleConnectionPoolTimeOutException(String poolName,String url,ClientConfiguration configuration,ConnectionPoolTimeoutException ex){
         if(configuration == null){
-            return new HttpProxyRequestException(ex);
+            StringBuilder builder = new StringBuilder();
+            builder.append("Send request to url[").append(url).append("] Wait timeout for idle http connection from http connection pool[").append(poolName).append("].");
+            return new HttpProxyRequestException(builder.toString(),ex);
         }
         else{
             StringBuilder builder = new StringBuilder();
-            builder.append("Wait timeout for ").append(configuration.getConnectionRequestTimeout()).append("ms for idle http connection from http connection pool.");
+            builder.append("Send request to url[").append(url).append("] Wait timeout for ").append(configuration.getConnectionRequestTimeout()).append("ms for idle http connection from http connection pool[").append(poolName).append("].");
 
             return new HttpProxyRequestException(builder.toString(),ex);
         }
     }
 
-    private static HttpProxyRequestException handleConnectionTimeOutException(ClientConfiguration configuration,ConnectTimeoutException ex){
+    private static HttpProxyRequestException handleConnectionTimeOutException(String poolName,String url,ClientConfiguration configuration,ConnectTimeoutException ex){
         if(configuration == null){
-            return new HttpProxyRequestException(ex);
+            StringBuilder builder = new StringBuilder();
+            builder.append("Send request to url[").append(url).append("] wait timeout for idle http connection from http connection pool[").append(poolName).append("].");
+            return new HttpProxyRequestException(builder.toString(),ex);
         }
         else{
             StringBuilder builder = new StringBuilder();
-            builder.append("Build a http connection timeout for ").append(configuration.getTimeoutConnection()).append("ms.");
+            builder.append("Send request to url[").append(url).append("] wait timeout  for ").append(configuration.getTimeoutConnection()).append("ms from http connection pool[").append(poolName).append("].");
 
             return new HttpProxyRequestException(builder.toString(),ex);
         }
@@ -2947,12 +2953,12 @@ public class HttpRequestProxy {
                 }
                 catch (ConnectionPoolTimeoutException ex){//连接池获取connection超时，直接抛出
 
-                    e = handleConnectionPoolTimeOutException( config,ex);
+                    e = handleConnectionPoolTimeOutException(poolname,url, config,ex);
                     break;
                 }
                 catch (ConnectTimeoutException connectTimeoutException){
                     httpAddress.setStatus(1);
-                    e = handleConnectionTimeOutException(config,connectTimeoutException);
+                    e = handleConnectionTimeOutException(poolname,url,config,connectTimeoutException);
                     if (!httpServiceHosts.reachEnd(triesCount )) {//失败尝试下一个地址
                         triesCount++;
                         continue;
@@ -2962,7 +2968,7 @@ public class HttpRequestProxy {
                 }
 
                 catch (SocketTimeoutException ex) {
-                    e = handleSocketTimeoutException(config, ex);
+                    e = handleSocketTimeoutException(poolname,url,config, ex);
                     break;
                 }
                 catch (NoHttpServerException ex){
@@ -3179,7 +3185,7 @@ public class HttpRequestProxy {
                 if (logger.isDebugEnabled()) {
                     logger.debug(new StringBuilder().append("Request url:").append(url).append(",status:").append(status).toString());
                 }
-                throw new HttpProxyRequestException(EntityUtils.toString(entity));
+                throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",error:").append(EntityUtils.toString(entity)).toString());
             }
             else
                 throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append( status).toString());
@@ -3200,7 +3206,7 @@ public class HttpRequestProxy {
                 if (logger.isDebugEnabled()) {
                     logger.debug(new StringBuilder().append("Request url:").append(url).append(",status:").append(status).toString());
                 }
-                throw new HttpProxyRequestException(EntityUtils.toString(entity));
+                throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",error:").append(EntityUtils.toString(entity)).toString());
             }
             else
                 throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append( status).toString());
@@ -3219,7 +3225,7 @@ public class HttpRequestProxy {
                 if (logger.isDebugEnabled()) {
                     logger.debug(new StringBuilder().append("Request url:").append(url).append(",status:").append(status).toString());
                 }
-                throw new HttpProxyRequestException(EntityUtils.toString(entity));
+                throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",error:").append(EntityUtils.toString(entity)).toString());
             }
             else
                 throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append( status).toString());
@@ -3238,7 +3244,7 @@ public class HttpRequestProxy {
                 if (logger.isDebugEnabled()) {
                     logger.debug(new StringBuilder().append("Request url:").append(url).append(",status:").append(status).toString());
                 }
-                throw new HttpProxyRequestException(EntityUtils.toString(entity));
+                throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",error:").append(EntityUtils.toString(entity)).toString());
             }
             else
                 throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append( status).toString());
@@ -3258,7 +3264,7 @@ public class HttpRequestProxy {
                 if (logger.isDebugEnabled()) {
                     logger.debug(new StringBuilder().append("Request url:").append(url).append(",status:").append(status).toString());
                 }
-                throw new HttpProxyRequestException(EntityUtils.toString(entity));
+                throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",error:").append(EntityUtils.toString(entity)).toString());
             }
             else
                 throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append( status).toString());
@@ -3442,12 +3448,12 @@ public class HttpRequestProxy {
                 }
                 catch (ConnectionPoolTimeoutException ex){//连接池获取connection超时，直接抛出
 
-                    e = handleConnectionPoolTimeOutException( config,ex);
+                    e = handleConnectionPoolTimeOutException( poolname,url,config,ex);
                     break;
                 }
                 catch (ConnectTimeoutException connectTimeoutException){
                     httpAddress.setStatus(1);
-                    e = handleConnectionTimeOutException(config,connectTimeoutException);
+                    e = handleConnectionTimeOutException(poolname,url,config,connectTimeoutException);
                     if (!httpServiceHosts.reachEnd(triesCount )) {//失败尝试下一个地址
                         triesCount++;
                         continue;
@@ -3457,7 +3463,7 @@ public class HttpRequestProxy {
                 }
 
                 catch (SocketTimeoutException ex) {
-                    e = handleSocketTimeoutException(config, ex);
+                    e = handleSocketTimeoutException(poolname,url,config, ex);
                     break;
                 }
                 catch (NoHttpServerException ex){
@@ -3535,7 +3541,7 @@ public class HttpRequestProxy {
                         if (logger.isDebugEnabled()) {
                             logger.debug(new StringBuilder().append("PUT Request url:").append(url).append(",status:").append(status).toString());
                         }
-                        throw new HttpProxyRequestException(EntityUtils.toString(entity));
+                        throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",error:").append(EntityUtils.toString(entity)).toString());
                     }
                     else
                         throw new HttpProxyRequestException(new StringBuilder().append("Put request url:").append(url).append(",Unexpected response status: " ).append( status).toString());

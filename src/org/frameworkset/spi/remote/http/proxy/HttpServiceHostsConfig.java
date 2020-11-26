@@ -89,12 +89,19 @@ public class HttpServiceHostsConfig {
 	private String hosts;
 	private long discoverServiceInterval = 10000l;
 	private Boolean handleNullOrEmptyHostsByDiscovery;
+
+	public boolean isFailAllContinue() {
+		return failAllContinue;
+	}
+
+	private final boolean failAllContinue = true;
 	public void toString(StringBuilder log, ExceptionWare exceptionWareBean, HttpHostDiscover httpHostDiscover){
 //		log.append(",http.authAccount=").append(authAccount);
 //		log.append(",http.authPassword=").append(authPassword);
 		log.append(",http.hosts=").append(hosts);
 		log.append(",http.health=").append(health);
 		log.append(",http.healthCheckInterval=").append(healthCheckInterval);
+		log.append(",http.failAllContinue=").append(failAllContinue);
 		log.append(",http.discoverServiceInterval=").append(discoverServiceInterval);
 		log.append(",http.handleNullOrEmptyHostsByDiscovery=").append(handleNullOrEmptyHostsByDiscovery);
 		if(exceptionWare != null)

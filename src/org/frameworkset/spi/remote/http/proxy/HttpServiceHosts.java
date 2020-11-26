@@ -38,14 +38,14 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @version 1.0
  */
 public class HttpServiceHosts {
-	private static Logger logger = LoggerFactory.getLogger(HttpServiceHosts.class);
+	private static final Logger logger = LoggerFactory.getLogger(HttpServiceHosts.class);
 
 
 	public HttpServiceHostsConfig getHttpServiceHostsConfig() {
 		return httpServiceHostsConfig;
 	}
 
-	private HttpServiceHostsConfig httpServiceHostsConfig;
+	private final HttpServiceHostsConfig httpServiceHostsConfig;
 	private ExceptionWare exceptionWare;
 	private HttpHostDiscover hostDiscover;
 //	private Map<String, String> authHeaders;
@@ -56,8 +56,8 @@ public class HttpServiceHosts {
 	private String routing;
 	private RoutingFilter routingFilter;
 	private final ReadWriteLock routingFilterLock = new ReentrantReadWriteLock();
-	private Lock routingFilterReadLock = routingFilterLock.readLock();
-	private Lock routingFilterWriteLock = routingFilterLock.writeLock();
+	private final Lock routingFilterReadLock = routingFilterLock.readLock();
+	private final Lock routingFilterWriteLock = routingFilterLock.writeLock();
 
 	private ClientConfiguration clientConfiguration;
 	public HttpServiceHosts(){
@@ -68,6 +68,16 @@ public class HttpServiceHosts {
 	 * 如果没有启动health健康检查机制，将启用被动自恢复机制
 	 */
 	private boolean healthCheckStarted;
+
+	public boolean isFailAllContinue() {
+		return failAllContinue;
+	}
+
+	public void setFailAllContinue(boolean failAllContinue) {
+		this.failAllContinue = failAllContinue;
+	}
+
+	private boolean failAllContinue = true;
 	public boolean healthCheckStarted(){
 		return healthCheckStarted;
 	}
@@ -75,7 +85,7 @@ public class HttpServiceHosts {
 		HttpAddress httpAddress = null;
 		if(!hasRouting) {
 			httpAddress = serversList.get();
-			if(httpAddress == null && !this.healthCheckStarted){
+			if(httpAddress == null && (failAllContinue || !this.healthCheckStarted)){
 				httpAddress = serversList.getOkOrFailed();
 			}
 			if(httpAddress == null) {
@@ -365,18 +375,13 @@ public class HttpServiceHosts {
 		address.setOriginAddress(httpHost.getOrigineAddress());
 		address.setRouting(routing);
 		if(old == null || old.equals("")){
-			if(routing == null || routing.equals(""))
-				return false;
-			return true;
+			return routing != null && !routing.equals("");
 
 		}
 		else{
 			if(routing == null || routing.equals(""))
 				return true;
-			else if(old.equals(routing)){
-				return false;
-			}
-			return true;
+			else return !old.equals(routing);
 		}
 	}
 	/**

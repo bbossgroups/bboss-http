@@ -19,14 +19,14 @@ import java.util.Map;
  * HttpServer节点健康检查
  */
 public class HealthCheck implements Runnable{
-	private List<HttpAddress> esAddresses;
+	private final List<HttpAddress> esAddresses;
 
-	private static Logger logger = LoggerFactory.getLogger(HealthCheck.class);
+	private static final Logger logger = LoggerFactory.getLogger(HealthCheck.class);
 	private long checkInterval = 5000;
 	private List<HCRunable> checkThreads ;
 //	private Map<String, String> headers;
-	private String poolName;
-	private String healthPoolName;
+	private final String poolName;
+	private final String healthPoolName;
 	public HealthCheck(String poolName,List<HttpAddress> esAddresses, long checkInterval){
 		this.esAddresses = esAddresses;
 		this.checkInterval = checkInterval;
@@ -76,10 +76,10 @@ public class HealthCheck implements Runnable{
 			 		 try {		
 			 			 if(logger.isDebugEnabled())
 			 				 logger.debug(new StringBuilder().append("Check downed Http pool[").append(poolName).append( "] server[").append(address.toString()).append("] status.").toString());
-						 HttpRequestUtil.httpGet(healthPoolName,address.getHealthPath(),(Map<String,String>)null,new ResponseHandler<Void>(){
+						 HttpRequestUtil.httpGet(healthPoolName,address.getHealthPath(), null,new ResponseHandler<Void>(){
 	
 							 @Override
-							 public Void handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+							 public Void handleResponse(HttpResponse response) throws IOException {
 								 int status = response.getStatusLine().getStatusCode();
 								 if (status >= 200 && status < 300) {
 									 if(logger.isInfoEnabled())
@@ -99,10 +99,21 @@ public class HealthCheck implements Runnable{
 					 }
 			 		 if(this.stop)
 					 		break;
-					 try {
-						 sleep(checkInterval);
-					 } catch (InterruptedException e) {					 
-						 break;
+			 		 if(address.failedCheck()) {
+						 try {
+							 sleep(checkInterval);
+						 } catch (InterruptedException e) {
+							 break;
+						 }
+					 }
+			 		 else{
+						 try {
+							 synchronized(this){
+								 wait();
+							 }
+						 } catch (InterruptedException e) {
+							 break;
+						 }
 					 }
 			 	 }
 			 	 else{

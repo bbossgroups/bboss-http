@@ -87,11 +87,11 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	private final static int RETRY_TIME = 3;
 	private boolean automaticRetriesDisabled = false;
 	private static final DefaultHttpRequestRetryHandler defaultHttpRequestRetryHandler = new ConnectionResetHttpRequestRetryHandler();
-	private static Logger logger = LoggerFactory.getLogger(ClientConfiguration.class);
+	private static final Logger logger = LoggerFactory.getLogger(ClientConfiguration.class);
 	private static RequestConfig defaultRequestConfig;
 	private static HttpClient defaultHttpclient;
-	private static Map<String, ClientConfiguration> clientConfigs = new HashMap<String, ClientConfiguration>();
-	private static Map<String, ClientConfiguration> healthClientConfigs = new HashMap<String, ClientConfiguration>();
+	private static final Map<String, ClientConfiguration> clientConfigs = new HashMap<String, ClientConfiguration>();
+	private static final Map<String, ClientConfiguration> healthClientConfigs = new HashMap<String, ClientConfiguration>();
 	private static BaseApplicationContext context;
 	private static boolean emptyContext;
 	private static ClientConfiguration defaultClientConfiguration;
@@ -157,7 +157,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	/**
 	 * 单位毫秒：
 	 */
-	private int maxIdleTime = -1;
+	private final int maxIdleTime = -1;
 
 	public HttpServiceHosts getHttpServiceHosts() {
 		return httpServiceHosts;
@@ -213,7 +213,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	private String[] _supportedProtocols;
 	private transient HostnameVerifier hostnameVerifier;
 
-	private String[] defaultSupportedProtocols = new String[]{"TLSv1.2", "TLSv1.1", "TLSv1"};
+	private final String[] defaultSupportedProtocols = new String[]{"TLSv1.2", "TLSv1.1", "TLSv1"};
 	/**
 	 * 默认保活1小时
 
@@ -501,7 +501,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		startHttpPoolsFromApollo(namespaces,apolloAwaredChangeListener);
 	}
 	public static void startHttpPoolsFromApollo(String namespaces){
-		startHttpPoolsFromApollo(namespaces,(String) null);
+		startHttpPoolsFromApollo(namespaces, null);
 	}
 	public static void startHttpPoolsFromApollo(String namespaces,String configChangeListener){
 		if(namespaces == null || namespaces.equals(""))
@@ -642,7 +642,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 					message.append("Start HttpPool[default] from configs failed:");
 					logger.error(message.toString(), e);
 				}
-			} ;
+			}
 		}
 		else{
 			String[] poolNames_ = poolNames.split(",");
@@ -875,13 +875,14 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 //			httpServiceHosts.setAuthPassword(authPassword);
 
 				String routing = ClientConfiguration._getStringValue(name, "http.routing", context, null);
-
+				log.append(",http.routing=").append(routing);
 				httpServiceHosts.setRouting(routing);
 
 				String health = ClientConfiguration._getStringValue(name, "http.health", context, null);
-
+				log.append(",http.health=").append(health);
 				httpServiceHosts.setHealth(health);
 				Object discoverService = ClientConfiguration._getObjectValue(name, "http.discoverService", context, null);
+				log.append(",http.discoverService=").append(discoverService);
 				if (discoverService != null) {
 					if (discoverService instanceof String)
 						httpServiceHosts.setDiscoverService((String) discoverService);
@@ -891,19 +892,33 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 				}
 
 				Object exceptionWare = ClientConfiguration._getObjectValue(name, "http.exceptionWare", context, null);
+
 				if (exceptionWare != null) {
-					if (exceptionWare instanceof String)
+					if (exceptionWare instanceof String) {
 						httpServiceHosts.setExceptionWare((String) exceptionWare);
+						log.append(",http.exceptionWare=").append(exceptionWare);
+					}
 					else if (exceptionWare instanceof ExceptionWare) {
 						httpServiceHosts.setExceptionWareBean((ExceptionWare) exceptionWare);
+						log.append(",http.exceptionWare=").append(exceptionWare.getClass().getCanonicalName());
 					}
 
 				}
 				String hosts = ClientConfiguration._getStringValue(name, "http.hosts", context, null);
-
+				log.append(",http.hosts=").append(hosts);
 				httpServiceHosts.setHosts(hosts);
+				String failAllContinue_ = ClientConfiguration._getStringValue(name, "http.failAllContinue", context, "true");
+				log.append(",http.failAllContinue=").append(failAllContinue_);
+				if (failAllContinue_ != null) {
+					try {
+						httpServiceHosts.setFailAllContinue(Boolean.parseBoolean(failAllContinue_));
+					}
+					catch (Exception e){
 
+					}
+				}
 				String healthCheckInterval_ = ClientConfiguration._getStringValue(name, "http.healthCheckInterval", context, null);
+				log.append(",http.healthCheckInterval=").append(healthCheckInterval_);
 				if (healthCheckInterval_ == null) {
 					httpServiceHosts.setHealthCheckInterval(3000l);
 				} else {
@@ -916,6 +931,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 					}
 				}
 				String discoverServiceInterval_ = ClientConfiguration._getStringValue(name, "http.discoverServiceInterval", context, null);
+				log.append(",http.discoverServiceInterval=").append(discoverServiceInterval_);
 				if (discoverServiceInterval_ == null) {
 					httpServiceHosts.setDiscoverServiceInterval(10000l);
 				} else {
@@ -929,6 +945,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 				}
 
 				String handleNullOrEmptyHostsByDiscovery_ = ClientConfiguration._getStringValue(name, "http.handleNullOrEmptyHostsByDiscovery", context, null);
+				log.append(",http.handleNullOrEmptyHostsByDiscovery=").append(handleNullOrEmptyHostsByDiscovery_);
 				if (handleNullOrEmptyHostsByDiscovery_ == null) {
 					httpServiceHosts.setHandleNullOrEmptyHostsByDiscovery(false);
 				} else {

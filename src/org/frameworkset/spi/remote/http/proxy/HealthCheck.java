@@ -1,7 +1,6 @@
 package org.frameworkset.spi.remote.http.proxy;
 
 import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.ResponseHandler;
 import org.frameworkset.spi.BaseApplicationContext;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
@@ -13,7 +12,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * HttpServer节点健康检查
@@ -60,12 +58,19 @@ public class HealthCheck implements Runnable{
 			super("Http pool["+poolName+"] server["+address.toString()+"] health check");
 			address.setHealthCheck(this);
 			this.address = address;
+			this.setDaemon(true);
 		}
 		public synchronized void stopRun(){
 			if(stop )
 				return;
 			this.stop = true;
 			this.interrupt();
+
+			try {
+				this.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
 		@Override
 		public void run() {

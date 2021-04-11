@@ -26,6 +26,7 @@ public abstract class HttpHostDiscover extends Thread{
 				stopCheck();
 			}
 		});
+		this.setDaemon(true);
 	}
 	boolean stop = false;
 	public  synchronized void stopCheck(){

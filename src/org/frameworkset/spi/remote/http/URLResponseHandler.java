@@ -27,4 +27,5 @@ import org.apache.http.client.ResponseHandler;
  */
 public interface URLResponseHandler<T> extends ResponseHandler<T> {
 	public void setUrl(String url);
+	public String getUrl();
 }

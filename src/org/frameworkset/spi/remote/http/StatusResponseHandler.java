@@ -29,6 +29,11 @@ public abstract class StatusResponseHandler {
 	public void setUrl(String url) {
 		this.url = url;
 	}
+
+	public String getUrl() {
+		return url;
+	}
+
 	protected RuntimeException throwException(int status, HttpEntity entity) throws IOException {
 
 		if (entity != null ) {

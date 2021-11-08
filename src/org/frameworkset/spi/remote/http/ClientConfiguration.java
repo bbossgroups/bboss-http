@@ -1000,6 +1000,8 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		if(healthclientConfiguration != null){
 			healthclientConfiguration.close();
 		}
+		if(poolName.equals("default"))
+			ClientConfiguration.defaultClientConfiguration = null;
 		return clientConfiguration;
 
 	}

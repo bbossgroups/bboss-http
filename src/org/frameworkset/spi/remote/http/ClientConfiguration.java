@@ -735,6 +735,8 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 			}
 			if(PropertiesContainer.showPassword)
 				log.append(",http.authPassword=").append(authPassword);
+			else
+				log.append(",http.authPassword=******");
 
 			String encodedAuthCharset = ClientConfiguration._getStringValue(name, "http.encodedAuthCharset", context, "US-ASCII");
 			if(encodedAuthCharset != null && !encodedAuthCharset.equals("")){

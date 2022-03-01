@@ -1,3 +1,10 @@
+# 版本构建方法
+
+gradle clean publishToMavenLocal
+
+需要通过gradle构建发布版本,gradle安装配置参考文档：
+
+https://esdoc.bbossgroups.com/#/bboss-build
 
 # bboss httpproxy
  bboss http  project.
@@ -48,9 +55,6 @@ httpproxy 案例：基于apollo进行配置管理、节点自动发现、路由�
      https://gitee.com/bboss/httpproxy-apollo 
 
      https://github.com/bbossgroups/httpproxy-apollo
-
-# 工程gradle构建运行说明：
-构建发布版本：gradle publish
 
 
 # License

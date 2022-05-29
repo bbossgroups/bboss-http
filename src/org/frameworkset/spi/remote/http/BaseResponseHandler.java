@@ -6,7 +6,7 @@ import org.apache.http.HttpEntity;
 import java.io.IOException;
 import java.io.InputStream;
 
-import static org.frameworkset.spi.remote.http.HttpRequestProxy.entityEmpty;
+import static org.frameworkset.spi.remote.http.ResponseUtil.entityEmpty;
 
 public abstract class BaseResponseHandler extends StatusResponseHandler {
 	protected <T> T converJson(HttpEntity entity,Class<T> clazz) throws IOException {

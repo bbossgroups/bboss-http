@@ -14,7 +14,6 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.FileBody;
-import org.apache.http.impl.io.EmptyInputStream;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
@@ -25,7 +24,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.NoRouteToHostException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
@@ -73,7 +71,7 @@ public class HttpRequestProxy {
             @Override
             public T handleResponse(final HttpResponse response)
                     throws ClientProtocolException, IOException {
-                return HttpRequestProxy.handleResponse(url,  response, resultType);
+                return ResponseUtil.handleResponse(url,  response, resultType);
             }
 
         });
@@ -88,7 +86,7 @@ public class HttpRequestProxy {
             @Override
             public T handleResponse(final HttpResponse response)
                     throws ClientProtocolException, IOException {
-                return HttpRequestProxy.handleResponse(  url,response, resultType);
+                return ResponseUtil.handleResponse(  url,response, resultType);
             }
 
         });
@@ -100,7 +98,7 @@ public class HttpRequestProxy {
             @Override
             public List<T> handleResponse(final HttpResponse response)
                     throws ClientProtocolException, IOException {
-                return HttpRequestProxy.handleListResponse(  url,response, resultType);
+                return ResponseUtil.handleListResponse(  url,response, resultType);
             }
 
         });
@@ -112,7 +110,7 @@ public class HttpRequestProxy {
             @Override
             public Map<K,T>  handleResponse(final HttpResponse response)
                     throws ClientProtocolException, IOException {
-                return HttpRequestProxy.handleMapResponse(  url,response,keyType, resultType);
+                return ResponseUtil.handleMapResponse(  url,response,keyType, resultType);
             }
 
         });
@@ -124,7 +122,7 @@ public class HttpRequestProxy {
             @Override
             public Set<T> handleResponse(final HttpResponse response)
                     throws ClientProtocolException, IOException {
-                return HttpRequestProxy.handleSetResponse(url,  response, resultType);
+                return ResponseUtil.handleSetResponse(url,  response, resultType);
             }
 
         });
@@ -136,7 +134,7 @@ public class HttpRequestProxy {
             @Override
             public List<T> handleResponse(final HttpResponse response)
                     throws ClientProtocolException, IOException {
-                return HttpRequestProxy.handleListResponse( url, response, resultType);
+                return ResponseUtil.handleListResponse( url, response, resultType);
             }
 
         });
@@ -150,7 +148,7 @@ public class HttpRequestProxy {
             @Override
             public D handleResponse(final HttpResponse response)
                     throws ClientProtocolException, IOException {
-                return HttpRequestProxy.handleResponse( url, response,containType, resultType);
+                return ResponseUtil.handleResponse( url, response,containType, resultType);
             }
 
         });
@@ -161,7 +159,7 @@ public class HttpRequestProxy {
             @Override
             public Map<K,T>  handleResponse(final HttpResponse response)
                     throws ClientProtocolException, IOException {
-                return HttpRequestProxy.handleMapResponse( url, response,keyType, resultType);
+                return ResponseUtil.handleMapResponse( url, response,keyType, resultType);
             }
 
         });
@@ -173,7 +171,7 @@ public class HttpRequestProxy {
             @Override
             public Set<T> handleResponse(final HttpResponse response)
                     throws ClientProtocolException, IOException {
-                return HttpRequestProxy.handleSetResponse( url, response, resultType);
+                return ResponseUtil.handleSetResponse( url, response, resultType);
             }
 
         });
@@ -711,7 +709,7 @@ public class HttpRequestProxy {
         return httpPostforString(url, params, (Map<String, String>) null, new BaseURLResponseHandler<T>() {
             @Override
             public T handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-                return HttpRequestProxy.handleResponse(url,response,resultType);
+                return ResponseUtil.handleResponse(url,response,resultType);
             }
         });
     }
@@ -720,7 +718,7 @@ public class HttpRequestProxy {
         return httpPostforString(url, params, (Map<String, String>) null, new BaseURLResponseHandler<List<T>>() {
             @Override
             public List<T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-                return HttpRequestProxy.handleListResponse(url,response,resultType);
+                return ResponseUtil.handleListResponse(url,response,resultType);
             }
         });
     }
@@ -728,7 +726,7 @@ public class HttpRequestProxy {
         return httpPostforString(url, params, (Map<String, String>) null, new BaseURLResponseHandler<Set<T>>() {
             @Override
             public Set<T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-                return HttpRequestProxy.handleSetResponse(url,response,resultType);
+                return ResponseUtil.handleSetResponse(url,response,resultType);
             }
         });
     }
@@ -737,7 +735,7 @@ public class HttpRequestProxy {
         return httpPostforString(url, params, (Map<String, String>) null, new BaseURLResponseHandler<Map<K,T>>() {
             @Override
             public Map<K,T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-                return HttpRequestProxy.handleMapResponse(url,response,keyType,resultType);
+                return ResponseUtil.handleMapResponse(url,response,keyType,resultType);
             }
         });
     }
@@ -750,7 +748,7 @@ public class HttpRequestProxy {
 		return httpPost(  poolName,   url,  httpOption, new BaseURLResponseHandler<T>() {
 			@Override
 			public T handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-				return HttpRequestProxy.handleResponse(url,response,resultType);
+				return ResponseUtil.handleResponse(url,response,resultType);
 			}
 		});
 //        return httpPostforString(  poolName,url, params, (Map<String, String>) null);
@@ -765,7 +763,7 @@ public class HttpRequestProxy {
 		return httpPost(  poolName,   url,  httpOption, new BaseURLResponseHandler<T>() {
 			@Override
 			public T handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-				return HttpRequestProxy.handleResponse(url,response,resultType);
+				return ResponseUtil.handleResponse(url,response,resultType);
 			}
 		});
 //        return httpPostforString(  poolName,url, params, (Map<String, String>) null);
@@ -780,7 +778,7 @@ public class HttpRequestProxy {
 		return httpPost(  poolName,   url,  httpOption, new BaseURLResponseHandler<List<T>>() {
 			@Override
 			public List<T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-				return HttpRequestProxy.handleListResponse(url,response,resultType);
+				return ResponseUtil.handleListResponse(url,response,resultType);
 			}
 		});
 
@@ -794,13 +792,13 @@ public class HttpRequestProxy {
 		return httpPost(  poolName,   url,  httpOption, new BaseURLResponseHandler<Set<T>>() {
 			@Override
 			public Set<T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-				return HttpRequestProxy.handleSetResponse(url,response,resultType);
+				return ResponseUtil.handleSetResponse(url,response,resultType);
 			}
 		});
 //		return httpPostforString(  poolName,url, params, (Map<String, String>) null, new ResponseHandler<Set<T>>() {
 //			@Override
 //			public Set<T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-//				return HttpRequestProxy.handleSetResponse(response,resultType);
+//				return ResponseUtil.handleSetResponse(response,resultType);
 //			}
 //		});
 	}
@@ -814,13 +812,13 @@ public class HttpRequestProxy {
 		return httpPost(  poolName,   url,  httpOption,new BaseURLResponseHandler<Map<K,T>>() {
 			@Override
 			public Map<K,T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-				return HttpRequestProxy.handleMapResponse(url,response,keyType,resultType);
+				return ResponseUtil.handleMapResponse(url,response,keyType,resultType);
 			}
 		});
 //    	return httpPostforString(poolName,url, params, (Map<String, String>) null, new ResponseHandler<Map<K,T>>() {
 //			@Override
 //			public Map<K,T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-//				return HttpRequestProxy.handleMapResponse(response,keyType,resultType);
+//				return ResponseUtil.handleMapResponse(response,keyType,resultType);
 //			}
 //		});
 	}
@@ -829,7 +827,7 @@ public class HttpRequestProxy {
         return httpPostforString(  poolName,url, params, (Map<String, String>) null, new BaseURLResponseHandler<List<T>>() {
             @Override
             public List<T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-                return HttpRequestProxy.handleListResponse(url,response,resultType);
+                return ResponseUtil.handleListResponse(url,response,resultType);
             }
         });
     }
@@ -837,7 +835,7 @@ public class HttpRequestProxy {
         return httpPostforString(  poolName,url, (Map<String, Object>) null, (Map<String, String>) null, new BaseURLResponseHandler<List<T>>() {
             @Override
             public List<T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-                return HttpRequestProxy.handleListResponse(url,response,resultType);
+                return ResponseUtil.handleListResponse(url,response,resultType);
             }
         });
     }
@@ -845,7 +843,7 @@ public class HttpRequestProxy {
         return httpPostforString(  (String)null,url, (Map<String, Object>) null, (Map<String, String>) null, new BaseURLResponseHandler<List<T>>() {
             @Override
             public List<T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-                return HttpRequestProxy.handleListResponse(url,response,resultType);
+                return ResponseUtil.handleListResponse(url,response,resultType);
             }
         });
     }
@@ -853,7 +851,7 @@ public class HttpRequestProxy {
         return httpPostforString(  poolName,url, params, (Map<String, String>) null, new BaseURLResponseHandler<Set<T>>() {
             @Override
             public Set<T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-                return HttpRequestProxy.handleSetResponse(url,response,resultType);
+                return ResponseUtil.handleSetResponse(url,response,resultType);
             }
         });
     }
@@ -862,7 +860,7 @@ public class HttpRequestProxy {
         return httpPostforString(poolName,url, params, (Map<String, String>) null, new BaseURLResponseHandler<Map<K,T>>() {
             @Override
             public Map<K,T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-                return HttpRequestProxy.handleMapResponse(url,response,keyType,resultType);
+                return ResponseUtil.handleMapResponse(url,response,keyType,resultType);
             }
         });
     }
@@ -1458,7 +1456,7 @@ public class HttpRequestProxy {
 
             @Override
             public T handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-                return HttpRequestProxy.handleResponse(url,response,resultType);
+                return ResponseUtil.handleResponse(url,response,resultType);
             }
         });
 //        return httpPut(  "default",   url,   (String)null,   (String)null,  params,
@@ -1466,7 +1464,7 @@ public class HttpRequestProxy {
 //
 //                    @Override
 //                    public T handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-//                        return HttpRequestProxy.handleResponse(response,resultType);
+//                        return ResponseUtil.handleResponse(response,resultType);
 //                    }
 //                });
     }
@@ -1488,7 +1486,7 @@ public class HttpRequestProxy {
 
             @Override
             public List<T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-                return HttpRequestProxy.handleListResponse(url,response,resultType);
+                return ResponseUtil.handleListResponse(url,response,resultType);
             }
         });
 //        return httpPut(  "default",   url,   (String)null,   (String)null,  params,
@@ -1496,7 +1494,7 @@ public class HttpRequestProxy {
 //
 //                    @Override
 //                    public List<T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-//                        return HttpRequestProxy.handleListResponse(response,resultType);
+//                        return ResponseUtil.handleListResponse(response,resultType);
 //                    }
 //                });
     }
@@ -1518,7 +1516,7 @@ public class HttpRequestProxy {
 
             @Override
             public Set<T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-                return HttpRequestProxy.handleSetResponse(url,response,resultType);
+                return ResponseUtil.handleSetResponse(url,response,resultType);
             }
         });
 //        return httpPut(  "default",   url,   (String)null,   (String)null,  params,
@@ -1526,7 +1524,7 @@ public class HttpRequestProxy {
 //
 //                    @Override
 //                    public Set<T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-//                        return HttpRequestProxy.handleSetResponse(response,resultType);
+//                        return ResponseUtil.handleSetResponse(response,resultType);
 //                    }
 //                });
     }
@@ -1548,7 +1546,7 @@ public class HttpRequestProxy {
 
             @Override
             public Map<K,T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-                return HttpRequestProxy.handleMapResponse(url,response,keyType,resultType);
+                return ResponseUtil.handleMapResponse(url,response,keyType,resultType);
             }
         });
 //        return httpPut(  "default",   url,   (String)null,   (String)null,  params,
@@ -1556,7 +1554,7 @@ public class HttpRequestProxy {
 //
 //                    @Override
 //                    public Map<K,T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-//                        return HttpRequestProxy.handleMapResponse(response,keyType,resultType);
+//                        return ResponseUtil.handleMapResponse(response,keyType,resultType);
 //                    }
 //                });
     }
@@ -1578,7 +1576,7 @@ public class HttpRequestProxy {
 
             @Override
             public T handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-                return HttpRequestProxy.handleResponse(url,response,resultType);
+                return ResponseUtil.handleResponse(url,response,resultType);
             }
         });
 //        return httpPut(  poolName,   url,   (String)null,   (String)null,  params,
@@ -1586,7 +1584,7 @@ public class HttpRequestProxy {
 //
 //                    @Override
 //                    public T handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-//                        return HttpRequestProxy.handleResponse(response,resultType);
+//                        return ResponseUtil.handleResponse(response,resultType);
 //                    }
 //                });
     }
@@ -1608,7 +1606,7 @@ public class HttpRequestProxy {
 
             @Override
             public List<T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-                return HttpRequestProxy.handleListResponse(url,response,resultType);
+                return ResponseUtil.handleListResponse(url,response,resultType);
             }
         });
 //        return httpPut(  poolName,   url,   (String)null,   (String)null,  params,
@@ -1616,7 +1614,7 @@ public class HttpRequestProxy {
 //
 //                    @Override
 //                    public List<T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-//                        return HttpRequestProxy.handleListResponse(response,resultType);
+//                        return ResponseUtil.handleListResponse(response,resultType);
 //                    }
 //                });
     }
@@ -1638,7 +1636,7 @@ public class HttpRequestProxy {
 
             @Override
             public Set<T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-                return HttpRequestProxy.handleSetResponse(url,response,resultType);
+                return ResponseUtil.handleSetResponse(url,response,resultType);
             }
         });
 //        return httpPut(  poolName,   url,   (String)null,   (String)null,  params,
@@ -1646,7 +1644,7 @@ public class HttpRequestProxy {
 //
 //                    @Override
 //                    public Set<T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-//                        return HttpRequestProxy.handleSetResponse(response,resultType);
+//                        return ResponseUtil.handleSetResponse(response,resultType);
 //                    }
 //                });
     }
@@ -1668,7 +1666,7 @@ public class HttpRequestProxy {
 
             @Override
             public Map<K,T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-                return HttpRequestProxy.handleMapResponse(url,response,keyType,resultType);
+                return ResponseUtil.handleMapResponse(url,response,keyType,resultType);
             }
         });
 //        return httpPut(   poolName,   url,   (String)null,   (String)null,  params,
@@ -1676,7 +1674,7 @@ public class HttpRequestProxy {
 //
 //                    @Override
 //                    public Map<K,T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-//                        return HttpRequestProxy.handleMapResponse(response,keyType,resultType);
+//                        return ResponseUtil.handleMapResponse(response,keyType,resultType);
 //                    }
 //                });
     }
@@ -1788,7 +1786,7 @@ public class HttpRequestProxy {
                 (Map<String, File>) null, (Map<String, String>) null, new BaseURLResponseHandler<T>() {
                     @Override
                     public T handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-                        return HttpRequestProxy.handleResponse(url,response,resultType);
+                        return ResponseUtil.handleResponse(url,response,resultType);
                     }
                 }) ;
     }
@@ -1806,7 +1804,7 @@ public class HttpRequestProxy {
                 (Map<String, File>) null, (Map<String, String>) null, new BaseURLResponseHandler<List<T>>() {
                     @Override
                     public List<T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-                        return HttpRequestProxy.handleListResponse(url,response,resultType);
+                        return ResponseUtil.handleListResponse(url,response,resultType);
                     }
                 }) ;
     }
@@ -1824,7 +1822,7 @@ public class HttpRequestProxy {
                 (Map<String, File>) null, (Map<String, String>) null, new BaseURLResponseHandler<Set<T>>() {
                     @Override
                     public Set<T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-                        return HttpRequestProxy.handleSetResponse(url,response,resultType);
+                        return ResponseUtil.handleSetResponse(url,response,resultType);
                     }
                 }) ;
     }
@@ -1841,7 +1839,7 @@ public class HttpRequestProxy {
                 (Map<String, File>) null, (Map<String, String>) null, new BaseURLResponseHandler<Map<K,T>>() {
                     @Override
                     public Map<K,T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-                        return HttpRequestProxy.handleMapResponse(url,response,keyType,resultType);
+                        return ResponseUtil.handleMapResponse(url,response,keyType,resultType);
                     }
                 }) ;
     }
@@ -1859,7 +1857,7 @@ public class HttpRequestProxy {
         return httpPut(  poolName,url, httpOption, new BaseURLResponseHandler<T>() {
                     @Override
                     public T handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-                        return HttpRequestProxy.handleResponse(url,response,resultType);
+                        return ResponseUtil.handleResponse(url,response,resultType);
                     }
                 }) ;
     }
@@ -1877,7 +1875,7 @@ public class HttpRequestProxy {
         return httpPut(  poolName,url, httpOption, new BaseURLResponseHandler<List<T>>() {
                     @Override
                     public List<T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-                        return HttpRequestProxy.handleListResponse(url,response,resultType);
+                        return ResponseUtil.handleListResponse(url,response,resultType);
                     }
                 }) ;
     }
@@ -1895,7 +1893,7 @@ public class HttpRequestProxy {
         return httpPut(  poolName,url,httpOption, new BaseURLResponseHandler<Set<T>>() {
                     @Override
                     public Set<T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-                        return HttpRequestProxy.handleSetResponse(url,response,resultType);
+                        return ResponseUtil.handleSetResponse(url,response,resultType);
                     }
                 }) ;
     }
@@ -1912,7 +1910,7 @@ public class HttpRequestProxy {
         return httpPut(  poolName,url, httpOption, new BaseURLResponseHandler<Map<K,T>>() {
                     @Override
                     public Map<K,T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-                        return HttpRequestProxy.handleMapResponse(url,response,keyType,resultType);
+                        return ResponseUtil.handleMapResponse(url,response,keyType,resultType);
                     }
                 }) ;
     }
@@ -3572,242 +3570,29 @@ public class HttpRequestProxy {
         }
         return responseBody;*/
     }
-    public static String handleStringResponse(String url,HttpResponse response)
-            throws ClientProtocolException, IOException {
-        int status = response.getStatusLine().getStatusCode();
 
-        if (status >= 200 && status < 300) {
-            HttpEntity entity = response.getEntity();
-            return entity != null ? EntityUtils.toString(entity) : null;
-        } else {
-            HttpEntity entity = response.getEntity();
-            if (entity != null )
-                throw new HttpProxyRequestException(new StringBuilder().append("send request to ")
-                                                            .append(url).append(" failed:")
-                                                            .append(EntityUtils.toString(entity)).toString());
-            else
-                throw new HttpProxyRequestException(new StringBuilder().append("send request to ").append(url).append(",Unexpected response status: " ).append( status).toString());
-        }
-    }
     public static String sendBody(String poolname,String requestBody, String url, Map<String, String> headers,ContentType contentType) throws HttpProxyRequestException {
     	return sendBody(  poolname,  requestBody,   url, headers,  contentType, new BaseURLResponseHandler<String>() {
 
             @Override
             public String handleResponse(final HttpResponse response)
                     throws ClientProtocolException, IOException {
-                return handleStringResponse(url, response);
+                return ResponseUtil.handleStringResponse(url, response);
             }
 
         });
         
     }
-    public static boolean entityEmpty(HttpEntity entity,InputStream inputStream) throws IOException {
-//        long contentLength = entity.getContentLength();
-//        if(contentLength <= 0){
-//            return true;
-//        }
 
-         if(inputStream instanceof EmptyInputStream)
-            return true;
-         return false;
-
-    }
-    public static <T> T converJson(HttpEntity entity, Class<T> clazz) throws IOException {
-        InputStream inputStream = null;
-
-        T var4;
-        try {
-
-            inputStream = entity.getContent();
-            if(entityEmpty(entity,inputStream)){
-                return null;
-            }
-
-            var4 = SimpleStringUtil.json2Object(inputStream, clazz);
-        } finally {
-            inputStream.close();
-        }
-
-        return var4;
-    }
-
-    public static <D,T> D converJson(HttpEntity entity, Class<D> containType ,Class<T> clazz) throws IOException {
-        InputStream inputStream = null;
-
-        D var4;
-        try {
-
-            inputStream = entity.getContent();
-            if(entityEmpty(entity,inputStream)){
-                return null;
-            }
-            var4 = SimpleStringUtil.json2TypeObject(inputStream,containType, clazz);
-        } finally {
-            inputStream.close();
-        }
-
-        return var4;
-    }
-
-    public static <T> List<T> converJson2List(HttpEntity entity, Class<T> clazz) throws IOException {
-        InputStream inputStream = null;
-
-        List<T> var4 = null;
-        try {
-
-            inputStream = entity.getContent();
-            if(entityEmpty(entity,inputStream)){
-                return null;
-            }
-            var4 = SimpleStringUtil.json2ListObject(inputStream, clazz);
-        } finally {
-            if(inputStream != null)
-                inputStream.close();
-        }
-
-        return var4;
-    }
-
-    public static <T> Set<T> converJson2Set(HttpEntity entity, Class<T> clazz) throws IOException {
-        InputStream inputStream = null;
-
-        Set<T> var4;
-        try {
-
-            inputStream = entity.getContent();
-            if(entityEmpty(entity,inputStream)){
-                return null;
-            }
-            var4 = SimpleStringUtil.json2LSetObject(inputStream, clazz);
-        } finally {
-            inputStream.close();
-        }
-
-        return var4;
-    }
-
-    public static <K,T> Map<K,T> converJson2Map(HttpEntity entity,Class<K> keyType,Class<T> beanType) throws IOException {
-        InputStream inputStream = null;
-
-        Map<K,T> var4;
-        try {
-
-            inputStream = entity.getContent();
-            if(entityEmpty(entity,inputStream)){
-                return null;
-            }
-            var4 = SimpleStringUtil.json2LHashObject(inputStream,  keyType, beanType);
-        } finally {
-            inputStream.close();
-        }
-
-        return var4;
-    }
-    public static <K,T> Map<K,T> handleMapResponse(String url,HttpResponse response,Class<K> keyType,Class<T> beanType)
-            throws ClientProtocolException, IOException {
-        int status = response.getStatusLine().getStatusCode();
-
-        if (status >= 200 && status < 300) {
-            HttpEntity entity = response.getEntity();
-            return entity != null ? converJson2Map(  entity,  keyType,  beanType) : null;
-        } else {
-            HttpEntity entity = response.getEntity();
-            if (entity != null ) {
-                if (logger.isDebugEnabled()) {
-                    logger.debug(new StringBuilder().append("Request url:").append(url).append(",status:").append(status).toString());
-                }
-                throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",error:").append(EntityUtils.toString(entity)).toString());
-            }
-            else
-                throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append( status).toString());
-        }
-    }
-
-
-    public static <T> List<T> handleListResponse(String url,HttpResponse response, Class<T> resultType)
-            throws ClientProtocolException, IOException {
-        int status = response.getStatusLine().getStatusCode();
-
-        if (status >= 200 && status < 300) {
-            HttpEntity entity = response.getEntity();
-            return entity != null ? converJson2List(  entity,  resultType) : null;
-        } else {
-            HttpEntity entity = response.getEntity();
-            if (entity != null ) {
-                if (logger.isDebugEnabled()) {
-                    logger.debug(new StringBuilder().append("Request url:").append(url).append(",status:").append(status).toString());
-                }
-                throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",error:").append(EntityUtils.toString(entity)).toString());
-            }
-            else
-                throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append( status).toString());
-        }
-    }
-    public static <T> Set<T> handleSetResponse(String url,HttpResponse response, Class<T> resultType)
-            throws ClientProtocolException, IOException {
-        int status = response.getStatusLine().getStatusCode();
-
-        if (status >= 200 && status < 300) {
-            HttpEntity entity = response.getEntity();
-            return entity != null ? converJson2Set(  entity,  resultType) : null;
-        } else {
-            HttpEntity entity = response.getEntity();
-            if (entity != null ) {
-                if (logger.isDebugEnabled()) {
-                    logger.debug(new StringBuilder().append("Request url:").append(url).append(",status:").append(status).toString());
-                }
-                throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",error:").append(EntityUtils.toString(entity)).toString());
-            }
-            else
-                throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append( status).toString());
-        }
-    }
-    public static <T> T handleResponse(String url,HttpResponse response, Class<T> resultType)
-            throws ClientProtocolException, IOException {
-        int status = response.getStatusLine().getStatusCode();
-
-        if (status >= 200 && status < 300) {
-            HttpEntity entity = response.getEntity();
-            return entity != null ? converJson(  entity,  resultType) : null;
-        } else {
-            HttpEntity entity = response.getEntity();
-            if (entity != null ) {
-                if (logger.isDebugEnabled()) {
-                    logger.debug(new StringBuilder().append("Request url:").append(url).append(",status:").append(status).toString());
-                }
-                throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",error:").append(EntityUtils.toString(entity)).toString());
-            }
-            else
-                throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append( status).toString());
-        }
-    }
-
-    public static <D,T> D handleResponse(String url,HttpResponse response,Class<D> containType, Class<T> resultType)
-            throws ClientProtocolException, IOException {
-        int status = response.getStatusLine().getStatusCode();
-
-        if (status >= 200 && status < 300) {
-            HttpEntity entity = response.getEntity();
-            return entity != null ? converJson(  entity, containType, resultType) : null;
-        } else {
-            HttpEntity entity = response.getEntity();
-            if (entity != null ) {
-                if (logger.isDebugEnabled()) {
-                    logger.debug(new StringBuilder().append("Request url:").append(url).append(",status:").append(status).toString());
-                }
-                throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",error:").append(EntityUtils.toString(entity)).toString());
-            }
-            else
-                throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append( status).toString());
-        }
-    }
+   
+   
     public static <T> T sendBody(String poolname,String requestBody, String url, Map<String, String> headers,ContentType contentType,final Class<T> resultType) throws HttpProxyRequestException {
         return sendBody(  poolname,  requestBody,   url, headers,  contentType, new BaseURLResponseHandler<T>() {
 
             @Override
             public T handleResponse(final HttpResponse response)
                     throws ClientProtocolException, IOException {
-                return HttpRequestProxy.handleResponse( url, response, resultType);
+                return ResponseUtil.handleResponse( url, response, resultType);
             }
 
         });
@@ -3820,7 +3605,7 @@ public class HttpRequestProxy {
             @Override
             public D handleResponse(final HttpResponse response)
                     throws ClientProtocolException, IOException {
-                return HttpRequestProxy.handleResponse( url, response, containType,resultType);
+                return ResponseUtil.handleResponse( url, response, containType,resultType);
             }
 
         });
@@ -3838,7 +3623,7 @@ public class HttpRequestProxy {
         return httpPost(  poolName,   url,  httpOption, new BaseURLResponseHandler<D>() {
             @Override
             public D handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-                return HttpRequestProxy.handleResponse(url,response,containType,resultType);
+                return ResponseUtil.handleResponse(url,response,containType,resultType);
             }
         });
 //        return httpPostforString(  poolName,url, params, (Map<String, String>) null);
@@ -3849,7 +3634,7 @@ public class HttpRequestProxy {
             @Override
             public List<T> handleResponse(final HttpResponse response)
                     throws ClientProtocolException, IOException {
-                return HttpRequestProxy.handleListResponse( url, response, resultType);
+                return ResponseUtil.handleListResponse( url, response, resultType);
             }
 
         });
@@ -3862,7 +3647,7 @@ public class HttpRequestProxy {
             @Override
             public Set<T> handleResponse(final HttpResponse response)
                     throws ClientProtocolException, IOException {
-                return HttpRequestProxy.handleSetResponse( url, response, resultType);
+                return ResponseUtil.handleSetResponse( url, response, resultType);
             }
 
         });
@@ -3875,7 +3660,7 @@ public class HttpRequestProxy {
             @Override
             public Map<K,T>  handleResponse(final HttpResponse response)
                     throws ClientProtocolException, IOException {
-                return HttpRequestProxy.handleMapResponse( url, response, keyType,resultType);
+                return ResponseUtil.handleMapResponse( url, response, keyType,resultType);
             }
 
         });

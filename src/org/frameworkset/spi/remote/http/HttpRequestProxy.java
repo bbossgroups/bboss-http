@@ -2838,9 +2838,19 @@ public class HttpRequestProxy {
         return  sendBodyForSet(   poolname, object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON,  resultType);
     }
 
+    public static <T> Set<T> sendJsonBodyForSet(Object requestBody, String url,Class<T> resultType) throws HttpProxyRequestException {
+
+        return  sendBodyForSet(   (String)null, object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON,  resultType);
+    }
+
+
     public static <K,T> Map<K,T> sendJsonBodyForMap(String poolname,Object requestBody, String url,Class<K> keyType,Class<T> resultType) throws HttpProxyRequestException {
 
         return  sendBodyForMap(   poolname, object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON, keyType, resultType);
+    }
+    public static <K,T> Map<K,T> sendJsonBodyForMap(Object requestBody, String url,Class<K> keyType,Class<T> resultType) throws HttpProxyRequestException {
+
+        return  sendBodyForMap(   (String)null, object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON, keyType, resultType);
     }
     public static String sendStringBody(String poolname,String requestBody, String url) throws HttpProxyRequestException {
         return  sendBody(  poolname,  requestBody,   url,   null,ContentType.create(

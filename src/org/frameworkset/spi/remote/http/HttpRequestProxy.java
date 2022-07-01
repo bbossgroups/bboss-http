@@ -19,6 +19,7 @@ import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 import org.frameworkset.spi.remote.http.proxy.*;
+import org.frameworkset.util.ResourceStartResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,22 +41,22 @@ import static org.frameworkset.spi.remote.http.HttpRequestUtil.object2json;
 public class HttpRequestProxy {
 
     private static Logger logger = LoggerFactory.getLogger(HttpRequestProxy.class);
-    public static void startHttpPools(String configFile){
-        HttpRequestUtil.startHttpPools(configFile);
+    public static ResourceStartResult startHttpPools(String configFile){
+        return HttpRequestUtil.startHttpPools(configFile);
     }
-    public static void startHttpPools(Map<String,Object> configs){
-        HttpRequestUtil.startHttpPools(configs);
-    }
-
-    public static void startHttpPoolsFromApollo(String namespaces){
-        HttpRequestUtil.startHttpPoolsFromApollo(namespaces);
-    }
-    public static void startHttpPoolsFromApollo(String namespaces,String configChangeListener){
-        HttpRequestUtil.startHttpPoolsFromApollo(namespaces,configChangeListener);
+    public static ResourceStartResult startHttpPools(Map<String,Object> configs){
+        return HttpRequestUtil.startHttpPools(configs);
     }
 
-    public static void startHttpPoolsFromApolloAwaredChange(String namespaces){
-        HttpRequestUtil.startHttpPoolsFromApolloAwaredChange(namespaces);
+    public static ResourceStartResult startHttpPoolsFromApollo(String namespaces){
+        return HttpRequestUtil.startHttpPoolsFromApollo(namespaces);
+    }
+    public static ResourceStartResult startHttpPoolsFromApollo(String namespaces,String configChangeListener){
+        return HttpRequestUtil.startHttpPoolsFromApollo(namespaces,configChangeListener);
+    }
+
+    public static ResourceStartResult startHttpPoolsFromApolloAwaredChange(String namespaces){
+        return HttpRequestUtil.startHttpPoolsFromApolloAwaredChange(namespaces);
     }
 
 
@@ -3129,6 +3130,30 @@ public class HttpRequestProxy {
         }
         return responseBody;
          */
+    }
+
+    public static ClientConfiguration stopHttpClient(String poolName){
+        return ClientConfiguration.stopHttpClient(poolName);
+    }
+
+    public static void stopHttpClients(ResourceStartResult resourceStartResult){
+
+        if(resourceStartResult != null) {
+            Map<String,Object> reses = resourceStartResult.getResourceStartResult();
+            if(reses != null && reses.size() > 0) {
+                Iterator<Map.Entry<String,Object>> iterator = reses.entrySet().iterator();
+                while (iterator.hasNext()){
+                    Map.Entry<String,Object> entry = iterator.next();
+                    try {
+                        ClientConfiguration.stopHttpClient(entry.getKey());
+                    }
+                    catch (Exception e){
+                        logger.warn("stop http pool "+ entry.getKey() + " failed:",e);
+                    }
+                }
+
+            }
+        }
     }
 
     /**

@@ -23,6 +23,7 @@ import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 import org.frameworkset.spi.remote.http.proxy.HttpProxyRequestException;
+import org.frameworkset.util.ResourceStartResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,21 +58,21 @@ public class HttpRequestUtil {
 //	private final static int TIMEOUT_SOCKET = 20000;
 //	private final static int RETRY_TIME = 3;
     private static long retryInterval = -1;
-    public static void startHttpPools(String configFile){
-        ClientConfiguration.startHttpPools(configFile);
+    public static ResourceStartResult startHttpPools(String configFile){
+        return ClientConfiguration.startHttpPools(configFile);
     }
-    public static void startHttpPoolsFromApollo(String namespaces){
-        ClientConfiguration.startHttpPoolsFromApollo(namespaces);
+    public static ResourceStartResult startHttpPoolsFromApollo(String namespaces){
+        return ClientConfiguration.startHttpPoolsFromApollo(namespaces);
     }
-    public static void startHttpPoolsFromApolloAwaredChange(String namespaces){
-        ClientConfiguration.startHttpPoolsFromApolloAwaredChange(namespaces);
+    public static ResourceStartResult startHttpPoolsFromApolloAwaredChange(String namespaces){
+        return ClientConfiguration.startHttpPoolsFromApolloAwaredChange(namespaces);
     }
-    public static void startHttpPoolsFromApollo(String namespaces,String configChangeListener){
-        ClientConfiguration.startHttpPoolsFromApollo(namespaces,configChangeListener);
+    public static ResourceStartResult startHttpPoolsFromApollo(String namespaces,String configChangeListener){
+        return ClientConfiguration.startHttpPoolsFromApollo(namespaces,configChangeListener);
     }
 
-    public static void startHttpPools(Map<String,Object>  configs){
-        ClientConfiguration.startHttpPools(  configs);
+    public static ResourceStartResult startHttpPools(Map<String,Object>  configs){
+        return ClientConfiguration.startHttpPools(  configs);
     }
 
     static HttpClient getHttpClient(ClientConfiguration config) throws Exception {
@@ -101,7 +102,7 @@ public class HttpRequestUtil {
     }
 
     static HttpGet getHttpGet(String url, String cookie, String userAgent, Map<String, String> headers) {
-        return getHttpGet(ClientConfiguration.getDefaultClientConfiguration(), url, cookie, userAgent, headers);
+        return getHttpGet(ClientConfiguration.getDefaultClientConfiguration(null), url, cookie, userAgent, headers);
     }
 
     static HttpGet getHttpGet(ClientConfiguration config, String url, String cookie, String userAgent, Map<String, String> headers) {

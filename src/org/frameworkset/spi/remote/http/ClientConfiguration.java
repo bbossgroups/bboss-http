@@ -40,6 +40,7 @@ import org.frameworkset.spi.remote.http.proxy.HttpHostDiscover;
 import org.frameworkset.spi.remote.http.proxy.HttpServiceHosts;
 import org.frameworkset.spi.remote.http.ssl.SSLHelper;
 import org.frameworkset.util.ClassUtil;
+import org.frameworkset.util.ResourceStartResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -255,10 +256,12 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 
 	public static HttpClient getDefaultHttpclient() {
 		loadClientConfiguration();
-		return getDefaultClientConfiguration()._getHttpclient();
+		return getDefaultClientConfiguration(null)._getHttpclient();
 	}
-
-	public static ClientConfiguration getDefaultClientConfiguration() {
+	public static ClientConfiguration getDefaultClientConfiguration(){
+		return getDefaultClientConfiguration((ResourceStartResult)null);
+	}
+	public static ClientConfiguration getDefaultClientConfiguration(ResourceStartResult resourceStartResult) {
 		loadClientConfiguration();
 		if (defaultClientConfiguration != null)
 			return defaultClientConfiguration;
@@ -266,7 +269,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		if (defaultClientConfiguration == null) {
 
 			try {
-				defaultClientConfiguration = makeDefualtClientConfiguration("default");
+				defaultClientConfiguration = makeDefualtClientConfiguration(resourceStartResult,"default");
 			} catch (Exception e) {
 				throw new ConfigHttpRuntimeException("Get DefaultClientConfiguration[default] failed:", e);
 			}
@@ -274,10 +277,10 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		return defaultClientConfiguration;
 	}
 
-	private static ClientConfiguration _getDefaultClientConfiguration(String healthPoolname,GetProperties context) {
+	private static ClientConfiguration _getDefaultClientConfiguration(ResourceStartResult resourceStartResult,String healthPoolname,GetProperties context) {
 		if(healthPoolname != null){
 			try {
-				return makeDefualtClientConfiguration(healthPoolname,"default", context);
+				return makeDefualtClientConfiguration(  resourceStartResult,healthPoolname,"default", context);
 			} catch (Exception e) {
 				throw new ConfigHttpRuntimeException("Get Default healthcheck ClientConfiguration["+healthPoolname+"] failed:", e);
 			}
@@ -288,7 +291,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		else{
 
 			try {
-				defaultClientConfiguration = makeDefualtClientConfiguration(healthPoolname,"default", context);
+				defaultClientConfiguration = makeDefualtClientConfiguration(  resourceStartResult,healthPoolname,"default", context);
 				return defaultClientConfiguration;
 			} catch (Exception e) {
 				throw new ConfigHttpRuntimeException("Get DefaultClientConfiguration[default] failed:", e);
@@ -297,7 +300,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 
 	}
 
-	private static ClientConfiguration makeDefualtClientConfiguration(String name) throws Exception {
+	private static ClientConfiguration makeDefualtClientConfiguration(ResourceStartResult resourceStartResult,String name) throws Exception {
 
 		ClientConfiguration clientConfiguration = clientConfigs.get(name);
 		if (clientConfiguration != null) {
@@ -351,6 +354,8 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 
 					clientConfiguration.afterPropertiesSet();
 					clientConfigs.put(name, clientConfiguration);
+					if(resourceStartResult != null)
+						resourceStartResult.addResourceStartResult(name);
 					if(logger.isInfoEnabled()){
 						logger.info("Make http pool[{}] use default config completed!",name);
 					}
@@ -383,6 +388,8 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 					clientConfiguration.setBeanName(name);
 					clientConfiguration.afterPropertiesSet();
 					clientConfigs.put(name, clientConfiguration);
+					if(resourceStartResult != null)
+						resourceStartResult.addResourceStartResult(name);
 					if(logger.isInfoEnabled()){
 						logger.info("Make http pool[{}] use default config completed!",name);
 					}
@@ -479,7 +486,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		else
 			return org.apache.http.conn.ssl.SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER;
 	}
-	public static void startHttpPoolsFromApolloAwaredChange(String namespaces){
+	public static ResourceStartResult startHttpPoolsFromApolloAwaredChange(String namespaces){
 		String apolloAwaredChangeListener = "org.frameworkset.apollo.HttpProxyConfigChangeListener";
 		try {
 			Class t = Class.forName(apolloAwaredChangeListener);
@@ -492,18 +499,19 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 					.append( "    <dependency>\n"  )
 					.append("            <groupId>com.bbossgroups.plugins</groupId>\n"  )
 					.append("            <artifactId>bboss-plugin-httpproxy-apollo</artifactId>\n"  )
-					.append("            <version>5.7.7</version>\n"  )
+					.append("            <version>6.0.1</version>\n"  )
 					.append("        </dependency>");
 			logger.error(msg.toString(),e);
 			throw new IllegalArgumentException(msg.toString(),e);
 		}
 
-		startHttpPoolsFromApollo(namespaces,apolloAwaredChangeListener);
+		return startHttpPoolsFromApollo(namespaces,apolloAwaredChangeListener);
 	}
-	public static void startHttpPoolsFromApollo(String namespaces){
-		startHttpPoolsFromApollo(namespaces, null);
+	public static ResourceStartResult startHttpPoolsFromApollo(String namespaces){
+		return startHttpPoolsFromApollo(namespaces, null);
 	}
-	public static void startHttpPoolsFromApollo(String namespaces,String configChangeListener){
+	public static ResourceStartResult startHttpPoolsFromApollo(String namespaces, String configChangeListener){
+		ResourceStartResult resourceStartResult = new ResourceStartResult();
 		if(namespaces == null || namespaces.equals(""))
 		{
 			if(logger.isWarnEnabled()) {
@@ -511,7 +519,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 				message.append("Ignore start HttpPools from Apollo: namespaces is empty!");
 				logger.warn(message.toString());
 			}
-			return;
+			return resourceStartResult;
 		}
 		PropertiesContainer propertiesContainer = new PropertiesContainer();
 		propertiesContainer.addConfigPropertiesFromApollo(namespaces,configChangeListener);
@@ -521,10 +529,10 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		if(poolNames == null){
 			//load default http pool config
 			try {
-				makeDefualtClientConfiguration(null,"default", propertiesContainer);
+				makeDefualtClientConfiguration(resourceStartResult,null,"default", propertiesContainer);
 				String health = ClientConfiguration._getStringValue("default", "http.health", propertiesContainer, null);
 				if(health != null && !health.equals("")){
-					makeDefualtClientConfiguration(getHealthPoolName(null),"default", propertiesContainer);
+					makeDefualtClientConfiguration(resourceStartResult,getHealthPoolName(null),"default", propertiesContainer);
 				}
 			}
 			catch (Exception e){
@@ -543,10 +551,10 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 					poolName = "default";
 				}
 				try {
-					makeDefualtClientConfiguration(null,poolName, propertiesContainer);
+					makeDefualtClientConfiguration(resourceStartResult,null,poolName, propertiesContainer);
 					String health = ClientConfiguration._getStringValue(poolName, "http.health", propertiesContainer, null);
 					if(health != null && !health.equals("")){
-						makeDefualtClientConfiguration(getHealthPoolName(poolName),poolName, propertiesContainer);
+						makeDefualtClientConfiguration(resourceStartResult,getHealthPoolName(poolName),poolName, propertiesContainer);
 					}
 				}
 				catch (Exception e){
@@ -558,8 +566,10 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 				}
 			}
 		}
+		return resourceStartResult;
 	}
-	public static void startHttpPools(String configFile){
+	public static ResourceStartResult startHttpPools(String configFile){
+		ResourceStartResult resourceStartResult = new ResourceStartResult();
 		if(configFile == null || configFile.equals(""))
 		{
 			if(logger.isWarnEnabled()) {
@@ -567,7 +577,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 				message.append("Ignore start HttpPools from configfile[").append(configFile).append("]: configFile path is empty!");
 				logger.warn(message.toString());
 			}
-			return;
+			return resourceStartResult;
 		}
 		PropertiesContainer propertiesContainer = new PropertiesContainer();
 		propertiesContainer.addConfigPropertiesFile(configFile);
@@ -576,10 +586,10 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		if(poolNames == null){
 			//load default http pool config
 			try {
-				makeDefualtClientConfiguration(null,"default", propertiesContainer);
+				makeDefualtClientConfiguration(resourceStartResult,null,"default", propertiesContainer);
 				String health = ClientConfiguration._getStringValue("default", "http.health", propertiesContainer, null);
 				if(health != null && !health.equals("")){
-					makeDefualtClientConfiguration(getHealthPoolName(null),"default", propertiesContainer);
+					makeDefualtClientConfiguration(resourceStartResult,getHealthPoolName(null),"default", propertiesContainer);
 				}
 			}
 			catch (Exception e){
@@ -598,10 +608,10 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 					poolName = "default";
 				}
 				try {
-					makeDefualtClientConfiguration(null,poolName, propertiesContainer);
+					makeDefualtClientConfiguration(resourceStartResult,null,poolName, propertiesContainer);
 					String health = ClientConfiguration._getStringValue(poolName, "http.health", propertiesContainer, null);
 					if(health != null && !health.equals("")){
-						makeDefualtClientConfiguration(getHealthPoolName(poolName),poolName, propertiesContainer);
+						makeDefualtClientConfiguration(resourceStartResult,getHealthPoolName(poolName),poolName, propertiesContainer);
 					}
 				}
 				catch (Exception e){
@@ -613,9 +623,11 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 				}
 			}
 		}
+		return resourceStartResult;
 	}
 
-	public static void startHttpPools(Map<String,Object>  configs){
+	public static ResourceStartResult startHttpPools(Map<String,Object>  configs){
+		ResourceStartResult resourceStartResult = new ResourceStartResult();
 		if(configs == null || configs.size() == 0)
 		{
 			if(logger.isWarnEnabled()) {
@@ -623,17 +635,17 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 				message.append("Ignore start HttpPools from configs: configs is null or empty!");
 				logger.warn(message.toString());
 			}
-			return;
+			return resourceStartResult;
 		}
 		GetProperties propertiesContainer = new MapGetProperties(configs);
 		//http.poolNames = scedule,elastisearch
 		String poolNames = propertiesContainer.getExternalProperty("http.poolNames");
 		if(poolNames == null){
 			try {
-				makeDefualtClientConfiguration(null,"default", propertiesContainer);
+				makeDefualtClientConfiguration(resourceStartResult,null,"default", propertiesContainer);
 				String health = ClientConfiguration._getStringValue("default", "http.health", propertiesContainer, null);
 				if(health != null && !health.equals("")){
-					makeDefualtClientConfiguration(getHealthPoolName("default"),"default", propertiesContainer);
+					makeDefualtClientConfiguration(resourceStartResult,getHealthPoolName("default"),"default", propertiesContainer);
 				}
 			}
 			catch (Exception e){
@@ -652,10 +664,10 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 					poolName = "default";
 				}
 				try {
-					makeDefualtClientConfiguration(null,poolName, propertiesContainer);
+					makeDefualtClientConfiguration(resourceStartResult,null,poolName, propertiesContainer);
 					String health = ClientConfiguration._getStringValue(poolName, "http.health", propertiesContainer, null);
 					if(health != null && !health.equals("")){
-						makeDefualtClientConfiguration(getHealthPoolName(poolName),poolName, propertiesContainer);
+						makeDefualtClientConfiguration(resourceStartResult,getHealthPoolName(poolName),poolName, propertiesContainer);
 					}
 				}
 				catch (Exception e){
@@ -667,6 +679,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 				}
 			}
 		}
+		return resourceStartResult;
 	}
 
 	static ClientConfiguration _get(String healthPoolname,String name){
@@ -687,7 +700,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 			return name;
 		}
 	}
-	static ClientConfiguration makeDefualtClientConfiguration(String healthPoolname,String name, GetProperties context) throws Exception {
+	static ClientConfiguration makeDefualtClientConfiguration(ResourceStartResult resourceStartResult,String healthPoolname,String name, GetProperties context) throws Exception {
 		ClientConfiguration clientConfiguration = _get(  healthPoolname,  name);
 
 		if (clientConfiguration != null) {
@@ -976,17 +989,21 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 				httpServiceHosts.after(name,context);
 
 			clientConfigs.put(rname(healthPoolname,name), clientConfiguration);
+			if(resourceStartResult != null)
+				resourceStartResult.addResourceStartResult(rname(healthPoolname,name));
 
 		}
 		return clientConfiguration;
 
 	}
 
-	public static void bootClientConfiguations(String[] serverNames, GetProperties context) {
+	public static ResourceStartResult bootClientConfiguations(String[] serverNames, GetProperties context) {
+		ResourceStartResult resourceStartResult = new ResourceStartResult();
 		//初始化Http连接池
 		for (String serverName : serverNames) {
-			ClientConfiguration.configClientConfiguation(null,serverName, context);
+			ClientConfiguration.configClientConfiguation(resourceStartResult,null,serverName, context);
 		}
+		return resourceStartResult;
 	}
 
 	public static ClientConfiguration stopHttpClient(String poolName){
@@ -1028,26 +1045,28 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 				httpclient.close();
 				httpclient = null;
 			} catch (IOException e) {
-				e.printStackTrace();
+				logger.warn("stop http pool "+ this.getBeanName() + " failed:",e);
 			}
 
 		}
 
 	}
-	public static void bootHealthCheckClientConfiguations(String[] serverNames, GetProperties context) {
+	public static ResourceStartResult bootHealthCheckClientConfiguations(String[] serverNames, GetProperties context) {
+		ResourceStartResult resourceStartResult = new ResourceStartResult();
 		//初始化Http连接池
 		HealthCheckGetProperties healthCheckGetProperties = new HealthCheckGetProperties(context);
 		for (String serverName : serverNames) {
-			ClientConfiguration.configClientConfiguation(getHealthPoolName(serverName),serverName, healthCheckGetProperties);
+			ClientConfiguration.configClientConfiguation(resourceStartResult,getHealthPoolName(serverName),serverName, healthCheckGetProperties);
 		}
+		return resourceStartResult;
 	}
 
-	private static ClientConfiguration configClientConfiguation(String healthPoolname,String poolname, GetProperties context) {
+	private static ClientConfiguration configClientConfiguation(ResourceStartResult resourceStartResult,String healthPoolname,String poolname, GetProperties context) {
 //		loadClientConfiguration();
 		if (poolname == null || poolname.equals("default"))
-			return _getDefaultClientConfiguration(healthPoolname,context);
+			return _getDefaultClientConfiguration(resourceStartResult,healthPoolname,context);
 		try {
-			return makeDefualtClientConfiguration(healthPoolname,poolname, context);
+			return makeDefualtClientConfiguration(resourceStartResult,healthPoolname,poolname, context);
 		} catch (Exception e) {
 			throw new ConfigHttpRuntimeException("Build ClientConfiguration [" + healthPoolname + poolname + "] failed:", e);
 		}
@@ -1075,9 +1094,9 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	public static ClientConfiguration getClientConfiguration(String poolname) {
 		loadClientConfiguration();
 		if (poolname == null)
-			return getDefaultClientConfiguration();
+			return getDefaultClientConfiguration((ResourceStartResult)null);
 		try {
-			return makeDefualtClientConfiguration(poolname);
+			return makeDefualtClientConfiguration((ResourceStartResult)null,poolname);
 		} catch (Exception e) {
 			throw new ConfigHttpRuntimeException("makeDefualtClientConfiguration [" + poolname + "] failed:", e);
 		}

@@ -3964,6 +3964,11 @@ public class HttpRequestProxy {
 
     }
 
+    public static String putJson(String poolName,String requestBody, String url) throws HttpProxyRequestException {
+        return putBody(poolName,requestBody,   url,   (Map<String, String> )null,  ContentType.APPLICATION_JSON) ;
+
+    }
+
     private interface ExecuteRequest{
         Object execute(ClientConfiguration config,HttpClient httpClient ,String url, int triesCount) throws Exception;
     }

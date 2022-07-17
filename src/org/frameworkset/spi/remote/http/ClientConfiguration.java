@@ -511,7 +511,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		return startHttpPoolsFromApollo(namespaces, null);
 	}
 	public static ResourceStartResult startHttpPoolsFromApollo(String namespaces, String configChangeListener){
-		ResourceStartResult resourceStartResult = new ResourceStartResult();
+		ResourceStartResult resourceStartResult = new HttpResourceStartResult();
 		if(namespaces == null || namespaces.equals(""))
 		{
 			if(logger.isWarnEnabled()) {
@@ -569,7 +569,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		return resourceStartResult;
 	}
 	public static ResourceStartResult startHttpPools(String configFile){
-		ResourceStartResult resourceStartResult = new ResourceStartResult();
+		ResourceStartResult resourceStartResult = new HttpResourceStartResult();
 		if(configFile == null || configFile.equals(""))
 		{
 			if(logger.isWarnEnabled()) {
@@ -627,7 +627,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	}
 
 	public static ResourceStartResult startHttpPools(Map<String,Object>  configs){
-		ResourceStartResult resourceStartResult = new ResourceStartResult();
+		ResourceStartResult resourceStartResult = new HttpResourceStartResult();
 		if(configs == null || configs.size() == 0)
 		{
 			if(logger.isWarnEnabled()) {
@@ -998,7 +998,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	}
 
 	public static ResourceStartResult bootClientConfiguations(String[] serverNames, GetProperties context) {
-		ResourceStartResult resourceStartResult = new ResourceStartResult();
+		ResourceStartResult resourceStartResult = new HttpResourceStartResult();
 		//初始化Http连接池
 		for (String serverName : serverNames) {
 			ClientConfiguration.configClientConfiguation(resourceStartResult,null,serverName, context);
@@ -1010,6 +1010,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		if(poolName == null){
 			poolName = "default";
 		}
+		logger.info("Stop HttpClient[{}] client begin......",poolName);
 		String healthPool = getHealthPoolName(poolName);
 		boolean r = false;
 		ClientConfiguration clientConfiguration = getClientConfigurationAndRemove( poolName);
@@ -1022,6 +1023,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		}
 		if(poolName.equals("default"))
 			ClientConfiguration.defaultClientConfiguration = null;
+		logger.info("Stop HttpClient[{}] client complete.",poolName);
 		return clientConfiguration;
 
 	}
@@ -1052,7 +1054,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 
 	}
 	public static ResourceStartResult bootHealthCheckClientConfiguations(String[] serverNames, GetProperties context) {
-		ResourceStartResult resourceStartResult = new ResourceStartResult();
+		ResourceStartResult resourceStartResult = new HttpResourceStartResult();
 		//初始化Http连接池
 		HealthCheckGetProperties healthCheckGetProperties = new HealthCheckGetProperties(context);
 		for (String serverName : serverNames) {

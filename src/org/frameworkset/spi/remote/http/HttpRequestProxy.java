@@ -3936,14 +3936,8 @@ public class HttpRequestProxy {
     
     
 
-    public static <T> T putJson(String poolname,String requestBody, String url, Map<String, String> headers,ContentType contentType, ResponseHandler<T> responseHandler) throws HttpProxyRequestException {
-       return putJson(  poolname,  requestBody,   url,   headers,ContentType.APPLICATION_JSON,  responseHandler);
-    }
-    
-    public static String putJson(String poolname,String requestBody, String url, Map<String, String> headers,ContentType contentType) throws HttpProxyRequestException {
-    	return putJson(  poolname,  requestBody,   url, headers, ContentType.APPLICATION_JSON);
-        
-    }
+
+
     
     public static <T> T putJson(String requestBody, String url, Map<String, String> headers, ResponseHandler<T> responseHandler) throws HttpProxyRequestException {
         return putBody( "default", requestBody,   url,  headers,   ContentType.APPLICATION_JSON,  responseHandler) ;

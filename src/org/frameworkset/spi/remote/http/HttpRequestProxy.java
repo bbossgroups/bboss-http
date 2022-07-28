@@ -2807,6 +2807,11 @@ public class HttpRequestProxy {
         return  sendBodyForList(   poolname, requestBody,   url,   null,ContentType.APPLICATION_JSON,resultType);
     }
 
+    public static <T> List<T> sendJsonBodyForList(String poolname,String requestBody, String url, Map<String, String> headers,Class<T> resultType) throws HttpProxyRequestException {
+
+        return  sendBodyForList(   poolname, requestBody,   url,   headers,ContentType.APPLICATION_JSON,resultType);
+    }
+
     public static <T> Set<T> sendJsonBodyForSet(String poolname,String requestBody, String url,Class<T> resultType) throws HttpProxyRequestException {
 
         return  sendBodyForSet(   poolname, requestBody,   url,   null,ContentType.APPLICATION_JSON,resultType);
@@ -2825,7 +2830,10 @@ public class HttpRequestProxy {
 
         return  sendBody(   poolname, object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON,  resultType);
     }
+    public static <T> List<T> sendJsonBodyForList(String poolname,Object requestBody, String url,Map<String,String> headers,Class<T> resultType) throws HttpProxyRequestException {
 
+        return  sendBodyForList(   poolname, object2json(requestBody),   url,   headers,ContentType.APPLICATION_JSON,  resultType);
+    }
     public static <T> List<T> sendJsonBodyForList(String poolname,Object requestBody, String url,Class<T> resultType) throws HttpProxyRequestException {
 
         return  sendBodyForList(   poolname, object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON,  resultType);
@@ -2858,7 +2866,10 @@ public class HttpRequestProxy {
                 "text/plain", Consts.UTF_8));
     }
 
+    public static <T> T sendJsonBody(String poolname, Object requestBody, String url, Map<String, String> headers,Class<T> type) throws HttpProxyRequestException {
 
+        return  sendBody(  poolname, object2json(requestBody),   url,   headers,ContentType.APPLICATION_JSON,type);
+    }
     public static String sendJsonBody(String poolname, Object requestBody, String url, Map<String, String> headers) throws HttpProxyRequestException {
 
         return  sendBody(  poolname, object2json(requestBody),   url,   headers,ContentType.APPLICATION_JSON);
@@ -2929,6 +2940,7 @@ public class HttpRequestProxy {
 
         return  sendBody( poolname, requestBody,   url,   headers,ContentType.APPLICATION_JSON, responseHandler);
     }
+
     public static <T> T sendBody(final String poolname,  String requestBody, String url,
                                  final Map<String, String> headers, ContentType contentType,
                                  final ResponseHandler<T> responseHandler) throws HttpProxyRequestException {

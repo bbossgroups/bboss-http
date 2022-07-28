@@ -41,6 +41,7 @@ import org.frameworkset.spi.remote.http.proxy.HttpServiceHosts;
 import org.frameworkset.spi.remote.http.ssl.SSLHelper;
 import org.frameworkset.util.ClassUtil;
 import org.frameworkset.util.ResourceStartResult;
+import org.frameworkset.util.shutdown.ShutdownUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1380,7 +1381,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 			defaultHttpclient = httpclient;
 		}
 		clientConfigs.put(beanName, this);
-		BaseApplicationContext.addShutdownHook(new Runnable() {
+		ShutdownUtil.addShutdownHook(new Runnable() {
 			@Override
 			public void run() {
 				close();

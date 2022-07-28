@@ -1,10 +1,10 @@
 package org.frameworkset.spi.remote.http.proxy;
 
 
-import org.frameworkset.spi.BaseApplicationContext;
 import org.frameworkset.spi.assemble.GetProperties;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
 import org.frameworkset.spi.remote.http.HttpHost;
+import org.frameworkset.util.shutdown.ShutdownUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +20,7 @@ public abstract class HttpHostDiscover extends Thread{
 	private HttpServiceHosts httpServiceHosts;
 	public HttpHostDiscover( ){
 		super("Http HostDiscover Thread");
-		BaseApplicationContext.addShutdownHook(new Runnable() {
+		ShutdownUtil.addShutdownHook(new Runnable() {
 			@Override
 			public void run() {
 				stopCheck();

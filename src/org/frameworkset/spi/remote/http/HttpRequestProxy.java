@@ -2830,6 +2830,10 @@ public class HttpRequestProxy {
 
         return  sendBody(   poolname, object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON,  resultType);
     }
+    public static <T> T sendJsonBody(String poolname,Object requestBody,Map<String,String> headers, String url,Class<T> resultType) throws HttpProxyRequestException {
+
+        return  sendBody(   poolname, object2json(requestBody),   url,   headers,ContentType.APPLICATION_JSON,  resultType);
+    }
     public static <T> List<T> sendJsonBodyForList(String poolname,Object requestBody, String url,Map<String,String> headers,Class<T> resultType) throws HttpProxyRequestException {
 
         return  sendBodyForList(   poolname, object2json(requestBody),   url,   headers,ContentType.APPLICATION_JSON,  resultType);

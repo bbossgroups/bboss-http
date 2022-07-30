@@ -92,7 +92,17 @@ public class HttpRequestProxy {
 
         });
     }
+	public static <T> T httpGetforObject(String poolname, String url,Map<String,String> headers,final Class<T> resultType) throws HttpProxyRequestException {
+		return httpGetforString(poolname, url, (String) null, (String) null, headers, new BaseURLResponseHandler<T>() {
 
+			@Override
+			public T handleResponse(final HttpResponse response)
+					throws ClientProtocolException, IOException {
+				return ResponseUtil.handleResponse(  url,response, resultType);
+			}
+
+		});
+	}
     public static <T> List<T> httpGetforList(String url,final Class<T> resultType) throws HttpProxyRequestException {
         return httpGetforString("default",url, (String) null, (String) null, (Map<String, String>) null, new BaseURLResponseHandler<List<T>>() {
 
@@ -140,6 +150,18 @@ public class HttpRequestProxy {
 
         });
     }
+
+	public static <T> List<T> httpGetforList(String poolName,String url,Map<String, String> headers,final Class<T> resultType) throws HttpProxyRequestException {
+		return httpGetforString(  poolName,url, (String) null, (String) null, headers, new BaseURLResponseHandler<List<T>>() {
+
+			@Override
+			public List<T> handleResponse(final HttpResponse response)
+					throws ClientProtocolException, IOException {
+				return ResponseUtil.handleListResponse( url, response, resultType);
+			}
+
+		});
+	}
     public static <D,T> D httpGetforTypeObject(String url,final Class<D> containType,final Class<T> resultType) throws HttpProxyRequestException {
         return httpGetforTypeObject("default", url, containType, resultType);
     }
@@ -154,6 +176,9 @@ public class HttpRequestProxy {
 
         });
     }
+
+
+
     public static <K,T> Map<K,T> httpGetforMap(String poolName,String url,final Class<K> keyType,final Class<T> resultType) throws HttpProxyRequestException {
         return httpGetforString(  poolName,url, (String) null, (String) null, (Map<String, String>) null, new BaseURLResponseHandler<Map<K,T> >() {
 
@@ -165,6 +190,31 @@ public class HttpRequestProxy {
 
         });
     }
+
+	public static <K,T> Map<K,T> httpGetforMap(String poolName,String url,Map<String, String> headers,final Class<K> keyType,final Class<T> resultType) throws HttpProxyRequestException {
+		return httpGetforString(  poolName,url, (String) null, (String) null,  headers, new BaseURLResponseHandler<Map<K,T> >() {
+
+			@Override
+			public Map<K,T>  handleResponse(final HttpResponse response)
+					throws ClientProtocolException, IOException {
+				return ResponseUtil.handleMapResponse( url, response,keyType, resultType);
+			}
+
+		});
+	}
+
+
+	public static <T> Set<T> httpGetforSet(String poolName,String url,Map<String, String> headers,final Class<T> resultType) throws HttpProxyRequestException {
+		return httpGetforString(  poolName,url, (String) null, (String) null, headers, new BaseURLResponseHandler<Set<T>>() {
+
+			@Override
+			public Set<T> handleResponse(final HttpResponse response)
+					throws ClientProtocolException, IOException {
+				return ResponseUtil.handleSetResponse( url, response, resultType);
+			}
+
+		});
+	}
 
     public static <T> Set<T> httpGetforSet(String poolName,String url,final Class<T> resultType) throws HttpProxyRequestException {
         return httpGetforString(  poolName,url, (String) null, (String) null, (Map<String, String>) null, new BaseURLResponseHandler<Set<T>>() {

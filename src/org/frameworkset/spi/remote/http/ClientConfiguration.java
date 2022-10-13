@@ -29,6 +29,7 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.impl.conn.SystemDefaultDnsResolver;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.ssl.SSLContextBuilder;
+import org.apache.http.ssl.SSLContexts;
 import org.apache.http.ssl.TrustStrategy;
 import org.frameworkset.spi.*;
 import org.frameworkset.spi.assemble.GetProperties;
@@ -47,14 +48,16 @@ import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.HostnameVerifier;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.*;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -207,9 +210,11 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	 * pem证书配置
 	 */
 	private String pemCert;
+	//可选项，如果pemCert为.crt类型文件，则无需配置以下参数
 	private String pemtrustedCA;
 	private String pemKey;
 	private String pemkeyPassword;
+
 
 	private String supportedProtocols;
 	private String[] _supportedProtocols;
@@ -1210,13 +1215,32 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 			KeyStoreException, IOException,
 			KeyManagementException, UnrecoverableKeyException {
 		if(pemCert != null && !pemCert.equals("")){
-			SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(
-					SSLHelper.initSSLConfig("TLS", pemKey, this.pemkeyPassword, pemCert, pemtrustedCA),
-					_supportedProtocols,
-					null, hostnameVerifier
-			);
-			return sslsf;
+			if(!pemCert.endsWith(".crt")) {
+				SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(
+						SSLHelper.initSSLConfig("TLS", pemKey, this.pemkeyPassword, pemCert, pemtrustedCA),
+						_supportedProtocols,
+						null, hostnameVerifier
+				);
+				return sslsf;
+			}
+			else{
+				Path caCertificatePath = Paths.get(pemCert);
+				CertificateFactory factory =
+						CertificateFactory.getInstance("X.509");
+				java.security.cert.Certificate trustedCa;
+				try (InputStream is = Files.newInputStream(caCertificatePath)) {
+					trustedCa = factory.generateCertificate(is);
+				}
+				KeyStore trustStore = KeyStore.getInstance("pkcs12");
+				trustStore.load(null, null);
+				trustStore.setCertificateEntry("ca", trustedCa);
+				SSLContextBuilder sslContextBuilder = SSLContexts.custom()
+						.loadTrustMaterial(trustStore, null);
+				return new SSLConnectionSocketFactory(sslContextBuilder.build(), NoopHostnameVerifier.INSTANCE);
+			}
 		}
+
+
 
 		// Trust own CA and all self-signed certs
 		if (this.keystore == null || this.keystore.equals("")) {
@@ -1231,9 +1255,8 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		} else {
 
 
-
 			HostnameVerifier hostnameVerifier = this.hostnameVerifier != null ? this.hostnameVerifier :
-					SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER;
+					NoopHostnameVerifier.INSTANCE;
 			if(truststore == null || truststore.equals("")) {
 				SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(
 						SSLHelper.initSSLConfig(  keystore,   keyPassword),

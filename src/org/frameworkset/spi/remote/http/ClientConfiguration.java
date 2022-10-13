@@ -1266,12 +1266,31 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 				return sslsf;
 			}
 			else{
-				SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(
-						SSLHelper.initSSLConfig("TLS", keystore, "JKS", keyPassword, keystoreAlias, truststore, "JKS", trustPassword, trustAlias),
-						_supportedProtocols,
-						null, hostnameVerifier
-				);
-				return sslsf;
+				if(!truststore.endsWith(".p12")) {
+					SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(
+							SSLHelper.initSSLConfig("TLS", keystore, "JKS", keyPassword, keystoreAlias, truststore, "JKS", trustPassword, trustAlias),
+							_supportedProtocols,
+							null, hostnameVerifier
+					);
+
+					return sslsf;
+				}
+				else{
+					Path trustStorePath = Paths.get(truststore);
+					Path keyStorePath = Paths.get(keystore);
+					KeyStore trustStore = KeyStore.getInstance("pkcs12");
+					KeyStore keyStore = KeyStore.getInstance("pkcs12");
+					try (InputStream is = Files.newInputStream(trustStorePath)) {
+						trustStore.load(is, (trustPassword == null || trustPassword.length() == 0) ? null:trustPassword.toCharArray());
+					}
+					try (InputStream is = Files.newInputStream(keyStorePath)) {
+						keyStore.load(is, (keyPassword == null || keyPassword.length() == 0) ? null:keyPassword.toCharArray());
+					}
+					SSLContextBuilder sslBuilder = SSLContexts.custom()
+							.loadTrustMaterial(trustStore, null)
+							.loadKeyMaterial(keyStore, (keyPassword == null || keyPassword.length() == 0) ? null:keyPassword.toCharArray());
+					return new SSLConnectionSocketFactory(sslBuilder.build(), NoopHostnameVerifier.INSTANCE);
+				}
 			}
 		}
 	}

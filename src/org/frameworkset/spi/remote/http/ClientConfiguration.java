@@ -1244,14 +1244,26 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 
 		// Trust own CA and all self-signed certs
 		if (this.keystore == null || this.keystore.equals("")) {
-			SSLContextBuilder sslContextBuilder = new SSLContextBuilder();
-			sslContextBuilder.loadTrustMaterial(null, new TrustStrategy() {
-				@Override
-				public boolean isTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-					return true;
+			if(truststore == null || truststore.equals("")) {
+				SSLContextBuilder sslContextBuilder = new SSLContextBuilder();
+				sslContextBuilder.loadTrustMaterial(null, new TrustStrategy() {
+					@Override
+					public boolean isTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+						return true;
+					}
+				});
+				return new SSLConnectionSocketFactory(sslContextBuilder.build(), NoopHostnameVerifier.INSTANCE);
+			}
+			else {
+				Path trustStorePath = Paths.get(truststore);
+				KeyStore keyTruststore = KeyStore.getInstance(truststore.endsWith("p12")?"pkcs12":"JKS");
+				try (InputStream is = Files.newInputStream(trustStorePath)) {
+					keyTruststore.load(is, (trustPassword == null || trustPassword.length() == 0) ? null:trustPassword.toCharArray());
 				}
-			});
-			return new SSLConnectionSocketFactory(sslContextBuilder.build(), NoopHostnameVerifier.INSTANCE);
+				SSLContextBuilder sslBuilder = SSLContexts.custom()
+						.loadTrustMaterial(keyTruststore, null);
+				return new SSLConnectionSocketFactory(sslBuilder.build(), NoopHostnameVerifier.INSTANCE);
+			}
 		} else {
 
 

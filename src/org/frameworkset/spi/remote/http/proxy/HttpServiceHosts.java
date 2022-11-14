@@ -94,8 +94,9 @@ public class HttpServiceHosts {
 			}
 		}
 		else{
+			routingFilterReadLock.lock();
 			try {
-				routingFilterReadLock.lock();
+
 				httpAddress = this.routingFilter.get();
 				if(httpAddress == null && !this.healthCheckStarted){
 					httpAddress = this.routingFilter.getOkOrFailed();
@@ -117,8 +118,9 @@ public class HttpServiceHosts {
 			return tryCount >= serversList.size() - 1;
 		}
 		else{
+			routingFilterReadLock.lock();
 			try {
-				routingFilterReadLock.lock();
+
 				return tryCount >= routingFilter.size() - 1;
 			}
 			finally {
@@ -297,8 +299,9 @@ public class HttpServiceHosts {
 				this.routingFilter = new RoutingFilter(this,this.addressList,routing);
 			else {
 				RoutingFilter routingFilter = new RoutingFilter(this, this.addressList, newCurrentRounte);
+				routingFilterWriteLock.lock();
 				try {
-					routingFilterWriteLock.lock();
+
 					this.routing = newCurrentRounte;
 					this.routingFilter = routingFilter;
 				}
@@ -309,8 +312,9 @@ public class HttpServiceHosts {
 
 		else{
 			RoutingFilter temp = new RoutingFilter(this,this.addressList,newCurrentRounte == null?routing:newCurrentRounte);
+			routingFilterWriteLock.lock();
 			try {
-				routingFilterWriteLock.lock();
+
 
 				routingFilter = temp;
 				if(newCurrentRounte != null){

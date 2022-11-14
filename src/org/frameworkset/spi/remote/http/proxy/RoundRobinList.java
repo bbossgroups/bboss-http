@@ -42,8 +42,9 @@ public class RoundRobinList {
 
 
 	public void addAddresses(List<HttpAddress> address){
+		lock.lock();
 		try{
-			lock.lock();
+
 			this.elements.addAll(address);
 
 			this.iterator = elements.iterator();
@@ -54,8 +55,9 @@ public class RoundRobinList {
 	}
 	private Lock lock = new ReentrantLock();
 	public HttpAddress get(){
+		lock.lock();
 		try {
-			lock.lock();
+
 			HttpAddress address = null;
 			HttpAddress temp = null;
 			while (iterator.hasNext()) {
@@ -96,8 +98,9 @@ public class RoundRobinList {
 		return "[]";
 	}
 	public HttpAddress getOkOrFailed(){
+		lock.lock();
 		try {
-			lock.lock();
+
 			HttpAddress address = null;
 			HttpAddress temp = null;
 			while (iterator.hasNext()) {
@@ -134,8 +137,9 @@ public class RoundRobinList {
 	}
 
 	public HttpAddress getOkOrFailedFromRouting(){
+		lock.lock();
 		try {
-			lock.lock();
+
 			HttpAddress address = null;
 			HttpAddress temp = null;
 
@@ -173,8 +177,9 @@ public class RoundRobinList {
 	}
 
 	public HttpAddress getFromRouting(){
+		lock.lock();
 		try {
-			lock.lock();
+
 			HttpAddress address = null;
 			HttpAddress temp = null;
 
@@ -212,8 +217,9 @@ public class RoundRobinList {
 	}
 
 	public int size() {
+		lock.lock();
 		try {
-			lock.lock();
+
 			return elements.size();
 		}
 		finally {

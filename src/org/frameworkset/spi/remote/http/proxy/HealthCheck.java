@@ -4,7 +4,6 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.ResponseHandler;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
 import org.frameworkset.spi.remote.http.HttpRequestUtil;
-import org.frameworkset.util.shutdown.ShutdownUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -146,12 +145,12 @@ public class HealthCheck implements Runnable{
 			t.start();
 			checkThreads.add(t);
 		}
-		ShutdownUtil.addShutdownHook(new Runnable() {
-			@Override
-			public void run() {
-				stopCheck();
-			}
-		});
+//		ShutdownUtil.addShutdownHook(new Runnable() {
+//			@Override
+//			public void run() {
+//				stopCheck();
+//			}
+//		});
 	}
 
 	public void addNewAddress(List<HttpAddress> addresses){

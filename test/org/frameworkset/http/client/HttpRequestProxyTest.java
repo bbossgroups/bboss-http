@@ -20,6 +20,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -98,4 +99,14 @@ public class HttpRequestProxyTest {
 		}
 		while(true);
 	}
+    @Test
+    public void testGetParams(){
+        Map params = new LinkedHashMap();
+        params.put("a",1);
+        params.put("b",2);
+        System.out.println(HttpRequestProxy.appendParams("aaa.html",params));
+        System.out.println(HttpRequestProxy.appendParams("aaa.html?",params));
+        System.out.println(HttpRequestProxy.appendParams("aaa.html?aaa",params));
+        System.out.println(HttpRequestProxy.appendParams("aaa.html?aaa=bb",params));
+    }
 }

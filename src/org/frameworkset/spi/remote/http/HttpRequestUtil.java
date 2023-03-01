@@ -18,6 +18,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.FileBody;
+import org.apache.http.message.AbstractHttpMessage;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
@@ -101,11 +102,11 @@ public class HttpRequestUtil {
         return null;
     }
 
-    static HttpGet getHttpGet(String url, String cookie, String userAgent, Map<String, String> headers) {
+    static HttpGet getHttpGet(String url, String cookie, String userAgent, Map headers) {
         return getHttpGet(ClientConfiguration.getDefaultClientConfiguration(null), url, cookie, userAgent, headers);
     }
 
-    static HttpGet getHttpGet(ClientConfiguration config, String url, String cookie, String userAgent, Map<String, String> headers) {
+    static HttpGet getHttpGet(ClientConfiguration config, String url, String cookie, String userAgent, Map headers) {
 
         HttpGet httpget = new HttpGet(url);
         // Request configuration can be overridden at the request level.
@@ -115,18 +116,10 @@ public class HttpRequestUtil {
 
         httpget.setConfig(requestConfig);
 //        httpget.addHeader("Host", "www.bbossgroups.com");
-        if(config.getKeepAlive()>0)
-        	httpget.addHeader("Connection", "Keep-Alive");
-        if (headers != null && headers.size() > 0) {
-            Iterator<Entry<String, String>> entries = headers.entrySet().iterator();
-            while (entries.hasNext()) {
-                Entry<String, String> entry = entries.next();
-                httpget.addHeader(entry.getKey(), entry.getValue());
-            }
-        }
+        addHeaders(httpget,   headers,config.getKeepAlive());
         return httpget;
     }
-    static HttpTrace getHttpTrace(ClientConfiguration config, String url, String cookie, String userAgent, Map<String, String> headers) {
+    static HttpTrace getHttpTrace(ClientConfiguration config, String url, String cookie, String userAgent, Map headers) {
 
         HttpTrace httpget = new HttpTrace(url);
         // Request configuration can be overridden at the request level.
@@ -135,21 +128,24 @@ public class HttpRequestUtil {
 
 
         httpget.setConfig(requestConfig);
-//        httpget.addHeader("Host", "www.bbossgroups.com");
-        
-        if(config.getKeepAlive()>0)
-        	httpget.addHeader("Connection", "Keep-Alive");
-        if (headers != null && headers.size() > 0) {
-            Iterator<Entry<String, String>> entries = headers.entrySet().iterator();
-            while (entries.hasNext()) {
-                Entry<String, String> entry = entries.next();
-                httpget.addHeader(entry.getKey(), entry.getValue());
-            }
-        }
+
+
+        addHeaders(httpget,   headers,config.getKeepAlive());
         return httpget;
     }
+    static void addHeaders(AbstractHttpMessage abstractHttpMessage, Map headers,long keepAlive){
+        if(keepAlive  > 0L)
+            abstractHttpMessage.addHeader("Connection", "Keep-Alive");
+        if (headers != null && headers.size() > 0) {
+            Iterator<Entry> entries = headers.entrySet().iterator();
+            while (entries.hasNext()) {
+                Entry entry = entries.next();
+                abstractHttpMessage.addHeader(String.valueOf(entry.getKey()), String.valueOf(entry.getValue()));
+            }
+        }
+    }
 
-    static HttpOptions getHttpOptions(ClientConfiguration config, String url, String cookie, String userAgent, Map<String, String> headers) {
+    static HttpOptions getHttpOptions(ClientConfiguration config, String url, String cookie, String userAgent, Map headers) {
 
         HttpOptions httpget = new HttpOptions(url);
         // Request configuration can be overridden at the request level.
@@ -159,19 +155,11 @@ public class HttpRequestUtil {
 
         httpget.setConfig(requestConfig);
 //        httpget.addHeader("Host", "www.bbossgroups.com");
-        if(config.getKeepAlive()>0)
-        	httpget.addHeader("Connection", "Keep-Alive");
-        if (headers != null && headers.size() > 0) {
-            Iterator<Entry<String, String>> entries = headers.entrySet().iterator();
-            while (entries.hasNext()) {
-                Entry<String, String> entry = entries.next();
-                httpget.addHeader(entry.getKey(), entry.getValue());
-            }
-        }
+        addHeaders(httpget,   headers,config.getKeepAlive());
         return httpget;
     }
 
-    static HttpPatch getHttpPatch(ClientConfiguration config, String url, String cookie, String userAgent, Map<String, String> headers) {
+    static HttpPatch getHttpPatch(ClientConfiguration config, String url, String cookie, String userAgent, Map headers) {
 
         HttpPatch httpget = new HttpPatch(url);
         // Request configuration can be overridden at the request level.
@@ -181,19 +169,11 @@ public class HttpRequestUtil {
 
         httpget.setConfig(requestConfig);
 //        httpget.addHeader("Host", "www.bbossgroups.com");
-        if(config.getKeepAlive()>0)
-        	 httpget.addHeader("Connection", "Keep-Alive");
-        if (headers != null && headers.size() > 0) {
-            Iterator<Entry<String, String>> entries = headers.entrySet().iterator();
-            while (entries.hasNext()) {
-                Entry<String, String> entry = entries.next();
-                httpget.addHeader(entry.getKey(), entry.getValue());
-            }
-        }
+        addHeaders(httpget,   headers,config.getKeepAlive());
         return httpget;
     }
 
-    static HttpHead getHttpHead(ClientConfiguration config, String url, String cookie, String userAgent, Map<String, String> headers) {
+    static HttpHead getHttpHead(ClientConfiguration config, String url, String cookie, String userAgent, Map headers) {
 
         HttpHead httpHead = new HttpHead(url);
         // Request configuration can be overridden at the request level.
@@ -203,15 +183,7 @@ public class HttpRequestUtil {
 
         httpHead.setConfig(requestConfig);
 //        httpget.addHeader("Host", "www.bbossgroups.com");
-        if(config.getKeepAlive()>0)
-        	httpHead.addHeader("Connection", "Keep-Alive");
-        if (headers != null && headers.size() > 0) {
-            Iterator<Entry<String, String>> entries = headers.entrySet().iterator();
-            while (entries.hasNext()) {
-                Entry<String, String> entry = entries.next();
-                httpHead.addHeader(entry.getKey(), entry.getValue());
-            }
-        }
+        addHeaders(httpHead,   headers,config.getKeepAlive());
         return httpHead;
     }
 
@@ -219,122 +191,89 @@ public class HttpRequestUtil {
         return getHttpPost(ClientConfiguration.getDefaultClientConfiguration(), url, cookie, userAgent, null);
     }
 
-    static HttpPost getHttpPost(ClientConfiguration config, String url, String cookie, String userAgent, Map<String, String> headers) {
+    static HttpPost getHttpPost(ClientConfiguration config, String url, String cookie, String userAgent, Map headers) {
         HttpPost httpPost = new HttpPost(url);
         RequestConfig requestConfig =   config.getRequestConfig();
         httpPost.setConfig(requestConfig);
 //        httpPost.addHeader("Host", "www.bbossgroups.com");
-        if(config.getKeepAlive()>0)
-        	httpPost.addHeader("Connection", "Keep-Alive");
-        if (headers != null && headers.size() > 0) {
-            Iterator<Entry<String, String>> entries = headers.entrySet().iterator();
-            while (entries.hasNext()) {
-                Entry<String, String> entry = entries.next();
-                httpPost.addHeader(entry.getKey(), entry.getValue());
-            }
-        }
+        addHeaders(httpPost,   headers,config.getKeepAlive());
 
 
         return httpPost;
     }
 
-    static HttpDelete getHttpDelete(ClientConfiguration config, String url, String cookie, String userAgent, Map<String, String> headers) {
+    static HttpDelete getHttpDelete(ClientConfiguration config, String url, String cookie, String userAgent, Map headers) {
         HttpDelete httpDelete = new HttpDelete(url);
         RequestConfig requestConfig =   config.getRequestConfig();
         httpDelete.setConfig(requestConfig);
-//        httpDelete.addHeader("Host", "www.bbossgroups.com");
-        if(config.getKeepAlive()>0)
-        	 httpDelete.addHeader("Connection", "Keep-Alive");
-        if (headers != null && headers.size() > 0) {
-            Iterator<Entry<String, String>> entries = headers.entrySet().iterator();
-            while (entries.hasNext()) {
-                Entry<String, String> entry = entries.next();
-                httpDelete.addHeader(entry.getKey(), entry.getValue());
-            }
-        }
+        addHeaders(httpDelete,   headers,config.getKeepAlive());
 
 
         return httpDelete;
     }
 
-    static HttpDeleteWithBody getHttpDeleteWithBody(ClientConfiguration config, String url, String cookie, String userAgent, Map<String, String> headers) {
+    static HttpDeleteWithBody getHttpDeleteWithBody(ClientConfiguration config, String url, String cookie, String userAgent, Map headers) {
         HttpDeleteWithBody httpDelete = new HttpDeleteWithBody(url);
         RequestConfig requestConfig =   config.getRequestConfig();
         httpDelete.setConfig(requestConfig);
 //        httpDelete.addHeader("Host", "www.bbossgroups.com");
-        if(config.getKeepAlive()>0)
-            httpDelete.addHeader("Connection", "Keep-Alive");
-        if (headers != null && headers.size() > 0) {
-            Iterator<Entry<String, String>> entries = headers.entrySet().iterator();
-            while (entries.hasNext()) {
-                Entry<String, String> entry = entries.next();
-                httpDelete.addHeader(entry.getKey(), entry.getValue());
-            }
-        }
+        addHeaders(httpDelete,   headers,config.getKeepAlive());
 
 
         return httpDelete;
     }
     
-    static HttpPut getHttpPut(ClientConfiguration config , String url, String cookie, String userAgent, Map<String, String> headers) {
+    static HttpPut getHttpPut(ClientConfiguration config , String url, String cookie, String userAgent, Map headers) {
     	HttpPut httpPut = new HttpPut(url);
         RequestConfig requestConfig =   config .getRequestConfig();
         httpPut.setConfig(requestConfig);
 //        httpDelete.addHeader("Host", "www.bbossgroups.com");
-        if(config.getKeepAlive()>0)
-        	httpPut.addHeader("Connection", "Keep-Alive");
-        if (headers != null && headers.size() > 0) {
-            Iterator<Entry<String, String>> entries = headers.entrySet().iterator();
-            while (entries.hasNext()) {
-                Entry<String, String> entry = entries.next();
-                httpPut.addHeader(entry.getKey(), entry.getValue());
-            }
-        }
+        addHeaders(httpPut,   headers,config.getKeepAlive());
 
 
         return httpPut;
     }
 
     public static String httpGetforString(String url) throws Exception {
-        return httpGetforString(url, (String) null, (String) null, (Map<String, String>) null);
+        return httpGetforString(url, (String) null, (String) null, (Map) null);
     }
 
     public static String httpGetforString(String poolname, String url) throws Exception {
-        return httpGetforString(poolname, url, (String) null, (String) null, (Map<String, String>) null);
+        return httpGetforString(poolname, url, (String) null, (String) null, (Map) null);
     }
 
     public static <T> T httpGet(String poolname, String url,ResponseHandler<T> responseHandler) throws Exception {
-        return httpGetforString(poolname, url, (String) null, (String) null, (Map<String, String>) null,responseHandler);
+        return httpGetforString(poolname, url, (String) null, (String) null, (Map) null,responseHandler);
     }
 
-    public static <T> T httpGet(String poolname, String url,Map<String, String> headers,ResponseHandler<T> responseHandler) throws Exception {
+    public static <T> T httpGet(String poolname, String url,Map headers,ResponseHandler<T> responseHandler) throws Exception {
         return httpGetforString(poolname, url, (String) null, (String) null, headers,responseHandler);
     }
 
-    public static <T> T httpGet(String url,Map<String, String> headers,ResponseHandler<T> responseHandler) throws Exception {
+    public static <T> T httpGet(String url,Map headers,ResponseHandler<T> responseHandler) throws Exception {
         return httpGetforString("default", url, (String) null, (String) null, headers,responseHandler);
     }
 
-    public static String httpGetforString(String url, Map<String, String> headers) throws Exception {
+    public static String httpGetforString(String url, Map headers) throws Exception {
         return httpGetforString(url, (String) null, (String) null, headers);
     }
 
-    public static String httpGetforString(String poolname, String url, Map<String, String> headers) throws Exception {
+    public static String httpGetforString(String poolname, String url, Map headers) throws Exception {
         return httpGetforString(poolname, url, (String) null, (String) null, headers);
     }
 
-    public static <T> T httpGetforString(String poolname, String url, Map<String, String> headers,ResponseHandler<T> responseHandler) throws Exception {
+    public static <T> T httpGetforString(String poolname, String url, Map headers,ResponseHandler<T> responseHandler) throws Exception {
         return httpGetforString(poolname, url, (String) null, (String) null, headers,responseHandler);
     }
 
-    public static <T> T httpGetforString( String url, Map<String, String> headers,ResponseHandler<T> responseHandler) throws Exception {
+    public static <T> T httpGetforString( String url, Map headers,ResponseHandler<T> responseHandler) throws Exception {
         return httpGetforString("default",  url, (String) null, (String) null, headers,responseHandler);
     }
 
-    public static String httpGetforString(String url, String cookie, String userAgent, Map<String, String> headers) throws Exception {
+    public static String httpGetforString(String url, String cookie, String userAgent, Map headers) throws Exception {
         return httpGetforString("default", url, cookie, userAgent, headers);
     }
-    public static String httpGetforString(String poolname, String url, String cookie, String userAgent, Map<String, String> headers) throws Exception{
+    public static String httpGetforString(String poolname, String url, String cookie, String userAgent, Map headers) throws Exception{
         return  httpGetforString(poolname, url, cookie, userAgent, headers,new StringResponseHandler()) ;
     }
     /**
@@ -343,7 +282,7 @@ public class HttpRequestUtil {
      * @param url
      * @throws Exception
      */
-    public static <T> T httpGetforString(String poolname, String url, String cookie, String userAgent, Map<String, String> headers,ResponseHandler<T> responseHandler) throws Exception {
+    public static <T> T httpGetforString(String poolname, String url, String cookie, String userAgent, Map headers,ResponseHandler<T> responseHandler) throws Exception {
        return httpGet(  poolname,   url,   cookie,   userAgent,   headers, responseHandler);
     }
 
@@ -353,7 +292,7 @@ public class HttpRequestUtil {
      * @param url
      * @throws Exception
      */
-    public static <T> T httpGet(String poolname, String url, String cookie, String userAgent, Map<String, String> headers,ResponseHandler<T> responseHandler) throws Exception {
+    public static <T> T httpGet(String poolname, String url, String cookie, String userAgent, Map headers,ResponseHandler<T> responseHandler) throws Exception {
 
         HttpClient httpClient = null;
         HttpGet httpGet = null;
@@ -389,7 +328,7 @@ public class HttpRequestUtil {
      * @throws Exception
      */
     public static <T> T httpHead(String poolname, String url,ResponseHandler<T> responseHandler) throws Exception {
-        return httpHead(  poolname,   url,   null, null, (Map<String, String>) null,responseHandler);
+        return httpHead(  poolname,   url,   null, null, (Map) null,responseHandler);
 
     }
 
@@ -400,7 +339,7 @@ public class HttpRequestUtil {
      * @throws Exception
      */
     public static <T> T httpHead(String url,ResponseHandler<T> responseHandler) throws Exception {
-        return httpHead(  "default",   url,   null, null, (Map<String, String>) null,responseHandler);
+        return httpHead(  "default",   url,   null, null, (Map) null,responseHandler);
 
     }
 
@@ -410,29 +349,29 @@ public class HttpRequestUtil {
      * @param url
      * @throws Exception
      */
-    public static <T> T httpHead(String poolname, String url,Map<String, Object> params,Map<String, String> headers,ResponseHandler<T> responseHandler) throws Exception {
-        return httpHead(  poolname,   url,   null, null,params, (Map<String, String>) headers,responseHandler);
+    public static <T> T httpHead(String poolname, String url,Map params,Map headers,ResponseHandler<T> responseHandler) throws Exception {
+        return httpHead(  poolname,   url,   null, null,params, (Map) headers,responseHandler);
 
     }
 
     /**
      * get请求URL
-     * ,Map<String, Object> params,Map<String, String> headers,
+     * ,Map params,Map headers,
      * @param url
      * @throws Exception
      */
-    public static <T> T httpHead(String poolname, String url, String cookie, String userAgent, Map<String, String> headers,ResponseHandler<T> responseHandler) throws Exception {
-       return httpHead(  poolname,   url,   cookie,   userAgent,(Map<String, Object> )null, headers,responseHandler);
+    public static <T> T httpHead(String poolname, String url, String cookie, String userAgent, Map headers,ResponseHandler<T> responseHandler) throws Exception {
+       return httpHead(  poolname,   url,   cookie,   userAgent,(Map )null, headers,responseHandler);
 
     }
 
     /**
      * get请求URL
-     * ,Map<String, Object> params,Map<String, String> headers,
+     * ,Map params,Map headers,
      * @param url
      * @throws Exception
      */
-    public static <T> T httpHead(String poolname, String url, String cookie, String userAgent,Map<String, Object> params, Map<String, String> headers,ResponseHandler<T> responseHandler) throws Exception {
+    public static <T> T httpHead(String poolname, String url, String cookie, String userAgent,Map params, Map headers,ResponseHandler<T> responseHandler) throws Exception {
 
         HttpClient httpClient = null;
         HttpHead httpHead = null;
@@ -445,11 +384,11 @@ public class HttpRequestUtil {
                 HttpParams httpParams = null;
                 if(params != null && params.size() > 0) {
                     httpParams = new BasicHttpParams();
-                    Iterator<Entry<String, Object>> it = params.entrySet().iterator();
+                    Iterator<Entry> it = params.entrySet().iterator();
                     NameValuePair paramPair_ = null;
                     for (int i = 0; it.hasNext(); i++) {
-                        Entry<String, Object> entry = it.next();
-                        httpParams.setParameter(entry.getKey(), entry.getValue());
+                        Entry entry = it.next();
+                        httpParams.setParameter(String.valueOf(entry.getKey()), entry.getValue());
                     }
                     httpHead.setParams(httpParams);
                 }
@@ -482,22 +421,22 @@ public class HttpRequestUtil {
      * @param files
      * @throws Exception
      */
-    public static String httpPostFileforString(String url, Map<String, Object> params, Map<String, File> files)
+    public static String httpPostFileforString(String url, Map params, Map<String, File> files)
             throws Exception {
         return httpPostFileforString("default", url, (String) null, (String) null, params, files);
     }
 
-    public static String httpPostFileforString(String poolname, String url, Map<String, Object> params, Map<String, File> files)
+    public static String httpPostFileforString(String poolname, String url, Map params, Map<String, File> files)
             throws Exception {
         return httpPostFileforString(poolname, url, (String) null, (String) null, params, files);
     }
 
-    public static String httpPostforString(String url, Map<String, Object> params) throws Exception {
-        return httpPostforString(url, params, (Map<String, String>) null);
+    public static String httpPostforString(String url, Map params) throws Exception {
+        return httpPostforString(url, params, (Map) null);
     }
     
-    public static <T> T httpPost(String url, Map<String, Object> params,ResponseHandler<T> responseHandler) throws Exception {
-        return httpPostforString(url, params, (Map<String, String>) null, responseHandler);
+    public static <T> T httpPost(String url, Map params,ResponseHandler<T> responseHandler) throws Exception {
+        return httpPostforString(url, params, (Map) null, responseHandler);
     }
 
     /**
@@ -508,7 +447,7 @@ public class HttpRequestUtil {
      * @param headers
      * @throws Exception
      */
-    public static String httpPostforString(String url, Map<String, Object> params, Map<String, String> headers) throws Exception {
+    public static String httpPostforString(String url, Map params, Map headers) throws Exception {
         return httpPostFileforString("default", url, (String) null, (String) null, params, (Map<String, File>) null, headers);
     }
 
@@ -520,7 +459,7 @@ public class HttpRequestUtil {
      * @param headers
      * @throws Exception
      */
-    public static String httpPostforString(String poolName,String url, Map<String, Object> params, Map<String, String> headers) throws Exception {
+    public static String httpPostforString(String poolName,String url, Map params, Map headers) throws Exception {
         return httpPostFileforString(poolName, url, (String) null, (String) null, params, (Map<String, File>) null, headers);
     }
     
@@ -534,7 +473,7 @@ public class HttpRequestUtil {
      * @param headers
      * @throws Exception
      */
-    public static  <T> T  httpPost(String url, Map<String, Object> params, Map<String, String> headers,ResponseHandler<T> responseHandler) throws Exception {
+    public static  <T> T  httpPost(String url, Map params, Map headers,ResponseHandler<T> responseHandler) throws Exception {
         return httpPost("default", url, (String) null, (String) null, params, (Map<String, File>) null, headers, responseHandler);
     }
     
@@ -546,7 +485,7 @@ public class HttpRequestUtil {
      * @param headers
      * @throws Exception
      */
-    public static <T> T httpPostforString(String url, Map<String, Object> params, Map<String, String> headers,ResponseHandler<T> responseHandler) throws Exception {
+    public static <T> T httpPostforString(String url, Map params, Map headers,ResponseHandler<T> responseHandler) throws Exception {
         return httpPost("default", url, (String) null, (String) null, params, (Map<String, File>) null, headers,responseHandler);
     }
 
@@ -558,11 +497,11 @@ public class HttpRequestUtil {
      * @param headers
      * @throws Exception
      */
-    public static <T> T httpPostforString(String poolName,String url, Map<String, Object> params, Map<String, String> headers,ResponseHandler<T> responseHandler) throws Exception {
+    public static <T> T httpPostforString(String poolName,String url, Map params, Map headers,ResponseHandler<T> responseHandler) throws Exception {
         return httpPost(poolName, url, (String) null, (String) null, params, (Map<String, File>) null, headers,responseHandler);
     }
     
-    public static String httpPostforString(String poolname, String url, Map<String, Object> params) throws Exception {
+    public static String httpPostforString(String poolname, String url, Map params) throws Exception {
         return httpPostFileforString(poolname, url, (String) null, (String) null, params, (Map<String, File>) null);
     }
 
@@ -582,7 +521,7 @@ public class HttpRequestUtil {
      * @throws Exception
      */
     public static String httpPostforString(String poolname, String url) throws Exception {
-        return httpPostFileforString(poolname, url, (String) null, (String) null, (Map<String, Object>) null,
+        return httpPostFileforString(poolname, url, (String) null, (String) null, (Map) null,
                 (Map<String, File>) null);
     }
     
@@ -594,8 +533,8 @@ public class HttpRequestUtil {
      * @throws Exception
      */
     public static <T> T  httpPost(String poolname, String url,ResponseHandler<T> responseHandler) throws Exception {
-    	return httpPost(  poolname,   url, (String) null, (String) null, (Map<String, Object>) null,
-    			 (Map<String, File>) null, (Map<String, String>)null,responseHandler) ;
+    	return httpPost(  poolname,   url, (String) null, (String) null, (Map) null,
+    			 (Map<String, File>) null, (Map)null,responseHandler) ;
         
     }
 
@@ -611,13 +550,13 @@ public class HttpRequestUtil {
                 files);
     }
 
-    public static String httpPostforString(String url, String cookie, String userAgent, Map<String, Object> params,
+    public static String httpPostforString(String url, String cookie, String userAgent, Map params,
                                            Map<String, File> files) throws Exception {
         return httpPostFileforString("default", url, cookie, userAgent, params,
                 files);
     }
 
-    public static String httpPostFileforString(String poolname, String url, String cookie, String userAgent, Map<String, Object> params,
+    public static String httpPostFileforString(String poolname, String url, String cookie, String userAgent, Map params,
                                                Map<String, File> files) throws Exception {
         return httpPostFileforString(poolname, url, cookie, userAgent, params,
                 files, null);
@@ -636,8 +575,8 @@ public class HttpRequestUtil {
      * @param headers
      * @throws Exception
      */
-    public static <T> T httpPost(String poolname, String url, String cookie, String userAgent, Map<String, Object> params,
-                                               Map<String, File> files, Map<String, String> headers,ResponseHandler<T> responseHandler) throws Exception {
+    public static <T> T httpPost(String poolname, String url, String cookie, String userAgent, Map params,
+                                               Map<String, File> files, Map headers,ResponseHandler<T> responseHandler) throws Exception {
 
 
         HttpClient httpClient = null;
@@ -655,10 +594,10 @@ public class HttpRequestUtil {
             boolean hasdata = false;
 
             if (params != null) {
-                Iterator<Entry<String, Object>> it = params.entrySet().iterator();
+                Iterator<Entry> it = params.entrySet().iterator();
                 while (it.hasNext()) {
-                    Entry<String, Object> entry = it.next();
-                    multipartEntityBuilder.addTextBody(entry.getKey(), String.valueOf(entry.getValue()), ClientConfiguration.TEXT_PLAIN_UTF_8);
+                    Entry entry = it.next();
+                    multipartEntityBuilder.addTextBody(String.valueOf(entry.getKey()), String.valueOf(entry.getValue()), ClientConfiguration.TEXT_PLAIN_UTF_8);
                     hasdata = true;
                 }
             }
@@ -684,11 +623,11 @@ public class HttpRequestUtil {
                 httpEntity = multipartEntityBuilder.build();
         } else if (params != null && params.size() > 0) {
             paramPair = new ArrayList<NameValuePair>();
-            Iterator<Entry<String, Object>> it = params.entrySet().iterator();
+            Iterator<Entry> it = params.entrySet().iterator();
             NameValuePair paramPair_ = null;
             for (int i = 0; it.hasNext(); i++) {
-                Entry<String, Object> entry = it.next();
-                paramPair_ = new BasicNameValuePair(entry.getKey(), String.valueOf(entry.getValue()));
+                Entry entry = it.next();
+                paramPair_ = new BasicNameValuePair(String.valueOf(entry.getKey()), String.valueOf(entry.getValue()));
                 paramPair.add(paramPair_);
             }
         }
@@ -738,8 +677,8 @@ public class HttpRequestUtil {
      * @param headers
      * @throws Exception
      */
-    public static String httpPutforString(String poolname, String url, String cookie, String userAgent, Map<String, Object> params,
-                                               Map<String, File> files, Map<String, String> headers) throws Exception{
+    public static String httpPutforString(String poolname, String url, String cookie, String userAgent, Map params,
+                                               Map<String, File> files, Map headers) throws Exception{
     	return httpPut(  poolname,   url,   cookie,   userAgent,  params,
                   files,   headers,new StringResponseHandler());
     }
@@ -753,21 +692,21 @@ public class HttpRequestUtil {
      * @throws Exception
      */
 
-    public static String httpPutforString(  String url,Map<String, Object> params, Map<String, String> headers ) throws Exception{
+    public static String httpPutforString(  String url,Map params, Map headers ) throws Exception{
     	return httpPut(  "default",   url,   (String)null,   (String)null,  params,
     			( Map<String, File> )null,   headers,new StringResponseHandler());
     }
-    public static <T> T httpPutforString(  String url,Map<String, Object> params, Map<String, String> headers ,ResponseHandler<T> responseHandler ) throws Exception{
+    public static <T> T httpPutforString(  String url,Map params, Map headers ,ResponseHandler<T> responseHandler ) throws Exception{
         return httpPut(  "default",   url,   (String)null,   (String)null,  params,
                 ( Map<String, File> )null,   headers ,responseHandler);
     }
 
-    public static String httpPutforString(String poolname,  String url,Map<String, Object> params, Map<String, String> headers ) throws Exception{
+    public static String httpPutforString(String poolname,  String url,Map params, Map headers ) throws Exception{
         return httpPut(  poolname,   url,   (String)null,   (String)null,  params,
                 ( Map<String, File> )null,   headers,new StringResponseHandler());
     }
 
-    public static <T> T httpPutforString(String poolname,  String url,Map<String, Object> params, Map<String, String> headers ,ResponseHandler<T> responseHandler) throws Exception{
+    public static <T> T httpPutforString(String poolname,  String url,Map params, Map headers ,ResponseHandler<T> responseHandler) throws Exception{
         return httpPut(  poolname,   url,   (String)null,   (String)null,  params,
                 ( Map<String, File> )null,   headers,responseHandler);
     }
@@ -784,8 +723,8 @@ public class HttpRequestUtil {
      * @param headers
      * @throws Exception
      */
-    public static <T> T httpPut(String url, String cookie, String userAgent, Map<String, Object> params,
-                                               Map<String, File> files, Map<String, String> headers,ResponseHandler<T> responseHandler) throws Exception {
+    public static <T> T httpPut(String url, String cookie, String userAgent, Map params,
+                                               Map<String, File> files, Map headers,ResponseHandler<T> responseHandler) throws Exception {
     	return httpPut("default", url, cookie, userAgent, params,
                                                     files, headers, responseHandler) ;
     }
@@ -800,8 +739,8 @@ public class HttpRequestUtil {
      * @return
      * @throws Exception
      */
-    public static <T> T httpPut(String url, Map<String, Object> params,  Map<String, String> headers,ResponseHandler<T> responseHandler) throws Exception {
-    	return httpPut( url, (String)null, (String)null, (Map<String, Object>)params,
+    public static <T> T httpPut(String url, Map params,  Map headers,ResponseHandler<T> responseHandler) throws Exception {
+    	return httpPut( url, (String)null, (String)null, (Map)params,
     							(Map<String, File>)null, headers, responseHandler) ;
     }
 
@@ -814,9 +753,9 @@ public class HttpRequestUtil {
      * @return
      * @throws Exception
      */
-    public static <T> T httpPut(String url, Map<String, Object> params,ResponseHandler<T> responseHandler) throws Exception {
-    	return httpPut( url, (String)null, (String)null, (Map<String, Object>)params,
-    							(Map<String, File>)null, (Map<String, String>)null, responseHandler) ;
+    public static <T> T httpPut(String url, Map params,ResponseHandler<T> responseHandler) throws Exception {
+    	return httpPut( url, (String)null, (String)null, (Map)params,
+    							(Map<String, File>)null, (Map)null, responseHandler) ;
     }
 
     /**
@@ -828,8 +767,8 @@ public class HttpRequestUtil {
      * @throws Exception
      */
     public static <T> T httpPut(String url,ResponseHandler<T> responseHandler) throws Exception {
-    	return httpPut( url, (String)null, (String)null, (Map<String, Object>)null,
-    							(Map<String, File>)null, (Map<String, String>)null, responseHandler) ;
+    	return httpPut( url, (String)null, (String)null, (Map)null,
+    							(Map<String, File>)null, (Map)null, responseHandler) ;
     }
     /**
      * 公用post方法
@@ -843,8 +782,8 @@ public class HttpRequestUtil {
      * @param headers
      * @throws Exception
      */
-    public static <T> T httpPut(String poolname, String url, String cookie, String userAgent, Map<String, Object> params,
-                                               Map<String, File> files, Map<String, String> headers,ResponseHandler<T> responseHandler) throws Exception {
+    public static <T> T httpPut(String poolname, String url, String cookie, String userAgent, Map params,
+                                               Map<String, File> files, Map headers,ResponseHandler<T> responseHandler) throws Exception {
 
         HttpClient httpClient = null;
         HttpPut httpPut = null;
@@ -860,10 +799,10 @@ public class HttpRequestUtil {
             boolean hasdata = false;
 
             if (params != null) {
-                Iterator<Entry<String, Object>> it = params.entrySet().iterator();
+                Iterator<Entry> it = params.entrySet().iterator();
                 while (it.hasNext()) {
-                    Entry<String, Object> entry = it.next();
-                    multipartEntityBuilder.addTextBody(entry.getKey(), String.valueOf(entry.getValue()), ClientConfiguration.TEXT_PLAIN_UTF_8);
+                    Entry entry = it.next();
+                    multipartEntityBuilder.addTextBody(String.valueOf(entry.getKey()), String.valueOf(entry.getValue()), ClientConfiguration.TEXT_PLAIN_UTF_8);
                     hasdata = true;
                 }
             }
@@ -887,11 +826,11 @@ public class HttpRequestUtil {
                 httpEntity = multipartEntityBuilder.build();
         } else if (params != null && params.size() > 0) {
             paramPair = new ArrayList<NameValuePair>();
-            Iterator<Entry<String, Object>> it = params.entrySet().iterator();
+            Iterator<Entry> it = params.entrySet().iterator();
             NameValuePair paramPair_ = null;
             for (int i = 0; it.hasNext(); i++) {
-                Entry<String, Object> entry = it.next();
-                paramPair_ = new BasicNameValuePair(entry.getKey(), String.valueOf(entry.getValue()));
+                Entry entry = it.next();
+                paramPair_ = new BasicNameValuePair(String.valueOf(entry.getKey()), String.valueOf(entry.getValue()));
                 paramPair.add(paramPair_);
             }
         }
@@ -941,8 +880,8 @@ public class HttpRequestUtil {
      * @param headers
      * @throws Exception
      */
-    public static String httpPostFileforString(String poolname, String url, String cookie, String userAgent, Map<String, Object> params,
-                                               Map<String, File> files, Map<String, String> headers) throws Exception {
+    public static String httpPostFileforString(String poolname, String url, String cookie, String userAgent, Map params,
+                                               Map<String, File> files, Map headers) throws Exception {
     	
     	return httpPost(  poolname,   url,   cookie,   userAgent,   params,
                   files,  headers,new StringResponseHandler() );
@@ -960,8 +899,8 @@ public class HttpRequestUtil {
      * @throws Exception
      */
     public static String httpDelete(String poolname, String url) throws Exception{
-       return httpDelete(  poolname,   url, (String) null, (String) null, (Map<String, Object>) null,
-               (Map<String, String>) null);
+       return httpDelete(  poolname,   url, (String) null, (String) null, (Map) null,
+               (Map) null);
 
     }
 
@@ -973,8 +912,8 @@ public class HttpRequestUtil {
      * @throws Exception
      */
     public static String httpDelete( String url) throws Exception{
-        return httpDelete(  "default",   url, (String) null, (String) null, (Map<String, Object>) null,
-                (Map<String, String>) null);
+        return httpDelete(  "default",   url, (String) null, (String) null, (Map) null,
+                (Map) null);
 
     }
     /**
@@ -985,8 +924,8 @@ public class HttpRequestUtil {
      * @throws Exception
      */
     public static String httpDeleteWithbody( String url,String requestBody) throws Exception{
-        return httpDelete(  "default",   url,requestBody, (String) null, (String) null, (Map<String, Object>) null,
-                (Map<String, String>) null);
+        return httpDelete(  "default",   url,requestBody, (String) null, (String) null, (Map) null,
+                (Map) null);
 
     }
 
@@ -997,8 +936,8 @@ public class HttpRequestUtil {
 
      * @throws Exception
      */
-    public static String httpDelete( String url,Map<String, String> headers) throws Exception{
-        return httpDelete(  "default",   url, (String) null, (String) null, (Map<String, Object>) null,
+    public static String httpDelete( String url,Map headers) throws Exception{
+        return httpDelete(  "default",   url, (String) null, (String) null, (Map) null,
                 headers);
 
     }
@@ -1010,8 +949,8 @@ public class HttpRequestUtil {
 
      * @throws Exception
      */
-    public static String httpDelete( String url,String requestBody,Map<String, String> headers) throws Exception{
-        return httpDelete(  "default",   url,  requestBody, (String) null, (String) null, (Map<String, Object>) null,
+    public static String httpDelete( String url,String requestBody,Map headers) throws Exception{
+        return httpDelete(  "default",   url,  requestBody, (String) null, (String) null, (Map) null,
                 headers);
 
     }
@@ -1023,7 +962,7 @@ public class HttpRequestUtil {
 
      * @throws Exception
      */
-    public static String httpDeleteWithbody( String url,String requestBody,Map<String, Object> params,Map<String, String> headers) throws Exception{
+    public static String httpDeleteWithbody( String url,String requestBody,Map params,Map headers) throws Exception{
         return httpDelete(  "default",   url, requestBody, (String) null, (String) null, params,
                 headers);
 
@@ -1036,7 +975,7 @@ public class HttpRequestUtil {
 
      * @throws Exception
      */
-    public static String httpDelete( String url,Map<String, Object> params,Map<String, String> headers) throws Exception{
+    public static String httpDelete( String url,Map params,Map headers) throws Exception{
         return httpDelete(  "default",   url, (String) null, (String) null, params,
                 headers);
 
@@ -1044,37 +983,37 @@ public class HttpRequestUtil {
 
 
 
-    public static <T> T httpDelete( String url,Map<String, Object> params,Map<String, String> headers,ResponseHandler<T> responseHandler) throws Exception{
+    public static <T> T httpDelete( String url,Map params,Map headers,ResponseHandler<T> responseHandler) throws Exception{
         return httpDelete(  "default",   url, (String)null,(String) null, (String) null, params,
                 headers, responseHandler);
 
     }
 
-    public static <T> T httpDeleteWithBody (String url,String requestBody,Map<String, Object> params,Map<String, String> headers,ResponseHandler<T> responseHandler) throws Exception{
+    public static <T> T httpDeleteWithBody (String url,String requestBody,Map params,Map headers,ResponseHandler<T> responseHandler) throws Exception{
         return httpDelete(  "default",   url, requestBody,(String) null, (String) null, params,
                 headers, responseHandler);
 
     }
 
-    public static String httpDelete( String poolname,String url,Map<String, Object> params,Map<String, String> headers) throws Exception{
+    public static String httpDelete( String poolname,String url,Map params,Map headers) throws Exception{
         return httpDelete(  poolname,   url, (String) null, (String) null, params,
                 headers);
 
     }
 
-    public static String httpDelete ( String poolname,String url,String requestBody,Map<String, Object> params,Map<String, String> headers) throws Exception{
+    public static String httpDelete ( String poolname,String url,String requestBody,Map params,Map headers) throws Exception{
         return httpDelete(  poolname,   url,  requestBody,(String)null, (String) null, params,
                 headers);
 
     }
 
-    public static <T> T httpDelete( String poolname,String url,Map<String, Object> params,Map<String, String> headers,ResponseHandler<T> responseHandler) throws Exception{
+    public static <T> T httpDelete( String poolname,String url,Map params,Map headers,ResponseHandler<T> responseHandler) throws Exception{
         return httpDelete(  poolname,   url,(String)null, (String) null, (String) null, params,
                 headers,responseHandler);
 
     }
 
-    public static <T> T httpDelete( String poolname,String url,String requestBody,Map<String, Object> params,Map<String, String> headers,ResponseHandler<T> responseHandler) throws Exception{
+    public static <T> T httpDelete( String poolname,String url,String requestBody,Map params,Map headers,ResponseHandler<T> responseHandler) throws Exception{
         return httpDelete(  poolname,     url, requestBody,(String) null, (String) null, params,
                 headers,responseHandler);
 
@@ -1090,8 +1029,8 @@ public class HttpRequestUtil {
      * @param headers
      * @throws Exception
      */
-    public static String httpDelete(String poolname, String url, String cookie, String userAgent, Map<String, Object> params,
-                                                Map<String, String> headers) throws Exception {
+    public static String httpDelete(String poolname, String url, String cookie, String userAgent, Map params,
+                                                Map headers) throws Exception {
     	return httpDelete(  poolname,   url, (String)null  ,cookie,   userAgent,   params,
                   headers,new StringResponseHandler());
     }
@@ -1106,8 +1045,8 @@ public class HttpRequestUtil {
      * @param headers
      * @throws Exception
      */
-    public static String httpDelete(String poolname,String url,String requestBody,  String cookie, String userAgent, Map<String, Object> params,
-                                    Map<String, String> headers) throws Exception {
+    public static String httpDelete(String poolname,String url,String requestBody,  String cookie, String userAgent, Map params,
+                                    Map headers) throws Exception {
         return httpDelete(  poolname,   url,  requestBody, cookie,   userAgent,   params,
                 headers,new StringResponseHandler());
     }
@@ -1122,8 +1061,8 @@ public class HttpRequestUtil {
      * @param headers
      * @throws Exception
      */
-    public static <T> T httpDelete(String poolname, String url, String requestBody, String cookie, String userAgent, Map<String, Object> params,
-                                                Map<String, String> headers,ResponseHandler<T> responseHandler) throws Exception {
+    public static <T> T httpDelete(String poolname, String url, String requestBody, String cookie, String userAgent, Map params,
+                                                Map headers,ResponseHandler<T> responseHandler) throws Exception {
 
 
         HttpClient httpClient = null;
@@ -1141,11 +1080,11 @@ public class HttpRequestUtil {
                 HttpParams httpParams = null;
                 if(params != null && params.size() > 0) {
                     httpParams = new BasicHttpParams();
-                    Iterator<Entry<String, Object>> it = params.entrySet().iterator();
+                    Iterator<Entry> it = params.entrySet().iterator();
                     NameValuePair paramPair_ = null;
                     for (int i = 0; it.hasNext(); i++) {
-                        Entry<String, Object> entry = it.next();
-                        httpParams.setParameter(entry.getKey(), entry.getValue());
+                        Entry entry = it.next();
+                        httpParams.setParameter(String.valueOf(entry.getKey()), entry.getValue());
                     }
                 }
                 if(httpEntity != null) {
@@ -1186,7 +1125,7 @@ public class HttpRequestUtil {
     }
     
     
-    public static String sendStringBody(String poolname,String requestBody, String url, Map<String, String> headers) throws Exception {
+    public static String sendStringBody(String poolname,String requestBody, String url, Map headers) throws Exception {
         return  sendBody(poolname,  requestBody,   url,   headers,ContentType.create(
                 "text/plain", Consts.UTF_8));
     }
@@ -1218,15 +1157,15 @@ public class HttpRequestUtil {
     }
 
 
-    public static String sendJsonBody(String poolname, Object requestBody, String url, Map<String, String> headers) throws Exception {
+    public static String sendJsonBody(String poolname, Object requestBody, String url, Map headers) throws Exception {
 
         return  sendBody(  poolname, object2json(requestBody),   url,   headers,ContentType.APPLICATION_JSON);
     }
-    public static String sendJsonBody(String poolname, String requestBody, String url, Map<String, String> headers) throws Exception {
+    public static String sendJsonBody(String poolname, String requestBody, String url, Map headers) throws Exception {
 
         return  sendBody(  poolname, requestBody,   url,   headers,ContentType.APPLICATION_JSON);
     }
-    public static String sendStringBody(String requestBody, String url, Map<String, String> headers) throws Exception {
+    public static String sendStringBody(String requestBody, String url, Map headers) throws Exception {
         return  sendBody("default",  requestBody,   url,   headers,ContentType.create(
                 "text/plain", Consts.UTF_8));
     }
@@ -1251,20 +1190,20 @@ public class HttpRequestUtil {
                 mimeType, charSet));
     }
    
-    public static String sendJsonBody(String requestBody, String url, Map<String, String> headers ) throws Exception {
+    public static String sendJsonBody(String requestBody, String url, Map headers ) throws Exception {
 
         return  sendBody( "default", requestBody,   url,   headers,ContentType.APPLICATION_JSON);
     }
-    public static <T> T sendJsonBody(String requestBody, String url, Map<String, String> headers  ,ResponseHandler<T> responseHandler) throws Exception {
+    public static <T> T sendJsonBody(String requestBody, String url, Map headers  ,ResponseHandler<T> responseHandler) throws Exception {
 
         return  sendBody( "default", requestBody,   url,   headers,ContentType.APPLICATION_JSON, responseHandler);
     }
 
-    public static <T> T sendJsonBody(String poolname,String requestBody, String url, Map<String, String> headers  ,ResponseHandler<T> responseHandler) throws Exception {
+    public static <T> T sendJsonBody(String poolname,String requestBody, String url, Map headers  ,ResponseHandler<T> responseHandler) throws Exception {
 
         return  sendBody( poolname, requestBody,   url,   headers,ContentType.APPLICATION_JSON, responseHandler);
     }
-    public static <T> T sendBody(String poolname,String requestBody, String url, Map<String, String> headers,ContentType contentType, ResponseHandler<T> responseHandler) throws Exception {
+    public static <T> T sendBody(String poolname,String requestBody, String url, Map headers,ContentType contentType, ResponseHandler<T> responseHandler) throws Exception {
         HttpClient httpClient = null;
         HttpPost httpPost = null;
 
@@ -1296,7 +1235,7 @@ public class HttpRequestUtil {
 
         return responseBody;
     }
-    private static HttpRequestBase getHttpEntityEnclosingRequestBase(String action,ClientConfiguration config, String url,  Map<String, String> headers){
+    private static HttpRequestBase getHttpEntityEnclosingRequestBase(String action,ClientConfiguration config, String url,  Map headers){
         if(action.equals(HTTP_POST)){
             return getHttpPost(config, url, null, null, headers);
         }
@@ -1323,7 +1262,7 @@ public class HttpRequestUtil {
         }
         throw new java.lang.IllegalArgumentException("not support http action:"+action);
     }
-    public static <T> T sendBody(String poolname,String requestBody, String url, Map<String, String> headers,ContentType contentType, ResponseHandler<T> responseHandler,String action) throws Exception {
+    public static <T> T sendBody(String poolname,String requestBody, String url, Map headers,ContentType contentType, ResponseHandler<T> responseHandler,String action) throws Exception {
         HttpClient httpClient = null;
         HttpEntityEnclosingRequestBase httpPost = null;
 
@@ -1356,7 +1295,7 @@ public class HttpRequestUtil {
         return responseBody;
     }
     
-    public static String sendBody(String poolname,String requestBody, String url, Map<String, String> headers,ContentType contentType) throws Exception {
+    public static String sendBody(String poolname,String requestBody, String url, Map headers,ContentType contentType) throws Exception {
     	return sendBody(  poolname,  requestBody,   url, headers,  contentType, new BaseURLResponseHandler<String>() {
 
             @Override
@@ -1385,7 +1324,7 @@ public class HttpRequestUtil {
         
     }
 
-    public static <T> T putBody(String poolname,String requestBody, String url, Map<String, String> headers,ContentType contentType, ResponseHandler<T> responseHandler) throws Exception {
+    public static <T> T putBody(String poolname,String requestBody, String url, Map headers,ContentType contentType, ResponseHandler<T> responseHandler) throws Exception {
         HttpClient httpClient = null;
         HttpPut httpPost = null;
 
@@ -1419,7 +1358,7 @@ public class HttpRequestUtil {
         return responseBody;
     }
     
-    public static String putBody(String poolname,String requestBody, String url, Map<String, String> headers,ContentType contentType) throws Exception {
+    public static String putBody(String poolname,String requestBody, String url, Map headers,ContentType contentType) throws Exception {
     	return putBody(  poolname,  requestBody,   url, headers,  contentType, new BaseURLResponseHandler<String>() {
 
             @Override
@@ -1448,41 +1387,41 @@ public class HttpRequestUtil {
         
     }
     
-    public static <T> T putBody(String requestBody, String url, Map<String, String> headers,ContentType contentType, ResponseHandler<T> responseHandler) throws Exception {
+    public static <T> T putBody(String requestBody, String url, Map headers,ContentType contentType, ResponseHandler<T> responseHandler) throws Exception {
         return putBody( "default", requestBody,   url,  headers,  contentType,  responseHandler) ;
     }
     
-    public static String putBody(String requestBody, String url, Map<String, String> headers,ContentType contentType) throws Exception {
+    public static String putBody(String requestBody, String url, Map headers,ContentType contentType) throws Exception {
     	return putBody( "default",requestBody,   url,   headers,  contentType) ;
         
     }
     
     
 
-    public static <T> T putJson(String poolname,String requestBody, String url, Map<String, String> headers,ContentType contentType, ResponseHandler<T> responseHandler) throws Exception {
+    public static <T> T putJson(String poolname,String requestBody, String url, Map headers,ContentType contentType, ResponseHandler<T> responseHandler) throws Exception {
        return putJson(  poolname,  requestBody,   url,   headers,ContentType.APPLICATION_JSON,  responseHandler);
     }
     
-    public static String putJson(String poolname,String requestBody, String url, Map<String, String> headers,ContentType contentType) throws Exception {
+    public static String putJson(String poolname,String requestBody, String url, Map headers,ContentType contentType) throws Exception {
     	return putJson(  poolname,  requestBody,   url, headers, ContentType.APPLICATION_JSON);
         
     }
     
-    public static <T> T putJson(String requestBody, String url, Map<String, String> headers, ResponseHandler<T> responseHandler) throws Exception {
+    public static <T> T putJson(String requestBody, String url, Map headers, ResponseHandler<T> responseHandler) throws Exception {
         return putBody( "default", requestBody,   url,  headers,   ContentType.APPLICATION_JSON,  responseHandler) ;
     }
 
-    public static <T> T putJson(String poolName,String requestBody, String url, Map<String, String> headers, ResponseHandler<T> responseHandler) throws Exception {
+    public static <T> T putJson(String poolName,String requestBody, String url, Map headers, ResponseHandler<T> responseHandler) throws Exception {
         return putBody( poolName, requestBody,   url,  headers,   ContentType.APPLICATION_JSON,  responseHandler) ;
     }
 
 
-    public static String putJson(String requestBody, String url, Map<String, String> headers) throws Exception {
+    public static String putJson(String requestBody, String url, Map headers) throws Exception {
     	return putBody( "default",requestBody,   url,   headers,  ContentType.APPLICATION_JSON) ;
         
     }
 
-    public static String putJson(String poolName,String requestBody, String url, Map<String, String> headers) throws Exception {
+    public static String putJson(String poolName,String requestBody, String url, Map headers) throws Exception {
         return putBody(poolName,requestBody,   url,   headers,  ContentType.APPLICATION_JSON) ;
 
     }

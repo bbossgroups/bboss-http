@@ -9,6 +9,13 @@ import java.io.InputStream;
 import static org.frameworkset.spi.remote.http.ResponseUtil.entityEmpty;
 
 public abstract class BaseResponseHandler extends StatusResponseHandler {
+
+
+    /**
+     * 标记是否在响应对象中放置请求报文，便于在异常处理中放置请求报文数据
+     */
+    protected boolean enableSetRequestBody;
+    protected String requestBody;
 	protected <T> T converJson(HttpEntity entity,Class<T> clazz) throws IOException {
 		InputStream inputStream = null;
 		try {
@@ -24,4 +31,20 @@ public abstract class BaseResponseHandler extends StatusResponseHandler {
 			inputStream.close();
 		}
 	}
+
+    public boolean isEnableSetRequestBody() {
+        return enableSetRequestBody;
+    }
+
+    public void setEnableSetRequestBody(boolean enableSetRequestBody) {
+        this.enableSetRequestBody = enableSetRequestBody;
+    }
+
+    public String getRequestBody() {
+        return requestBody;
+    }
+
+    public void setRequestBody(String requestBody) {
+        this.requestBody = requestBody;
+    }
 }

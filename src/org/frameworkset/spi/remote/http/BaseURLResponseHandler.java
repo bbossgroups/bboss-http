@@ -25,7 +25,15 @@ package org.frameworkset.spi.remote.http;
  */
 public abstract class BaseURLResponseHandler<T> implements URLResponseHandler<T> {
 	protected String url;
+    /**
+     * 标记是否在响应对象中放置请求报文，便于在异常处理中放置请求报文数据
+     */
+    protected boolean enableSetRequestBody;
+    protected String requestBody;
 
+
+
+    protected boolean truncateLogBody;
 	public String getUrl() {
 		return url;
 	}
@@ -33,12 +41,26 @@ public abstract class BaseURLResponseHandler<T> implements URLResponseHandler<T>
 	public void setUrl(String url) {
 		this.url = url;
 	}
-//	protected RuntimeException throwException1(int status, HttpEntity entity) throws IOException {
-//		if (entity != null ) {
-//			return new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append("\r\n").append(EntityUtils.toString(entity)).toString());
-//		}
-//		else{
-//			return new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append( status).toString());
-//		}
-//	}
+    public boolean isEnableSetRequestBody() {
+        return enableSetRequestBody;
+    }
+
+    public void setEnableSetRequestBody(boolean enableSetRequestBody) {
+        this.enableSetRequestBody = enableSetRequestBody;
+    }
+
+    public String getRequestBody() {
+        return requestBody;
+    }
+
+    public void setRequestBody(String requestBody) {
+        this.requestBody = requestBody;
+    }
+    public boolean isTruncateLogBody() {
+        return truncateLogBody;
+    }
+
+    public void setTruncateLogBody(boolean truncateLogBody) {
+        this.truncateLogBody = truncateLogBody;
+    }
 }

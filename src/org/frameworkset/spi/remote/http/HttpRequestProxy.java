@@ -2942,13 +2942,25 @@ public class HttpRequestProxy {
         return  sendBody( poolname, requestBody,   url,   headers,ContentType.APPLICATION_JSON, responseHandler);
     }
 
+    private static void injectBody(ResponseHandler responseHandler,String requestBody){
+        if(requestBody == null || responseHandler == null)
+            return;
+        if(responseHandler instanceof BaseURLResponseHandler){
+            BaseURLResponseHandler baseURLResponseHandler = (BaseURLResponseHandler)responseHandler;
+            if(!baseURLResponseHandler.isEnableSetRequestBody() && baseURLResponseHandler.getRequestBody() == null){
+                baseURLResponseHandler.setRequestBody(requestBody);
+                baseURLResponseHandler.setEnableSetRequestBody(true);
+                baseURLResponseHandler.setTruncateLogBody(true);
+            }
+        }
+    }
     public static <T> T sendBody(final String poolname,  String requestBody, String url,
                                  final Map headers, ContentType contentType,
                                  final ResponseHandler<T> responseHandler) throws HttpProxyRequestException {
         final HttpEntity httpEntity = new StringEntity(
                 requestBody,
                 contentType);
-
+        injectBody(responseHandler, requestBody);
         return _handleRequest( poolname, url ,
                 responseHandler,new ExecuteRequest(){
                     @Override
@@ -3169,6 +3181,26 @@ public class HttpRequestProxy {
         }
     }
 
+    private static StringBuilder trucateData(ResponseHandler responseHandler){
+        if(responseHandler instanceof BaseURLResponseHandler){
+            BaseURLResponseHandler baseURLResponseHandler = (BaseURLResponseHandler)responseHandler;
+            if(baseURLResponseHandler.isEnableSetRequestBody()) {
+                StringBuilder builder = new StringBuilder();
+               String requestBody = baseURLResponseHandler.getRequestBody();
+                builder.append("RequestBody:");
+                if(baseURLResponseHandler.isTruncateLogBody() && requestBody != null && requestBody.length() > 10240){
+                    builder.append(requestBody.substring(0,10239)).append("......");
+                }
+                else {
+                    builder.append(requestBody);
+                }
+                return builder;
+            }
+        }
+        return null;
+
+    }
+
     /**
      * 公共处理请求方法
      * @param poolname
@@ -3191,6 +3223,8 @@ public class HttpRequestProxy {
         String endpoint = null;
         Throwable e = null;
         int triesCount = 0;
+        StringBuilder requestBody = trucateData( responseHandler);
+
         if(!url.startsWith("http://") && !url.startsWith("https://")) {
             endpoint = url;
             HttpAddress httpAddress = null;
@@ -3344,9 +3378,23 @@ public class HttpRequestProxy {
             }
         }
         if (e != null){
-            if(e instanceof HttpProxyRequestException)
-                throw (HttpProxyRequestException)e;
-            throw new HttpProxyRequestException("Send request Url:"+ url,e);
+            HttpProxyRequestException httpProxyRequestException = null;
+            if(requestBody == null) {
+                if (e instanceof HttpProxyRequestException)
+                    httpProxyRequestException = (HttpProxyRequestException) e;
+                else
+                    httpProxyRequestException = new HttpProxyRequestException("Send request Url:" + url, e);
+            }
+            else{
+
+                if (e instanceof HttpProxyRequestException) {
+                    httpProxyRequestException = new HttpProxyRequestException(requestBody.toString(),e);
+                }
+                else {
+                    httpProxyRequestException = new HttpProxyRequestException(requestBody.append("\r\nSend request Url:").append(url).toString(), e);
+                }
+            }
+            throw httpProxyRequestException;
         }
         return responseBody;
     }
@@ -3428,6 +3476,7 @@ public class HttpRequestProxy {
         final HttpEntity httpEntity = requestBody != null?new StringEntity(
                 requestBody,
                 contentType):null;
+        injectBody(responseHandler, requestBody);
         return _handleRequest( poolname,  url ,
                 responseHandler,new ExecuteRequest(){
                     @Override
@@ -3731,6 +3780,7 @@ public class HttpRequestProxy {
         final HttpEntity httpEntity = new StringEntity(
                 requestBody,
                 contentType);
+        injectBody(responseHandler, requestBody);
         return _handleRequest( poolname,  url ,
                 responseHandler,new ExecuteRequest(){
                     @Override

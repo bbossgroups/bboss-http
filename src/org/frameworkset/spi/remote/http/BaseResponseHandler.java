@@ -16,6 +16,10 @@ public abstract class BaseResponseHandler extends StatusResponseHandler {
      */
     protected boolean enableSetRequestBody;
     protected String requestBody;
+
+
+
+    protected boolean truncateLogBody;
 	protected <T> T converJson(HttpEntity entity,Class<T> clazz) throws IOException {
 		InputStream inputStream = null;
 		try {
@@ -46,5 +50,12 @@ public abstract class BaseResponseHandler extends StatusResponseHandler {
 
     public void setRequestBody(String requestBody) {
         this.requestBody = requestBody;
+    }
+    public boolean isTruncateLogBody() {
+        return truncateLogBody;
+    }
+
+    public void setTruncateLogBody(boolean truncateLogBody) {
+        this.truncateLogBody = truncateLogBody;
     }
 }

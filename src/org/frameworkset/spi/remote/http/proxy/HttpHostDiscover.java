@@ -34,7 +34,11 @@ public abstract class HttpHostDiscover extends Thread{
 			return;
 		this.stop = true;
 		this.interrupt();
-	}
+        try {
+            this.join();
+        } catch (InterruptedException e) {
+        }
+    }
 
 	/**
 	 * 主动定时服务发现和被动服务发现api

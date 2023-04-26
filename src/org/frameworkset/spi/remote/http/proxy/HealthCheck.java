@@ -68,7 +68,6 @@ public class HealthCheck implements Runnable{
 			try {
 				this.join();
 			} catch (InterruptedException e) {
-				e.printStackTrace();
 			}
 		}
 		@Override

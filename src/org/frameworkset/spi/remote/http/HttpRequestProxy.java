@@ -19,12 +19,14 @@ import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 import org.frameworkset.spi.remote.http.proxy.*;
+import org.frameworkset.util.ClassUtil;
 import org.frameworkset.util.ResourceStartResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.NoRouteToHostException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
@@ -719,7 +721,7 @@ public class HttpRequestProxy {
         });
     }
 
-    public static <T> T httpPostForObject(String poolName,String url, Map params, final Class<T> resultType) throws HttpProxyRequestException {
+    public static <T> T httpPostForObject(String poolName,String url, Object params, final Class<T> resultType) throws HttpProxyRequestException {
 		HttpOption httpOption = new HttpOption();
 
 		httpOption.params = params;
@@ -733,7 +735,7 @@ public class HttpRequestProxy {
 //        return httpPostforString(  poolName,url, params, (Map) null);
     }
 
-	public static <T> T httpPostForObject(String poolName,String url, Map params, final Class<T> resultType,DataSerialType dataSerialType) throws HttpProxyRequestException {
+	public static <T> T httpPostForObject(String poolName,String url, Object params, final Class<T> resultType,DataSerialType dataSerialType) throws HttpProxyRequestException {
 		HttpOption httpOption = new HttpOption();
 
 		httpOption.params = params;
@@ -748,7 +750,7 @@ public class HttpRequestProxy {
 //        return httpPostforString(  poolName,url, params, (Map) null);
 	}
 
-	public static <T> List<T> httpPostForList(String poolName,String url, Map params, final Class<T> resultType,DataSerialType dataSerialType) throws HttpProxyRequestException {
+	public static <T> List<T> httpPostForList(String poolName,String url, Object params, final Class<T> resultType,DataSerialType dataSerialType) throws HttpProxyRequestException {
 		HttpOption httpOption = new HttpOption();
 
 		httpOption.params = params;
@@ -762,7 +764,7 @@ public class HttpRequestProxy {
 		});
 
 	}
-	public static <T> Set<T> httpPostForSet(String poolName,String url, Map params, final Class<T> resultType,DataSerialType dataSerialType) throws HttpProxyRequestException {
+	public static <T> Set<T> httpPostForSet(String poolName,String url, Object params, final Class<T> resultType,DataSerialType dataSerialType) throws HttpProxyRequestException {
 		HttpOption httpOption = new HttpOption();
 
 		httpOption.params = params;
@@ -782,7 +784,7 @@ public class HttpRequestProxy {
 //		});
 	}
 
-	public static <K,T> Map<K,T> httpPostForMap(String poolName,String url, Map params, final Class<K> keyType, final Class<T> resultType,DataSerialType dataSerialType) throws HttpProxyRequestException {
+	public static <K,T> Map<K,T> httpPostForMap(String poolName,String url, Object params, final Class<K> keyType, final Class<T> resultType,DataSerialType dataSerialType) throws HttpProxyRequestException {
 		HttpOption httpOption = new HttpOption();
 
 		httpOption.params = params;
@@ -916,7 +918,7 @@ public class HttpRequestProxy {
         return httpPost(poolName, url, (String) null, (String) null, params, (Map<String, File>) null, headers,responseHandler);
     }
 
-    public static String httpPostforString(String poolname, String url, Map params) throws HttpProxyRequestException {
+    public static String httpPostforString(String poolname, String url, Object params) throws HttpProxyRequestException {
 		HttpOption httpOption = new HttpOption();
 
 		httpOption.params = params;
@@ -925,7 +927,7 @@ public class HttpRequestProxy {
 //        return httpPostFileforString(poolname, url, (String) null, (String) null, params, (Map<String, File>) null);
     }
 
-	public static String httpPostforString(String poolname, String url, Map params,DataSerialType dataSerialType) throws HttpProxyRequestException {
+	public static String httpPostforString(String poolname, String url, Object params,DataSerialType dataSerialType) throws HttpProxyRequestException {
 		HttpOption httpOption = new HttpOption();
 
 		httpOption.params = params;
@@ -996,13 +998,154 @@ public class HttpRequestProxy {
 	public static class HttpOption{
 		private String cookie;
 		private String userAgent;
-		private Map params;
+		private Object params;//只能是map或者PO对象
 		private Map<String, File> files;
 		private Map headers;
 		private DataSerialType dataSerialType = DataSerialType.TEXT;
 	}
 
-	/**
+    private static boolean paramsHandle(MultipartEntityBuilder multipartEntityBuilder,HttpOption httpOption) throws HttpProxyRequestException {
+        Object params = httpOption.params;
+        if (params != null) {
+            if(params instanceof Map){
+                return mapParamsHandle( multipartEntityBuilder, httpOption);
+            }
+            else{
+                try {
+                    return objectParamsHandle( multipartEntityBuilder, httpOption);
+                } catch (InvocationTargetException e) {
+                    throw new HttpProxyRequestException(e);
+                } catch (IllegalAccessException e) {
+                    throw new HttpProxyRequestException(e);
+                }
+            }
+        }
+        else{
+            return false;
+        }
+    }
+
+    private static boolean mapParamsHandle(MultipartEntityBuilder multipartEntityBuilder,HttpOption httpOption){
+        boolean hasdata = false;
+        Map params = (Map)httpOption.params;
+        if (params != null) {
+            Iterator<Entry> it = params.entrySet().iterator();
+            while (it.hasNext()) {
+                Entry entry = it.next();
+                if(entry.getValue() == null)
+                    continue;
+                if(httpOption.dataSerialType != DataSerialType.JSON || entry.getValue() instanceof String) {
+                    multipartEntityBuilder.addTextBody(String.valueOf(entry.getKey()), String.valueOf(entry.getValue()), ClientConfiguration.TEXT_PLAIN_UTF_8);
+                }
+                else{
+
+                    multipartEntityBuilder.addTextBody(String.valueOf(entry.getKey()), SimpleStringUtil.object2json(entry.getValue()), ClientConfiguration.TEXT_PLAIN_UTF_8);
+                }
+                hasdata = true;
+            }
+        }
+        return hasdata;
+    }
+
+    private static boolean objectParamsHandle(MultipartEntityBuilder multipartEntityBuilder,HttpOption httpOption) throws InvocationTargetException, IllegalAccessException {
+        boolean hasdata = false;
+
+        if (httpOption.params != null) {
+            Object params = (Object)httpOption.params;
+            ClassUtil.ClassInfo classInfo = ClassUtil.getClassInfo(params.getClass());
+            List<ClassUtil.PropertieDescription> propertieDescriptions = classInfo.getPropertyDescriptors();
+            for(ClassUtil.PropertieDescription propertieDescription: propertieDescriptions) {
+                String name = propertieDescription.getName();
+                Object value = propertieDescription.getValue(params);
+                if(value == null)
+                    continue;
+                if(httpOption.dataSerialType != DataSerialType.JSON || value instanceof String) {
+                    multipartEntityBuilder.addTextBody(name, String.valueOf(value), ClientConfiguration.TEXT_PLAIN_UTF_8);
+                }
+                else{
+
+                    multipartEntityBuilder.addTextBody(name, SimpleStringUtil.object2json(value), ClientConfiguration.TEXT_PLAIN_UTF_8);
+                }
+                hasdata = true;
+            }
+
+        }
+        return hasdata;
+    }
+
+    private static List<NameValuePair> paramsPaires(HttpOption httpOption) throws HttpProxyRequestException {
+        Object params = httpOption.params;
+        List<NameValuePair> pairs = null;
+        if (params != null) {
+            if(params instanceof Map){
+                pairs =  mapParamsPairs(  httpOption);
+            }
+            else{
+                try {
+                    pairs =  objectParamsPairs(  httpOption);
+                } catch (InvocationTargetException e) {
+                    throw new HttpProxyRequestException(e);
+                } catch (IllegalAccessException e) {
+                    throw new HttpProxyRequestException(e);
+                }
+            }
+        }
+//        if(pairs == null){
+//            pairs = new ArrayList<>(0);
+//        }
+        return pairs;
+    }
+    private static List<NameValuePair> objectParamsPairs(HttpOption httpOption) throws InvocationTargetException, IllegalAccessException {
+        List<NameValuePair> paramPair = new ArrayList<NameValuePair>();
+
+        if (httpOption.params != null) {
+            Object params = (Object)httpOption.params;
+            ClassUtil.ClassInfo classInfo = ClassUtil.getClassInfo(params.getClass());
+            List<ClassUtil.PropertieDescription> propertieDescriptions = classInfo.getPropertyDescriptors();
+            NameValuePair paramPair_ = null;
+            for(ClassUtil.PropertieDescription propertieDescription: propertieDescriptions) {
+                String name = propertieDescription.getName();
+                Object value = propertieDescription.getValue(params);
+                if(value == null)
+                    continue;
+                if(httpOption.dataSerialType != DataSerialType.JSON || value instanceof String) {
+                    paramPair_ = new BasicNameValuePair(name, String.valueOf(value));
+                }
+                else{
+                    paramPair_ = new BasicNameValuePair(name, SimpleStringUtil.object2json(value));
+                }
+                paramPair.add(paramPair_);
+            }
+
+        }
+        return paramPair;
+
+
+    }
+
+    private static List<NameValuePair> mapParamsPairs(HttpOption httpOption){
+        Map params = (Map)httpOption.params;
+        if(params.size() <= 0)
+            return null;
+        List<NameValuePair> paramPair = new ArrayList<NameValuePair>();
+
+        Iterator<Entry> it = params.entrySet().iterator();
+        NameValuePair paramPair_ = null;
+        for (int i = 0; it.hasNext(); i++) {
+            Entry entry = it.next();
+            if(entry.getValue() == null)
+                continue;
+            if(httpOption.dataSerialType != DataSerialType.JSON || entry.getValue() instanceof String) {
+                paramPair_ = new BasicNameValuePair(String.valueOf(entry.getKey()), String.valueOf(entry.getValue()));
+            }
+            else{
+                paramPair_ = new BasicNameValuePair(String.valueOf(entry.getKey()), SimpleStringUtil.object2json(entry.getValue()));
+            }
+            paramPair.add(paramPair_);
+        }
+        return paramPair;
+    }
+    /**
 	 * 公用post方法
 	 *
 	 * @param poolname
@@ -1019,27 +1162,27 @@ public class HttpRequestProxy {
         if (httpOption.files != null) {
             MultipartEntityBuilder multipartEntityBuilder = MultipartEntityBuilder.create();
             // post表单参数处理
-            int length = (httpOption.params == null ? 0 : httpOption.params.size()) + (httpOption.files == null ? 0 : httpOption.files.size());
+//            int length = (httpOption.params == null ? 0 : httpOption.params.size()) + (httpOption.files == null ? 0 : httpOption.files.size());
 
-            int i = 0;
-            boolean hasdata = false;
+//            int i = 0;
+            boolean hasdata = paramsHandle( multipartEntityBuilder,httpOption);
 
-            if (httpOption.params != null) {
-                Iterator<Entry> it = httpOption.params.entrySet().iterator();
-                while (it.hasNext()) {
-                    Entry entry = it.next();
-                    if(entry.getValue() == null)
-                        continue;
-                    if(httpOption.dataSerialType != DataSerialType.JSON || entry.getValue() instanceof String) {
-                        multipartEntityBuilder.addTextBody(String.valueOf(entry.getKey()), String.valueOf(entry.getValue()), ClientConfiguration.TEXT_PLAIN_UTF_8);
-                    }
-                    else{
-
-                        multipartEntityBuilder.addTextBody(String.valueOf(entry.getKey()), SimpleStringUtil.object2json(entry.getValue()), ClientConfiguration.TEXT_PLAIN_UTF_8);
-                    }
-                    hasdata = true;
-                }
-            }
+//            if (httpOption.params != null) {
+//                Iterator<Entry> it = httpOption.params.entrySet().iterator();
+//                while (it.hasNext()) {
+//                    Entry entry = it.next();
+//                    if(entry.getValue() == null)
+//                        continue;
+//                    if(httpOption.dataSerialType != DataSerialType.JSON || entry.getValue() instanceof String) {
+//                        multipartEntityBuilder.addTextBody(String.valueOf(entry.getKey()), String.valueOf(entry.getValue()), ClientConfiguration.TEXT_PLAIN_UTF_8);
+//                    }
+//                    else{
+//
+//                        multipartEntityBuilder.addTextBody(String.valueOf(entry.getKey()), SimpleStringUtil.object2json(entry.getValue()), ClientConfiguration.TEXT_PLAIN_UTF_8);
+//                    }
+//                    hasdata = true;
+//                }
+//            }
             if (httpOption.files != null) {
                 Iterator<Entry<String, File>> it = httpOption.files.entrySet().iterator();
                 while (it.hasNext()) {
@@ -1060,22 +1203,23 @@ public class HttpRequestProxy {
             }
             if (hasdata)
                 httpEntity = multipartEntityBuilder.build();
-        } else if (httpOption.params != null && httpOption.params.size() > 0) {
-            paramPair = new ArrayList<NameValuePair>();
-            Iterator<Entry> it = httpOption.params.entrySet().iterator();
-            NameValuePair paramPair_ = null;
-            for (int i = 0; it.hasNext(); i++) {
-                Entry entry = it.next();
-                if(entry.getValue() == null)
-                    continue;
-                if(httpOption.dataSerialType != DataSerialType.JSON || entry.getValue() instanceof String) {
-                    paramPair_ = new BasicNameValuePair(String.valueOf(entry.getKey()), String.valueOf(entry.getValue()));
-                }
-                else{
-                    paramPair_ = new BasicNameValuePair(String.valueOf(entry.getKey()), SimpleStringUtil.object2json(entry.getValue()));
-                }
-                paramPair.add(paramPair_);
-            }
+        } else if (httpOption.params != null ) {
+            paramPair = paramsPaires(  httpOption) ;
+//            paramPair = new ArrayList<NameValuePair>();
+//            Iterator<Entry> it = httpOption.params.entrySet().iterator();
+//            NameValuePair paramPair_ = null;
+//            for (int i = 0; it.hasNext(); i++) {
+//                Entry entry = it.next();
+//                if(entry.getValue() == null)
+//                    continue;
+//                if(httpOption.dataSerialType != DataSerialType.JSON || entry.getValue() instanceof String) {
+//                    paramPair_ = new BasicNameValuePair(String.valueOf(entry.getKey()), String.valueOf(entry.getValue()));
+//                }
+//                else{
+//                    paramPair_ = new BasicNameValuePair(String.valueOf(entry.getKey()), SimpleStringUtil.object2json(entry.getValue()));
+//                }
+//                paramPair.add(paramPair_);
+//            }
         }
         final HttpEntity _httpEntity = httpEntity;
         final List<NameValuePair> _paramPair = paramPair;
@@ -1375,7 +1519,7 @@ public class HttpRequestProxy {
      * @param headers
      * @throws HttpProxyRequestException
      */
-    public static <T> T httpPost(String poolname, String url, String cookie, String userAgent, Map params,
+    public static <T> T httpPost(String poolname, String url, String cookie, String userAgent, Object params,
                                                Map<String, File> files, Map headers,ResponseHandler<T> responseHandler) throws HttpProxyRequestException {
 		HttpOption httpOption = new HttpOption();
 		httpOption.cookie = cookie;
@@ -1399,7 +1543,7 @@ public class HttpRequestProxy {
      * @param headers
      * @throws HttpProxyRequestException
      */
-    public static String httpPutforString(String poolname, String url, String cookie, String userAgent, Map params,
+    public static String httpPutforString(String poolname, String url, String cookie, String userAgent, Object params,
                                                Map<String, File> files, Map headers) throws HttpProxyRequestException{
         HttpOption httpOption = new HttpOption();
         httpOption.cookie = cookie;
@@ -1420,7 +1564,7 @@ public class HttpRequestProxy {
      * @throws HttpProxyRequestException
      */
 
-    public static String httpPutforString(  String url,Map params, Map headers ) throws HttpProxyRequestException{
+    public static String httpPutforString(  String url,Object params, Map headers ) throws HttpProxyRequestException{
         HttpOption httpOption = new HttpOption();
         httpOption.params = params;
         httpOption.headers = headers;
@@ -1438,7 +1582,7 @@ public class HttpRequestProxy {
      * @throws HttpProxyRequestException
      */
 
-    public static <T> T httpPutforObject(String url, Map params, Map headers, final Class<T> resultType ) throws HttpProxyRequestException{
+    public static <T> T httpPutforObject(String url, Object params, Map headers, final Class<T> resultType ) throws HttpProxyRequestException{
         HttpOption httpOption = new HttpOption();
         httpOption.params = params;
         httpOption.headers = headers;
@@ -1468,7 +1612,7 @@ public class HttpRequestProxy {
      * @throws HttpProxyRequestException
      */
 
-    public static <T> List<T> httpPutforList(String url, Map params, Map headers, final Class<T> resultType ) throws HttpProxyRequestException{
+    public static <T> List<T> httpPutforList(String url, Object params, Map headers, final Class<T> resultType ) throws HttpProxyRequestException{
         HttpOption httpOption = new HttpOption();
         httpOption.params = params;
         httpOption.headers = headers;
@@ -1498,7 +1642,7 @@ public class HttpRequestProxy {
      * @throws HttpProxyRequestException
      */
 
-    public static <T> Set<T> httpPutforSet(String url, Map params, Map headers, final Class<T> resultType ) throws HttpProxyRequestException{
+    public static <T> Set<T> httpPutforSet(String url, Object params, Map headers, final Class<T> resultType ) throws HttpProxyRequestException{
         HttpOption httpOption = new HttpOption();
         httpOption.params = params;
         httpOption.headers = headers;
@@ -1528,7 +1672,7 @@ public class HttpRequestProxy {
      * @throws HttpProxyRequestException
      */
 
-    public static <K,T> Map<K,T> httpPutforObject(String url, Map params, Map headers, final Class<K> keyType , final Class<T> resultType ) throws HttpProxyRequestException{
+    public static <K,T> Map<K,T> httpPutforObject(String url, Object params, Map headers, final Class<K> keyType , final Class<T> resultType ) throws HttpProxyRequestException{
         HttpOption httpOption = new HttpOption();
         httpOption.params = params;
         httpOption.headers = headers;
@@ -1558,7 +1702,7 @@ public class HttpRequestProxy {
      * @throws HttpProxyRequestException
      */
 
-    public static <T> T httpPutforObject(String poolName,String url, Map params, Map headers, final Class<T> resultType ) throws HttpProxyRequestException{
+    public static <T> T httpPutforObject(String poolName,String url, Object params, Map headers, final Class<T> resultType ) throws HttpProxyRequestException{
         HttpOption httpOption = new HttpOption();
         httpOption.params = params;
         httpOption.headers = headers;
@@ -1588,7 +1732,7 @@ public class HttpRequestProxy {
      * @throws HttpProxyRequestException
      */
 
-    public static <T> List<T> httpPutforList(String poolName,String url, Map params, Map headers, final Class<T> resultType ) throws HttpProxyRequestException{
+    public static <T> List<T> httpPutforList(String poolName,String url, Object params, Map headers, final Class<T> resultType ) throws HttpProxyRequestException{
         HttpOption httpOption = new HttpOption();
         httpOption.params = params;
         httpOption.headers = headers;
@@ -1609,7 +1753,7 @@ public class HttpRequestProxy {
 //                });
     }
 
-    public static <T> List<T> httpPutforList(String poolName,String url, Map params, Map headers, final Class<T> resultType ,BaseURLResponseHandler<List<T>> baseURLResponseHandler) throws HttpProxyRequestException{
+    public static <T> List<T> httpPutforList(String poolName,String url, Object params, Map headers, final Class<T> resultType ,BaseURLResponseHandler<List<T>> baseURLResponseHandler) throws HttpProxyRequestException{
         HttpOption httpOption = new HttpOption();
         httpOption.params = params;
         httpOption.headers = headers;
@@ -1626,7 +1770,7 @@ public class HttpRequestProxy {
      * @throws HttpProxyRequestException
      */
 
-    public static <T> Set<T> httpPutforSet(String poolName,String url, Map params, Map headers, final Class<T> resultType ) throws HttpProxyRequestException{
+    public static <T> Set<T> httpPutforSet(String poolName,String url, Object params, Map headers, final Class<T> resultType ) throws HttpProxyRequestException{
         HttpOption httpOption = new HttpOption();
         httpOption.params = params;
         httpOption.headers = headers;
@@ -1656,7 +1800,7 @@ public class HttpRequestProxy {
      * @throws HttpProxyRequestException
      */
 
-    public static <K,T> Map<K,T> httpPutforObject(String poolName,String url, Map params, Map headers, final Class<K> keyType , final Class<T> resultType ) throws HttpProxyRequestException{
+    public static <K,T> Map<K,T> httpPutforObject(String poolName,String url, Object params, Map headers, final Class<K> keyType , final Class<T> resultType ) throws HttpProxyRequestException{
         HttpOption httpOption = new HttpOption();
         httpOption.params = params;
         httpOption.headers = headers;
@@ -1677,7 +1821,7 @@ public class HttpRequestProxy {
 //                });
     }
 
-    public static <T> T httpPutforString(  String url,Map params, Map headers ,ResponseHandler<T> responseHandler ) throws HttpProxyRequestException{
+    public static <T> T httpPutforString(  String url,Object params, Map headers ,ResponseHandler<T> responseHandler ) throws HttpProxyRequestException{
         HttpOption httpOption = new HttpOption();
         httpOption.params = params;
         httpOption.headers = headers;
@@ -1686,7 +1830,7 @@ public class HttpRequestProxy {
 //                ( Map<String, File> )null,   headers ,responseHandler);
     }
 
-    public static String httpPutforString(String poolname,  String url,Map params, Map headers ) throws HttpProxyRequestException{
+    public static String httpPutforString(String poolname,  String url,Object params, Map headers ) throws HttpProxyRequestException{
         HttpOption httpOption = new HttpOption();
         httpOption.params = params;
         httpOption.headers = headers;
@@ -1695,7 +1839,7 @@ public class HttpRequestProxy {
 //                ( Map<String, File> )null,   headers,new StringResponseHandler());
     }
 
-    public static <T> T httpPutforString(String poolname,  String url,Map params, Map headers ,ResponseHandler<T> responseHandler) throws HttpProxyRequestException{
+    public static <T> T httpPutforString(String poolname,  String url,Object params, Map headers ,ResponseHandler<T> responseHandler) throws HttpProxyRequestException{
         HttpOption httpOption = new HttpOption();
         httpOption.params = params;
         httpOption.headers = headers;
@@ -1716,7 +1860,7 @@ public class HttpRequestProxy {
      * @param headers
      * @throws HttpProxyRequestException
      */
-    public static <T> T httpPut(String url, String cookie, String userAgent, Map params,
+    public static <T> T httpPut(String url, String cookie, String userAgent, Object params,
                                                Map<String, File> files, Map headers,ResponseHandler<T> responseHandler) throws HttpProxyRequestException {
         HttpOption httpOption = new HttpOption();
         httpOption.cookie = cookie;
@@ -1924,7 +2068,7 @@ public class HttpRequestProxy {
      * @param headers
      * @throws HttpProxyRequestException
      */
-    public static <T> T httpPut(String poolname, String url, String cookie, String userAgent, Map params,
+    public static <T> T httpPut(String poolname, String url, String cookie, String userAgent, Object params,
                                                Map<String, File> files, Map headers,ResponseHandler<T> responseHandler) throws HttpProxyRequestException {
         // System.out.println("post_url==> "+url);
         // String cookie = getCookie(appContext);
@@ -1957,27 +2101,28 @@ public class HttpRequestProxy {
         List<NameValuePair> paramPair = null;
         if (httpOption.files != null) {
             MultipartEntityBuilder multipartEntityBuilder = MultipartEntityBuilder.create();
+
             // post表单参数处理
-            int length = (httpOption.params == null ? 0 : httpOption.params.size()) + (httpOption.files == null ? 0 : httpOption.files.size());
+//            int length = (httpOption.params == null ? 0 : httpOption.params.size()) + (httpOption.files == null ? 0 : httpOption.files.size());
+//
+//            int i = 0;
+            boolean hasdata = paramsHandle(multipartEntityBuilder,httpOption);
 
-            int i = 0;
-            boolean hasdata = false;
-
-            if (httpOption.params != null) {
-                Iterator<Entry> it = httpOption.params.entrySet().iterator();
-                while (it.hasNext()) {
-                    Entry entry = it.next();
-                    if(entry.getValue() == null){
-                        continue;
-                    }
-                    if(httpOption.dataSerialType != DataSerialType.JSON || entry.getValue() instanceof String)
-                        multipartEntityBuilder.addTextBody(String.valueOf(entry.getKey()), String.valueOf(entry.getValue()), ClientConfiguration.TEXT_PLAIN_UTF_8);
-                    else {
-                        multipartEntityBuilder.addTextBody(String.valueOf(entry.getKey()), SimpleStringUtil.object2json(entry.getValue()), ClientConfiguration.TEXT_PLAIN_UTF_8);
-                    }
-                    hasdata = true;
-                }
-            }
+//            if (httpOption.params != null) {
+//                Iterator<Entry> it = httpOption.params.entrySet().iterator();
+//                while (it.hasNext()) {
+//                    Entry entry = it.next();
+//                    if(entry.getValue() == null){
+//                        continue;
+//                    }
+//                    if(httpOption.dataSerialType != DataSerialType.JSON || entry.getValue() instanceof String)
+//                        multipartEntityBuilder.addTextBody(String.valueOf(entry.getKey()), String.valueOf(entry.getValue()), ClientConfiguration.TEXT_PLAIN_UTF_8);
+//                    else {
+//                        multipartEntityBuilder.addTextBody(String.valueOf(entry.getKey()), SimpleStringUtil.object2json(entry.getValue()), ClientConfiguration.TEXT_PLAIN_UTF_8);
+//                    }
+//                    hasdata = true;
+//                }
+//            }
             if (httpOption.files != null) {
                 Iterator<Entry<String, File>> it = httpOption.files.entrySet().iterator();
                 while (it.hasNext()) {
@@ -1998,23 +2143,24 @@ public class HttpRequestProxy {
             }
             if (hasdata)
                 httpEntity = multipartEntityBuilder.build();
-        } else if (httpOption.params != null && httpOption.params.size() > 0) {
-            paramPair = new ArrayList<NameValuePair>();
-            Iterator<Entry> it = httpOption.params.entrySet().iterator();
-            NameValuePair paramPair_ = null;
-            for (int i = 0; it.hasNext(); i++) {
-                Entry entry = it.next();
-                if(entry.getValue() == null){
-                    continue;
-                }
-                if(httpOption.dataSerialType != DataSerialType.JSON || entry.getValue() instanceof String) {
-                    paramPair_ = new BasicNameValuePair(String.valueOf(entry.getKey()), String.valueOf(entry.getValue()));
-                }
-                else{
-                    paramPair_ = new BasicNameValuePair(String.valueOf(entry.getKey()), SimpleStringUtil.object2json(entry.getValue()));
-                }
-                paramPair.add(paramPair_);
-            }
+        } else if (httpOption.params != null ) {
+            paramPair = paramsPaires(  httpOption) ;
+//            paramPair = new ArrayList<NameValuePair>();
+//            Iterator<Entry> it = httpOption.params.entrySet().iterator();
+//            NameValuePair paramPair_ = null;
+//            for (int i = 0; it.hasNext(); i++) {
+//                Entry entry = it.next();
+//                if(entry.getValue() == null){
+//                    continue;
+//                }
+//                if(httpOption.dataSerialType != DataSerialType.JSON || entry.getValue() instanceof String) {
+//                    paramPair_ = new BasicNameValuePair(String.valueOf(entry.getKey()), String.valueOf(entry.getValue()));
+//                }
+//                else{
+//                    paramPair_ = new BasicNameValuePair(String.valueOf(entry.getKey()), SimpleStringUtil.object2json(entry.getValue()));
+//                }
+//                paramPair.add(paramPair_);
+//            }
         }
         final HttpEntity _httpEntity = httpEntity;
         final List<NameValuePair> _paramPair = paramPair;
@@ -3712,7 +3858,7 @@ public class HttpRequestProxy {
         return httpPostForTypeObject("default", url, params,  containType, resultType);
 //        return httpPostforString(  poolName,url, params, (Map) null);
     }
-    public static <D,T> D httpPostForTypeObject(String poolName,String url, Map params, final Class<D> containType, final Class<T> resultType) throws HttpProxyRequestException {
+    public static <D,T> D httpPostForTypeObject(String poolName,String url, Object params, final Class<D> containType, final Class<T> resultType) throws HttpProxyRequestException {
         HttpOption httpOption = new HttpOption();
 
         httpOption.params = params;

@@ -21,6 +21,8 @@ import org.apache.http.util.EntityUtils;
 import org.frameworkset.spi.remote.http.proxy.*;
 import org.frameworkset.util.ClassUtil;
 import org.frameworkset.util.ResourceStartResult;
+import org.frameworkset.util.annotations.DateFormateMeta;
+import org.frameworkset.util.annotations.wraper.RequestParamWraper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,6 +33,8 @@ import java.net.NoRouteToHostException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -43,6 +47,7 @@ import static org.frameworkset.spi.remote.http.HttpRequestUtil.object2json;
 public class HttpRequestProxy {
 
     private static Logger logger = LoggerFactory.getLogger(HttpRequestProxy.class);
+    public static final String defaultDateformat = "yyyy-MM-dd HH:mm:ss";
     public static ResourceStartResult startHttpPools(String configFile){
         return HttpRequestUtil.startHttpPools(configFile);
     }
@@ -1046,6 +1051,17 @@ public class HttpRequestProxy {
         }
         return hasdata;
     }
+    private static String getDateformat(ClassUtil.PropertieDescription propertieDescription){
+        RequestParamWraper requestParam = propertieDescription.getRequestParam();
+        String dateFormat = null;
+        if(requestParam != null && requestParam.dateformat() != null){
+            dateFormat = requestParam.dateformat();
+        }
+        else{
+            dateFormat = defaultDateformat;
+        }
+        return dateFormat;
+    }
 
     private static boolean objectParamsHandle(MultipartEntityBuilder multipartEntityBuilder,HttpOption httpOption) throws InvocationTargetException, IllegalAccessException {
         boolean hasdata = false;
@@ -1057,9 +1073,28 @@ public class HttpRequestProxy {
             for(ClassUtil.PropertieDescription propertieDescription: propertieDescriptions) {
                 String name = propertieDescription.getName();
                 Object value = propertieDescription.getValue(params);
+
                 if(value == null)
                     continue;
-                if(httpOption.dataSerialType != DataSerialType.JSON || value instanceof String) {
+                if( value instanceof String) {
+                    multipartEntityBuilder.addTextBody(name, String.valueOf(value), ClientConfiguration.TEXT_PLAIN_UTF_8);
+                }
+                else if(value instanceof Date){
+                    String dateFormat = getDateformat(propertieDescription);
+                    value = DateFormateMeta.format((Date)value,dateFormat);
+                    multipartEntityBuilder.addTextBody(name, String.valueOf(value), ClientConfiguration.TEXT_PLAIN_UTF_8);
+                }
+                else if(value instanceof LocalDateTime){
+                    String dateFormat = getDateformat(propertieDescription);
+                    value = TimeUtil.changeLocalDateTime2String((LocalDateTime)value , dateFormat);
+                    multipartEntityBuilder.addTextBody(name, String.valueOf(value), ClientConfiguration.TEXT_PLAIN_UTF_8);
+                }
+                else if(value instanceof LocalDate){
+                    String dateFormat = getDateformat(propertieDescription);
+                    value = TimeUtil.changeLocalDate2String((LocalDate)value , dateFormat);
+                    multipartEntityBuilder.addTextBody(name, String.valueOf(value), ClientConfiguration.TEXT_PLAIN_UTF_8);
+                }
+                else if(httpOption.dataSerialType != DataSerialType.JSON || value instanceof String) {
                     multipartEntityBuilder.addTextBody(name, String.valueOf(value), ClientConfiguration.TEXT_PLAIN_UTF_8);
                 }
                 else{
@@ -1095,6 +1130,7 @@ public class HttpRequestProxy {
 //        }
         return pairs;
     }
+
     private static List<NameValuePair> objectParamsPairs(HttpOption httpOption) throws InvocationTargetException, IllegalAccessException {
         List<NameValuePair> paramPair = new ArrayList<NameValuePair>();
 
@@ -1108,7 +1144,25 @@ public class HttpRequestProxy {
                 Object value = propertieDescription.getValue(params);
                 if(value == null)
                     continue;
-                if(httpOption.dataSerialType != DataSerialType.JSON || value instanceof String) {
+                if( value instanceof String) {
+                    paramPair_ = new BasicNameValuePair(name, String.valueOf(value));
+                }
+                else if(value instanceof Date){
+                    String dateFormat = getDateformat(propertieDescription);
+                    value = DateFormateMeta.format((Date)value,dateFormat);
+                    paramPair_ = new BasicNameValuePair(name, String.valueOf(value));
+                }
+                else if(value instanceof LocalDateTime){
+                    String dateFormat = getDateformat(propertieDescription);
+                    value = TimeUtil.changeLocalDateTime2String((LocalDateTime)value , dateFormat);
+                    paramPair_ = new BasicNameValuePair(name, String.valueOf(value));
+                }
+                else if(value instanceof LocalDate){
+                    String dateFormat = getDateformat(propertieDescription);
+                    value = TimeUtil.changeLocalDate2String((LocalDate)value , dateFormat);
+                    paramPair_ = new BasicNameValuePair(name, String.valueOf(value));
+                }
+                else if(httpOption.dataSerialType != DataSerialType.JSON) {
                     paramPair_ = new BasicNameValuePair(name, String.valueOf(value));
                 }
                 else{

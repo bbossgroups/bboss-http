@@ -14,31 +14,27 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.FileBody;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
-import org.frameworkset.spi.remote.http.proxy.*;
-import org.frameworkset.util.ClassUtil;
+import org.frameworkset.spi.remote.http.proxy.HttpAddress;
+import org.frameworkset.spi.remote.http.proxy.HttpProxyRequestException;
+import org.frameworkset.spi.remote.http.proxy.HttpServiceHosts;
+import org.frameworkset.spi.remote.http.proxy.NoHttpServerException;
 import org.frameworkset.util.ResourceStartResult;
-import org.frameworkset.util.annotations.DateFormateMeta;
-import org.frameworkset.util.annotations.wraper.RequestParamWraper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.lang.reflect.InvocationTargetException;
 import java.net.NoRouteToHostException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import static org.frameworkset.spi.remote.http.HttpRequestUtil.object2json;
 
@@ -48,8 +44,7 @@ import static org.frameworkset.spi.remote.http.HttpRequestUtil.object2json;
  */
 public class HttpRequestProxy {
 
-    private static Logger logger = LoggerFactory.getLogger(HttpRequestProxy.class);
-    public static final String defaultDateformat = "yyyy-MM-dd HH:mm:ss";
+    private static final Logger logger = LoggerFactory.getLogger(HttpRequestProxy.class);
     public static ResourceStartResult startHttpPools(String configFile){
         return HttpRequestUtil.startHttpPools(configFile);
     }
@@ -80,7 +75,7 @@ public class HttpRequestProxy {
 
             @Override
             public T handleResponse(final HttpResponse response)
-                    throws ClientProtocolException, IOException {
+                    throws IOException {
                 return ResponseUtil.handleResponse(url,  response, resultType);
             }
 
@@ -95,7 +90,7 @@ public class HttpRequestProxy {
 
             @Override
             public T handleResponse(final HttpResponse response)
-                    throws ClientProtocolException, IOException {
+                    throws IOException {
                 return ResponseUtil.handleResponse(  url,response, resultType);
             }
 
@@ -107,7 +102,7 @@ public class HttpRequestProxy {
 
             @Override
             public T handleResponse(final HttpResponse response)
-                    throws ClientProtocolException, IOException {
+                    throws IOException {
                 return ResponseUtil.handleResponse(  url,response, resultType);
             }
 
@@ -119,7 +114,7 @@ public class HttpRequestProxy {
 
             @Override
             public T handleResponse(final HttpResponse response)
-                    throws ClientProtocolException, IOException {
+                    throws IOException {
                 return ResponseUtil.handleResponse(  url,response, resultType);
             }
 
@@ -131,7 +126,7 @@ public class HttpRequestProxy {
 
             @Override
             public T handleResponse(final HttpResponse response)
-                    throws ClientProtocolException, IOException {
+                    throws IOException {
                 return ResponseUtil.handleResponse(  url,response, resultType);
             }
 
@@ -143,7 +138,7 @@ public class HttpRequestProxy {
 
             @Override
             public T handleResponse(final HttpResponse response)
-                    throws ClientProtocolException, IOException {
+                    throws IOException {
                 return ResponseUtil.handleResponse(  url,response, resultType);
             }
 
@@ -155,7 +150,7 @@ public class HttpRequestProxy {
 
 			@Override
 			public T handleResponse(final HttpResponse response)
-					throws ClientProtocolException, IOException {
+					throws IOException {
 				return ResponseUtil.handleResponse(  url,response, resultType);
 			}
 
@@ -166,7 +161,7 @@ public class HttpRequestProxy {
 
             @Override
             public List<T> handleResponse(final HttpResponse response)
-                    throws ClientProtocolException, IOException {
+                    throws IOException {
                 return ResponseUtil.handleListResponse(  url,response, resultType);
             }
 
@@ -178,7 +173,7 @@ public class HttpRequestProxy {
 
             @Override
             public Map<K,T>  handleResponse(final HttpResponse response)
-                    throws ClientProtocolException, IOException {
+                    throws IOException {
                 return ResponseUtil.handleMapResponse(  url,response,keyType, resultType);
             }
 
@@ -190,7 +185,7 @@ public class HttpRequestProxy {
 
             @Override
             public Set<T> handleResponse(final HttpResponse response)
-                    throws ClientProtocolException, IOException {
+                    throws IOException {
                 return ResponseUtil.handleSetResponse(url,  response, resultType);
             }
 
@@ -202,7 +197,7 @@ public class HttpRequestProxy {
 
             @Override
             public List<T> handleResponse(final HttpResponse response)
-                    throws ClientProtocolException, IOException {
+                    throws IOException {
                 return ResponseUtil.handleListResponse( url, response, resultType);
             }
 
@@ -213,7 +208,7 @@ public class HttpRequestProxy {
 
             @Override
             public List<T> handleResponse(final HttpResponse response)
-                    throws ClientProtocolException, IOException {
+                    throws IOException {
                 return ResponseUtil.handleListResponse( url, response, resultType);
             }
 
@@ -231,7 +226,7 @@ public class HttpRequestProxy {
 
             @Override
             public List<T> handleResponse(final HttpResponse response)
-                    throws ClientProtocolException, IOException {
+                    throws IOException {
                 return ResponseUtil.handleListResponse( url, response, resultType);
             }
 
@@ -246,7 +241,7 @@ public class HttpRequestProxy {
 
             @Override
             public D handleResponse(final HttpResponse response)
-                    throws ClientProtocolException, IOException {
+                    throws IOException {
                 return ResponseUtil.handleResponse( url, response,containType, resultType);
             }
 
@@ -254,13 +249,43 @@ public class HttpRequestProxy {
     }
 
 
+    public static <D,T> D httpGetforTypeObjectWithParams(String url,Object params,final Class<D> containType,final Class<T> resultType) throws HttpProxyRequestException {
+        return httpGetforTypeObject("default", url, params,containType, resultType);
+    }
+    public static <D,T> D httpGetforTypeObject(String poolName,String url,Object params,final Class<D> containType,final Class<T> resultType) throws HttpProxyRequestException {
+        return httpGetforString(  poolName,url, (String) null, (String) null, params,(Map) null, new BaseURLResponseHandler<D>() {
+
+            @Override
+            public D handleResponse(final HttpResponse response)
+                    throws IOException {
+                return ResponseUtil.handleResponse( url, response,containType, resultType);
+            }
+
+        });
+    }
+
+    public static <D,T> D httpGetforTypeObjectWithHeader(String url,Object params,Map headers,final Class<D> containType,final Class<T> resultType) throws HttpProxyRequestException {
+        return httpGetforTypeObject("default", url, params,headers,containType, resultType);
+    }
+    public static <D,T> D httpGetforTypeObject(String poolName,String url,Object params,Map headers,final Class<D> containType,final Class<T> resultType) throws HttpProxyRequestException {
+        return httpGetforString(  poolName,url, (String) null, (String) null, params,headers, new BaseURLResponseHandler<D>() {
+
+            @Override
+            public D handleResponse(final HttpResponse response)
+                    throws IOException {
+                return ResponseUtil.handleResponse( url, response,containType, resultType);
+            }
+
+        });
+    }
+
 
     public static <K,T> Map<K,T> httpGetforMap(String poolName,String url,final Class<K> keyType,final Class<T> resultType) throws HttpProxyRequestException {
         return httpGetforString(  poolName,url, (String) null, (String) null, (Map) null, new BaseURLResponseHandler<Map<K,T> >() {
 
             @Override
             public Map<K,T>  handleResponse(final HttpResponse response)
-                    throws ClientProtocolException, IOException {
+                    throws IOException {
                 return ResponseUtil.handleMapResponse( url, response,keyType, resultType);
             }
 
@@ -272,7 +297,7 @@ public class HttpRequestProxy {
 
 			@Override
 			public Map<K,T>  handleResponse(final HttpResponse response)
-					throws ClientProtocolException, IOException {
+					throws IOException {
 				return ResponseUtil.handleMapResponse( url, response,keyType, resultType);
 			}
 
@@ -285,7 +310,7 @@ public class HttpRequestProxy {
 
 			@Override
 			public Set<T> handleResponse(final HttpResponse response)
-					throws ClientProtocolException, IOException {
+					throws IOException {
 				return ResponseUtil.handleSetResponse( url, response, resultType);
 			}
 
@@ -297,7 +322,7 @@ public class HttpRequestProxy {
 
             @Override
             public Set<T> handleResponse(final HttpResponse response)
-                    throws ClientProtocolException, IOException {
+                    throws IOException {
                 return ResponseUtil.handleSetResponse( url, response, resultType);
             }
 
@@ -378,220 +403,7 @@ public class HttpRequestProxy {
     public static <T> T httpGetforString(String poolname, String url, String cookie, String userAgent,Object params, Map headers,ResponseHandler<T> responseHandler) throws HttpProxyRequestException {
         return httpGet(  poolname,   url,   cookie,   userAgent,  params, headers, responseHandler);
     }
-    private static Exception getException(ResponseHandler responseHandler,HttpServiceHosts httpServiceHosts ){
-//        assertCheck(  httpServiceHosts );
-        ExceptionWare exceptionWare = httpServiceHosts.getExceptionWare();
-        if(exceptionWare != null) {
-            return exceptionWare.getExceptionFromResponse(responseHandler);
-        }
-        return null;
-    }
-
-    /**
-     * 拼接get请求参数
-     * @param url
-     * @param params
-     * @return
-     */
-    public static String appendParams(String url,Object params){
-        if(params == null){
-            return url;
-        }
-        else if(params instanceof Map){
-            return appendMapParams(url,(Map)params);
-        }
-        else{
-            return appendObjectParams(url,params);
-        }
-
-    }
-
-    /**
-     * 拼接get请求参数
-     * @param url
-     * @param params
-     * @return
-     */
-    public static String appendMapParams(String url,Map params){
-        int idx = url.indexOf("?");
-        boolean hasParams = idx > 0;
-        boolean lastIdx = idx == url.length() - 1;
-        StringBuilder ret = new StringBuilder();
-        ret.append(url);
-        //拼接get请求参数
-        if(params != null && params.size() > 0){
-            Iterator<Map.Entry> iterator = params.entrySet().iterator();
-            int i = 0;
-            while (iterator.hasNext()) {
-                Map.Entry entry = iterator.next();
-                String name = String.valueOf(entry.getKey());
-                Object value_ = entry.getValue();
-                if (value_ == null)
-                    continue;
-                String value = convertValue( value_, null);
-                try {
-                    value = java.net.URLEncoder.encode(value, StandardCharsets.UTF_8.name());
-                } catch (UnsupportedEncodingException e) {
-                    throw new HttpProxyRequestException(e);
-                }
-                if (hasParams) {
-                    if (lastIdx) {
-                        ret.append(name).append("=").append(value);
-                        lastIdx = false;
-                    } else {
-                        ret.append("&").append(name).append("=").append(value);
-                    }
-                } else {
-                    ret.append("?").append(name).append("=").append(value);
-                    hasParams = true;
-                }
-            }
-        }
-        return ret.toString();
-            /**
-            int idx = url.indexOf("?");
-            StringBuilder ret = new StringBuilder();
-            ret.append(url);
-            if(idx < 0){
-                ret.append("?");
-                Iterator<Map.Entry> iterator = params.entrySet().iterator();
-                int i = 0;
-                while (iterator.hasNext()){
-                    Map.Entry entry = iterator.next();
-                    if(i > 0)
-                        ret.append("&");
-                    ret.append(entry.getKey()).append("=").append(entry.getValue());
-                    i ++;
-                }
-            }
-            else{
-                if(idx == url.length() - 1){
-                    Iterator<Map.Entry> iterator = params.entrySet().iterator();
-                    int i = 0;
-                    while (iterator.hasNext()){
-                        Map.Entry entry = iterator.next();
-                        if(i > 0)
-                            ret.append("&");
-                        ret.append(entry.getKey()).append("=").append(entry.getValue());
-                        i ++;
-                    }
-                }
-                else{
-                    Iterator<Map.Entry> iterator = params.entrySet().iterator();
-                    while (iterator.hasNext()){
-                        Map.Entry entry = iterator.next();
-                        ret.append("&");
-                        ret.append(entry.getKey()).append("=").append(entry.getValue());
-                    }
-                }
-            }
-            url = ret.toString();
-
-        }
-        return url;
-             */
-
-    }
-
-    private static String convertValue(Object value, ClassUtil.PropertieDescription propertieDescription,DataSerialType dataSerialType){
-        if( value instanceof String) {
-            return String.valueOf(value);
-        }
-        else if(value instanceof Date){
-            String dateFormat = getDateformat(propertieDescription);
-            return DateFormateMeta.format((Date)value,dateFormat);
-        }
-        else if(value instanceof LocalDateTime){
-            String dateFormat = getDateformat(propertieDescription);
-            return TimeUtil.changeLocalDateTime2String((LocalDateTime)value , dateFormat);
-        }
-        else if(value instanceof LocalDate){
-            String dateFormat = getDateformat(propertieDescription);
-            return TimeUtil.changeLocalDate2String((LocalDate)value , dateFormat);
-        }
-
-        else if(dataSerialType == null || dataSerialType != DataSerialType.JSON) {
-            return String.valueOf(value);
-        }
-        else{
-            return SimpleStringUtil.object2json(value);
-        }
-    }
-
-
-    private static String convertValue(Object value, DataSerialType dataSerialType){
-        if( value instanceof String) {
-            return String.valueOf(value);
-        }
-        else if(value instanceof Date){
-            return DateFormateMeta.format((Date)value,defaultDateformat);
-        }
-        else if(value instanceof LocalDateTime){
-            return TimeUtil.changeLocalDateTime2String((LocalDateTime)value , defaultDateformat);
-        }
-        else if(value instanceof LocalDate){
-            return TimeUtil.changeLocalDate2String((LocalDate)value , defaultDateformat);
-        }
-
-        else if(dataSerialType == null || dataSerialType != DataSerialType.JSON) {
-            return String.valueOf(value);
-        }
-        else{
-            return SimpleStringUtil.object2json(value);
-        }
-    }
-    /**
-     * 拼接get请求参数
-     * @param url
-     * @param params
-     * @return
-     */
-    public static String appendObjectParams(String url,Object params)  {
-        ClassUtil.ClassInfo classInfo = ClassUtil.getClassInfo(params.getClass());
-        List<ClassUtil.PropertieDescription> propertieDescriptions = classInfo.getPropertyDescriptors();
-        int idx = url.indexOf("?");
-        boolean hasParams = idx > 0;
-        boolean lastIdx = idx == url.length() - 1;
-        StringBuilder ret = new StringBuilder();
-        ret.append(url);
-        for(ClassUtil.PropertieDescription propertieDescription: propertieDescriptions) {
-            String name = propertieDescription.getName();
-            Object value_ = null;
-            try {
-                value_ = propertieDescription.getValue(params);
-            } catch (IllegalAccessException e) {
-                throw new HttpProxyRequestException(e);
-            } catch (InvocationTargetException e) {
-                throw new HttpProxyRequestException(e);
-            }
-            if(value_ == null)
-                continue;
-            String value = convertValue( value_,propertieDescription,null);
-            try {
-                value = java.net.URLEncoder.encode(value, StandardCharsets.UTF_8.name());
-            } catch (UnsupportedEncodingException e) {
-                throw new HttpProxyRequestException(e);
-            }
-            if(hasParams){
-                if(lastIdx){
-                    ret.append(name).append("=").append(value);
-                    lastIdx = false;
-                }
-                else{
-                    ret.append("&").append(name).append("=").append(value);
-                }
-            }
-            else{
-                ret.append("?").append(name).append("=").append(value);
-                hasParams = true;
-            }
-
-
-        }
-        return ret.toString();
-
-    }
-    /**
+   /**
      * get请求URL
      *
      * @param url
@@ -599,7 +411,7 @@ public class HttpRequestProxy {
      */
     public static <T> T httpGet(String poolname, String url, final String cookie,final  String userAgent,final  Object params,final  Map headers,final ResponseHandler<T> responseHandler) throws HttpProxyRequestException {
         //拼接get请求参数
-        url = appendParams(url,params);
+        url = HttpParamsHandler.appendParams(url,params);
         return _handleRequest( poolname,  url ,
                 responseHandler,new ExecuteRequest(){
                     @Override
@@ -608,8 +420,7 @@ public class HttpRequestProxy {
                         try {
                             httpGet = HttpRequestUtil.getHttpGet(config, url, cookie, userAgent, headers);
 
-                            Object responseBody = httpClient.execute(httpGet, responseHandler);
-                            return responseBody;
+                            return httpClient.execute(httpGet, responseHandler);
                         }
                         finally {
                             // 释放连接
@@ -685,7 +496,7 @@ public class HttpRequestProxy {
                             httpHead = HttpRequestUtil.getHttpHead(config, url, cookie, userAgent, headers);
 
                             if (params != null) {
-                                HttpParams httpParams = httpParams( params);
+                                HttpParams httpParams = HttpParamsHandler.httpParams( params);
 //                                Iterator<Entry> it = params.entrySet().iterator();
 //                                for (int i = 0; it.hasNext(); i++) {
 //                                    Entry entry = it.next();
@@ -695,8 +506,7 @@ public class HttpRequestProxy {
                                     httpHead.setParams(httpParams);
                             }
 
-                            Object responseBody = httpClient.execute(httpHead, responseHandler);
-                            return responseBody;
+                            return httpClient.execute(httpHead, responseHandler);
                         }
                         finally {
                             // 释放连接
@@ -910,27 +720,27 @@ public class HttpRequestProxy {
         return httpPostFileforString(poolname, url, (String) null, (String) null, params, files);
     }
 
-    public static String httpPostforString(String url, Object params) throws HttpProxyRequestException {
+    public static String httpPostforStringWithParams(String url, Object params) throws HttpProxyRequestException {
         return httpPostforString((String)null,url, params);
     }
 
-    public static <T> T httpPost(String url, Object params,ResponseHandler<T> responseHandler) throws HttpProxyRequestException {
+    public static <T> T httpPostWithParams(String url, Object params,ResponseHandler<T> responseHandler) throws HttpProxyRequestException {
         return httpPostforString(url, params, (Map) null, responseHandler);
     }
 
     public static <T> T httpPostForObject(String url, Object params, final Class<T> resultType) throws HttpProxyRequestException {
         return httpPostforString(url, params, (Map) null, new BaseURLResponseHandler<T>() {
             @Override
-            public T handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+            public T handleResponse(HttpResponse response) throws IOException {
                 return ResponseUtil.handleResponse(url,response,resultType);
             }
         });
     }
 
-    public static <T> List<T> httpPostForList(String url, Object params, final Class<T> resultType) throws HttpProxyRequestException {
+    public static <T> List<T> httpPostForListWithParams(String url, Object params, final Class<T> resultType) throws HttpProxyRequestException {
         return httpPostforString(url, params, (Map) null, new BaseURLResponseHandler<List<T>>() {
             @Override
-            public List<T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+            public List<T>  handleResponse(HttpResponse response) throws IOException {
                 return ResponseUtil.handleListResponse(url,response,resultType);
             }
         });
@@ -938,7 +748,7 @@ public class HttpRequestProxy {
     public static <T> Set<T> httpPostForSet(String url, Object params, final Class<T> resultType) throws HttpProxyRequestException {
         return httpPostforString(url, params, (Map) null, new BaseURLResponseHandler<Set<T>>() {
             @Override
-            public Set<T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+            public Set<T>  handleResponse(HttpResponse response) throws IOException {
                 return ResponseUtil.handleSetResponse(url,response,resultType);
             }
         });
@@ -947,7 +757,7 @@ public class HttpRequestProxy {
     public static <K,T> Map<K,T> httpPostForMap(String url, Object params, final Class<K> keyType, final Class<T> resultType) throws HttpProxyRequestException {
         return httpPostforString(url, params, (Map) null, new BaseURLResponseHandler<Map<K,T>>() {
             @Override
-            public Map<K,T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+            public Map<K,T>  handleResponse(HttpResponse response) throws IOException {
                 return ResponseUtil.handleMapResponse(url,response,keyType,resultType);
             }
         });
@@ -960,7 +770,7 @@ public class HttpRequestProxy {
 
 		return httpPost(  poolName,   url,  httpOption, new BaseURLResponseHandler<T>() {
 			@Override
-			public T handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+			public T handleResponse(HttpResponse response) throws IOException {
 				return ResponseUtil.handleResponse(url,response,resultType);
 			}
 		});
@@ -975,7 +785,7 @@ public class HttpRequestProxy {
 
 		return httpPost(  poolName,   url,  httpOption, new BaseURLResponseHandler<T>() {
 			@Override
-			public T handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+			public T handleResponse(HttpResponse response) throws IOException {
 				return ResponseUtil.handleResponse(url,response,resultType);
 			}
 		});
@@ -990,7 +800,7 @@ public class HttpRequestProxy {
 
 		return httpPost(  poolName,   url,  httpOption, new BaseURLResponseHandler<List<T>>() {
 			@Override
-			public List<T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+			public List<T>  handleResponse(HttpResponse response) throws IOException {
 				return ResponseUtil.handleListResponse(url,response,resultType);
 			}
 		});
@@ -1004,13 +814,13 @@ public class HttpRequestProxy {
 
 		return httpPost(  poolName,   url,  httpOption, new BaseURLResponseHandler<Set<T>>() {
 			@Override
-			public Set<T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+			public Set<T>  handleResponse(HttpResponse response) throws IOException {
 				return ResponseUtil.handleSetResponse(url,response,resultType);
 			}
 		});
 //		return httpPostforString(  poolName,url, params, (Map) null, new ResponseHandler<Set<T>>() {
 //			@Override
-//			public Set<T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+//			public Set<T>  handleResponse(HttpResponse response) throws IOException {
 //				return ResponseUtil.handleSetResponse(response,resultType);
 //			}
 //		});
@@ -1024,13 +834,13 @@ public class HttpRequestProxy {
 
 		return httpPost(  poolName,   url,  httpOption,new BaseURLResponseHandler<Map<K,T>>() {
 			@Override
-			public Map<K,T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+			public Map<K,T>  handleResponse(HttpResponse response) throws IOException {
 				return ResponseUtil.handleMapResponse(url,response,keyType,resultType);
 			}
 		});
 //    	return httpPostforString(poolName,url, params, (Map) null, new ResponseHandler<Map<K,T>>() {
 //			@Override
-//			public Map<K,T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+//			public Map<K,T>  handleResponse(HttpResponse response) throws IOException {
 //				return ResponseUtil.handleMapResponse(response,keyType,resultType);
 //			}
 //		});
@@ -1039,7 +849,7 @@ public class HttpRequestProxy {
     public static <T> List<T> httpPostForList(String poolName,String url, Object params, final Class<T> resultType) throws HttpProxyRequestException {
         return httpPostforString(  poolName,url, params, (Map) null, new BaseURLResponseHandler<List<T>>() {
             @Override
-            public List<T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+            public List<T>  handleResponse(HttpResponse response) throws IOException {
                 return ResponseUtil.handleListResponse(url,response,resultType);
             }
         });
@@ -1047,7 +857,7 @@ public class HttpRequestProxy {
     public static <T> List<T> httpPostForList(String poolName,String url, Object params, Map headers, final Class<T> resultType) throws HttpProxyRequestException {
         return httpPostforString(  poolName,url, params, headers, new BaseURLResponseHandler<List<T>>() {
             @Override
-            public List<T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+            public List<T>  handleResponse(HttpResponse response) throws IOException {
                 return ResponseUtil.handleListResponse(url,response,resultType);
             }
         });
@@ -1058,7 +868,7 @@ public class HttpRequestProxy {
     public static <T> List<T> httpPostForList(String poolName,String url , final Class<T> resultType) throws HttpProxyRequestException {
         return httpPostforString(  poolName,url, (Map) null, (Map) null, new BaseURLResponseHandler<List<T>>() {
             @Override
-            public List<T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+            public List<T>  handleResponse(HttpResponse response) throws IOException {
                 return ResponseUtil.handleListResponse(url,response,resultType);
             }
         });
@@ -1066,7 +876,7 @@ public class HttpRequestProxy {
     public static <T> List<T> httpPostForList(String url , final Class<T> resultType) throws HttpProxyRequestException {
         return httpPostforString(  (String)null,url, (Map) null, (Map) null, new BaseURLResponseHandler<List<T>>() {
             @Override
-            public List<T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+            public List<T>  handleResponse(HttpResponse response) throws IOException {
                 return ResponseUtil.handleListResponse(url,response,resultType);
             }
         });
@@ -1074,7 +884,7 @@ public class HttpRequestProxy {
     public static <T> Set<T> httpPostForSet(String poolName,String url, Object params, final Class<T> resultType) throws HttpProxyRequestException {
         return httpPostforString(  poolName,url, params, (Map) null, new BaseURLResponseHandler<Set<T>>() {
             @Override
-            public Set<T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+            public Set<T>  handleResponse(HttpResponse response) throws IOException {
                 return ResponseUtil.handleSetResponse(url,response,resultType);
             }
         });
@@ -1083,7 +893,7 @@ public class HttpRequestProxy {
     public static <K,T> Map<K,T> httpPostForMap(String poolName,String url, Object params, final Class<K> keyType, final Class<T> resultType) throws HttpProxyRequestException {
         return httpPostforString(poolName,url, params, (Map) null, new BaseURLResponseHandler<Map<K,T>>() {
             @Override
-            public Map<K,T>  handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+            public Map<K,T>  handleResponse(HttpResponse response) throws IOException {
                 return ResponseUtil.handleMapResponse(url,response,keyType,resultType);
             }
         });
@@ -1169,7 +979,7 @@ public class HttpRequestProxy {
 	}
 
     public static String httpPostforString(String url) throws HttpProxyRequestException {
-        return httpPostforString("default", url);
+        return httpPostforString("default", url,(Object)null);
     }
 
     public static <T> T  httpPost(String url,ResponseHandler<T> responseHandler) throws HttpProxyRequestException {
@@ -1201,7 +1011,7 @@ public class HttpRequestProxy {
 
     }
 
-    public static String httpPostforString(String url, String cookie, String userAgent,
+    public static String httpPostforStringWithFiles(String url, String cookie, String userAgent,
                                            Map<String, File> files) throws HttpProxyRequestException {
         return httpPostforString("default", url, cookie, userAgent,
                 files);
@@ -1213,7 +1023,7 @@ public class HttpRequestProxy {
                 files);
     }
 
-    public static String httpPostforString(String url, String cookie, String userAgent, Object params,
+    public static String httpPostforStringWithParams(String url, String cookie, String userAgent, Object params,
                                            Map<String, File> files) throws HttpProxyRequestException {
         return httpPostFileforString("default", url, cookie, userAgent, params,
                 files);
@@ -1228,363 +1038,14 @@ public class HttpRequestProxy {
 
 
 	public static class HttpOption{
-		private String cookie;
-		private String userAgent;
-		private Object params;//只能是map或者PO对象
-		private Map<String, File> files;
-		private Map headers;
-		private DataSerialType dataSerialType = DataSerialType.TEXT;
+        public String cookie;
+        public String userAgent;
+        public Object params;//只能是map或者PO对象
+        public Map<String, File> files;
+        public Map headers;
+        public DataSerialType dataSerialType = DataSerialType.TEXT;
 	}
 
-    private static boolean paramsHandle(MultipartEntityBuilder multipartEntityBuilder,HttpOption httpOption) throws HttpProxyRequestException {
-        Object params = httpOption.params;
-        if (params != null) {
-            if(params instanceof Map){
-                return mapParamsHandle( multipartEntityBuilder, httpOption);
-            }
-            else{
-                try {
-                    return objectParamsHandle( multipartEntityBuilder, httpOption);
-                } catch (InvocationTargetException e) {
-                    throw new HttpProxyRequestException(e);
-                } catch (IllegalAccessException e) {
-                    throw new HttpProxyRequestException(e);
-                }
-            }
-        }
-        else{
-            return false;
-        }
-    }
-
-
-    private static String getDateformat(ClassUtil.PropertieDescription propertieDescription){
-        RequestParamWraper requestParam = propertieDescription.getRequestParam();
-        String dateFormat = null;
-        if(requestParam != null && requestParam.dateformat() != null){
-            dateFormat = requestParam.dateformat();
-        }
-        else{
-            dateFormat = defaultDateformat;
-        }
-        return dateFormat;
-    }
-
-    private static boolean objectParamsHandle(MultipartEntityBuilder multipartEntityBuilder,HttpOption httpOption) throws InvocationTargetException, IllegalAccessException {
-        boolean hasdata = false;
-
-        if (httpOption.params != null) {
-            Object params = (Object)httpOption.params;
-            ClassUtil.ClassInfo classInfo = ClassUtil.getClassInfo(params.getClass());
-            List<ClassUtil.PropertieDescription> propertieDescriptions = classInfo.getPropertyDescriptors();
-            for(ClassUtil.PropertieDescription propertieDescription: propertieDescriptions) {
-                String name = propertieDescription.getName();
-                Object value_ = propertieDescription.getValue(params);
-
-                if(value_ == null)
-                    continue;
-                String value = convertValue( value_,propertieDescription,httpOption.dataSerialType);
-                multipartEntityBuilder.addTextBody(name, value, ClientConfiguration.TEXT_PLAIN_UTF_8);
-//                if( value instanceof String) {
-//                    multipartEntityBuilder.addTextBody(name, String.valueOf(value), ClientConfiguration.TEXT_PLAIN_UTF_8);
-//                }
-//                else if(value instanceof Date){
-//                    String dateFormat = getDateformat(propertieDescription);
-//                    value = DateFormateMeta.format((Date)value,dateFormat);
-//                    multipartEntityBuilder.addTextBody(name, String.valueOf(value), ClientConfiguration.TEXT_PLAIN_UTF_8);
-//                }
-//                else if(value instanceof LocalDateTime){
-//                    String dateFormat = getDateformat(propertieDescription);
-//                    value = TimeUtil.changeLocalDateTime2String((LocalDateTime)value , dateFormat);
-//                    multipartEntityBuilder.addTextBody(name, String.valueOf(value), ClientConfiguration.TEXT_PLAIN_UTF_8);
-//                }
-//                else if(value instanceof LocalDate){
-//                    String dateFormat = getDateformat(propertieDescription);
-//                    value = TimeUtil.changeLocalDate2String((LocalDate)value , dateFormat);
-//                    multipartEntityBuilder.addTextBody(name, String.valueOf(value), ClientConfiguration.TEXT_PLAIN_UTF_8);
-//                }
-//                else if(httpOption.dataSerialType != DataSerialType.JSON || value instanceof String) {
-//                    multipartEntityBuilder.addTextBody(name, String.valueOf(value), ClientConfiguration.TEXT_PLAIN_UTF_8);
-//                }
-//                else{
-//
-//                    multipartEntityBuilder.addTextBody(name, SimpleStringUtil.object2json(value), ClientConfiguration.TEXT_PLAIN_UTF_8);
-//                }
-                hasdata = true;
-            }
-
-        }
-        return hasdata;
-    }
-
-    private static List<NameValuePair> paramsPaires(HttpOption httpOption) throws HttpProxyRequestException {
-        Object params = httpOption.params;
-        List<NameValuePair> pairs = null;
-        if (params != null) {
-            if(params instanceof Map){
-                pairs =  mapParamsPairs(  httpOption);
-            }
-            else{
-                try {
-                    pairs =  objectParamsPairs(  httpOption);
-                } catch (InvocationTargetException e) {
-                    throw new HttpProxyRequestException(e);
-                } catch (IllegalAccessException e) {
-                    throw new HttpProxyRequestException(e);
-                }
-            }
-        }
-//        if(pairs == null){
-//            pairs = new ArrayList<>(0);
-//        }
-        return pairs;
-    }
-
-    private static List<NameValuePair> objectParamsPairs(HttpOption httpOption) throws InvocationTargetException, IllegalAccessException {
-        List<NameValuePair> paramPair = new ArrayList<NameValuePair>();
-
-        if (httpOption.params != null) {
-            Object params = (Object)httpOption.params;
-            ClassUtil.ClassInfo classInfo = ClassUtil.getClassInfo(params.getClass());
-            List<ClassUtil.PropertieDescription> propertieDescriptions = classInfo.getPropertyDescriptors();
-            NameValuePair paramPair_ = null;
-            for(ClassUtil.PropertieDescription propertieDescription: propertieDescriptions) {
-                String name = propertieDescription.getName();
-                Object value_ = propertieDescription.getValue(params);
-                if(value_ == null)
-                    continue;
-                String value = convertValue(value_,propertieDescription,httpOption.dataSerialType);
-                paramPair_ = new BasicNameValuePair(name, value);
-//                if( value instanceof String) {
-//                    paramPair_ = new BasicNameValuePair(name, String.valueOf(value));
-//                }
-//                else if(value instanceof Date){
-//                    String dateFormat = getDateformat(propertieDescription);
-//                    value = DateFormateMeta.format((Date)value,dateFormat);
-//                    paramPair_ = new BasicNameValuePair(name, String.valueOf(value));
-//                }
-//                else if(value instanceof LocalDateTime){
-//                    String dateFormat = getDateformat(propertieDescription);
-//                    value = TimeUtil.changeLocalDateTime2String((LocalDateTime)value , dateFormat);
-//                    paramPair_ = new BasicNameValuePair(name, String.valueOf(value));
-//                }
-//                else if(value instanceof LocalDate){
-//                    String dateFormat = getDateformat(propertieDescription);
-//                    value = TimeUtil.changeLocalDate2String((LocalDate)value , dateFormat);
-//                    paramPair_ = new BasicNameValuePair(name, String.valueOf(value));
-//                }
-//                else if(httpOption.dataSerialType != DataSerialType.JSON) {
-//                    paramPair_ = new BasicNameValuePair(name, String.valueOf(value));
-//                }
-//                else{
-//                    paramPair_ = new BasicNameValuePair(name, SimpleStringUtil.object2json(value));
-//                }
-                paramPair.add(paramPair_);
-            }
-
-        }
-        return paramPair;
-
-
-    }
-
-    private static List<NameValuePair> mapParamsPairs(HttpOption httpOption){
-        Map params = (Map)httpOption.params;
-        if(params.size() <= 0)
-            return null;
-        List<NameValuePair> paramPair = new ArrayList<NameValuePair>();
-
-        Iterator<Entry> it = params.entrySet().iterator();
-        NameValuePair paramPair_ = null;
-        for (int i = 0; it.hasNext(); i++) {
-            Entry entry = it.next();
-            Object value_ = entry.getValue();
-
-            if(value_ == null)
-                continue;
-            String value = convertValue(value_,httpOption.dataSerialType);
-            String name = String.valueOf(entry.getKey());
-            paramPair_ = new BasicNameValuePair(name, value);
-//            if(value instanceof String) {
-//                paramPair_ = new BasicNameValuePair(name, String.valueOf(value));
-//            }
-//            else if(value instanceof Date){
-//                value = DateFormateMeta.format((Date)value,defaultDateformat);
-//                paramPair_ = new BasicNameValuePair(name, String.valueOf(value));
-//            }
-//            else if(value instanceof LocalDateTime){
-//                value = TimeUtil.changeLocalDateTime2String((LocalDateTime)value , defaultDateformat);
-//                paramPair_ = new BasicNameValuePair(name, String.valueOf(value));
-//            }
-//            else if(value instanceof LocalDate){
-//                value = TimeUtil.changeLocalDate2String((LocalDate)value , defaultDateformat);
-//                paramPair_ = new BasicNameValuePair(name, String.valueOf(value));
-//            }
-//            else if(httpOption.dataSerialType != DataSerialType.JSON ) {
-//                paramPair_ = new BasicNameValuePair(name, String.valueOf(value));
-//            }
-//            else{
-//                paramPair_ = new BasicNameValuePair(name, SimpleStringUtil.object2json(value));
-//            }
-            paramPair.add(paramPair_);
-        }
-        return paramPair;
-    }
-
-
-    private static HttpParams objectHttpParams(Object params) {
-//        if (params != null && params.size() > 0) {
-//            httpParams = new BasicHttpParams();
-//            Iterator<Entry> it = params.entrySet().iterator();
-//            for (int i = 0; it.hasNext(); i++) {
-//                Entry entry = it.next();
-//                httpParams.setParameter(String.valueOf(entry.getKey()), entry.getValue());
-//            }
-//        }
-        HttpParams httpParams = null;
-        if (params != null) {
-            httpParams = new BasicHttpParams();
-            ClassUtil.ClassInfo classInfo = ClassUtil.getClassInfo(params.getClass());
-            List<ClassUtil.PropertieDescription> propertieDescriptions = classInfo.getPropertyDescriptors();
-            for(ClassUtil.PropertieDescription propertieDescription: propertieDescriptions) {
-                String name = propertieDescription.getName();
-                Object value_ = null;
-                try {
-                    value_ = propertieDescription.getValue(params);
-                } catch (IllegalAccessException e) {
-                    throw new HttpProxyRequestException(e);
-                } catch (InvocationTargetException e) {
-                    throw new HttpProxyRequestException(e);
-                }
-                if(value_ == null)
-                    continue;
-                String value = convertValue(value_,propertieDescription,null);
-                httpParams.setParameter(name, value);
-//                if( value instanceof String) {
-//                    paramPair_ = new BasicNameValuePair(name, String.valueOf(value));
-//                }
-//                else if(value instanceof Date){
-//                    String dateFormat = getDateformat(propertieDescription);
-//                    value = DateFormateMeta.format((Date)value,dateFormat);
-//                    paramPair_ = new BasicNameValuePair(name, String.valueOf(value));
-//                }
-//                else if(value instanceof LocalDateTime){
-//                    String dateFormat = getDateformat(propertieDescription);
-//                    value = TimeUtil.changeLocalDateTime2String((LocalDateTime)value , dateFormat);
-//                    paramPair_ = new BasicNameValuePair(name, String.valueOf(value));
-//                }
-//                else if(value instanceof LocalDate){
-//                    String dateFormat = getDateformat(propertieDescription);
-//                    value = TimeUtil.changeLocalDate2String((LocalDate)value , dateFormat);
-//                    paramPair_ = new BasicNameValuePair(name, String.valueOf(value));
-//                }
-//                else if(httpOption.dataSerialType != DataSerialType.JSON) {
-//                    paramPair_ = new BasicNameValuePair(name, String.valueOf(value));
-//                }
-//                else{
-//                    paramPair_ = new BasicNameValuePair(name, SimpleStringUtil.object2json(value));
-//                }
-            }
-
-        }
-        return httpParams;
-
-
-    }
-
-    private static HttpParams httpParams(Object params){
-        if(params == null){
-            return null;
-        }
-        if(params instanceof Map){
-            return mapHttpParams((Map)params);
-        }
-        else{
-            return objectHttpParams(params);
-        }
-
-    }
-
-    private static HttpParams mapHttpParams(Map params){
-        if(params.size() <= 0)
-            return null;
-        HttpParams httpParams = new BasicHttpParams();
-
-        Iterator<Entry> it = params.entrySet().iterator();
-        for (int i = 0; it.hasNext(); i++) {
-            Entry entry = it.next();
-            Object value_ = entry.getValue();
-
-            if(value_ == null)
-                continue;
-            String value = convertValue(value_,null);
-            String name = String.valueOf(entry.getKey());
-            httpParams.setParameter(name, value);
-//            if(value instanceof String) {
-//                paramPair_ = new BasicNameValuePair(name, String.valueOf(value));
-//            }
-//            else if(value instanceof Date){
-//                value = DateFormateMeta.format((Date)value,defaultDateformat);
-//                paramPair_ = new BasicNameValuePair(name, String.valueOf(value));
-//            }
-//            else if(value instanceof LocalDateTime){
-//                value = TimeUtil.changeLocalDateTime2String((LocalDateTime)value , defaultDateformat);
-//                paramPair_ = new BasicNameValuePair(name, String.valueOf(value));
-//            }
-//            else if(value instanceof LocalDate){
-//                value = TimeUtil.changeLocalDate2String((LocalDate)value , defaultDateformat);
-//                paramPair_ = new BasicNameValuePair(name, String.valueOf(value));
-//            }
-//            else if(httpOption.dataSerialType != DataSerialType.JSON ) {
-//                paramPair_ = new BasicNameValuePair(name, String.valueOf(value));
-//            }
-//            else{
-//                paramPair_ = new BasicNameValuePair(name, SimpleStringUtil.object2json(value));
-//            }
-        }
-        return httpParams;
-    }
-
-    private static boolean mapParamsHandle(MultipartEntityBuilder multipartEntityBuilder,HttpOption httpOption){
-        boolean hasdata = false;
-        Map params = (Map)httpOption.params;
-        if (params != null) {
-            Iterator<Entry> it = params.entrySet().iterator();
-            while (it.hasNext()) {
-                Entry entry = it.next();
-                Object value_ = entry.getValue();
-                if(value_ == null)
-                    continue;
-                String value = convertValue(value_,httpOption.dataSerialType);
-                String name = String.valueOf(entry.getKey());
-                multipartEntityBuilder.addTextBody(name, value, ClientConfiguration.TEXT_PLAIN_UTF_8);
-//                if(value instanceof String) {
-//                    multipartEntityBuilder.addTextBody(name, String.valueOf(value), ClientConfiguration.TEXT_PLAIN_UTF_8);
-//                }
-//                else if(value instanceof Date){
-//                    value = DateFormateMeta.format((Date)value,defaultDateformat);
-//                    multipartEntityBuilder.addTextBody(name, String.valueOf(value), ClientConfiguration.TEXT_PLAIN_UTF_8);
-//                }
-//                else if(value instanceof LocalDateTime){
-//                    value = TimeUtil.changeLocalDateTime2String((LocalDateTime)value , defaultDateformat);
-//                    multipartEntityBuilder.addTextBody(name, String.valueOf(value), ClientConfiguration.TEXT_PLAIN_UTF_8);
-//                }
-//                else if(value instanceof LocalDate){
-//                    value = TimeUtil.changeLocalDate2String((LocalDate)value , defaultDateformat);
-//                    multipartEntityBuilder.addTextBody(name, String.valueOf(value), ClientConfiguration.TEXT_PLAIN_UTF_8);
-//                }
-//                else if(httpOption.dataSerialType != DataSerialType.JSON) {
-//                    multipartEntityBuilder.addTextBody(name, String.valueOf(value), ClientConfiguration.TEXT_PLAIN_UTF_8);
-//                }
-//                else{
-//
-//                    multipartEntityBuilder.addTextBody(name, SimpleStringUtil.object2json(value), ClientConfiguration.TEXT_PLAIN_UTF_8);
-//                }
-                hasdata = true;
-            }
-        }
-        return hasdata;
-    }
     /**
 	 * 公用post方法
 	 *
@@ -1605,7 +1066,7 @@ public class HttpRequestProxy {
 //            int length = (httpOption.params == null ? 0 : httpOption.params.size()) + (httpOption.files == null ? 0 : httpOption.files.size());
 
 //            int i = 0;
-            boolean hasdata = paramsHandle( multipartEntityBuilder,httpOption);
+            boolean hasdata = HttpParamsHandler.paramsHandle( multipartEntityBuilder,httpOption);
 
 //            if (httpOption.params != null) {
 //                Iterator<Entry> it = httpOption.params.entrySet().iterator();
@@ -1634,8 +1095,6 @@ public class HttpRequestProxy {
                         FileBody file = new FileBody(f);
                         multipartEntityBuilder.addPart(entry.getKey(), file);
                         hasdata = true;
-                    } else {
-
                     }
 
                     // System.out.println("post_key_file==> "+file);
@@ -1644,7 +1103,7 @@ public class HttpRequestProxy {
             if (hasdata)
                 httpEntity = multipartEntityBuilder.build();
         } else if (httpOption.params != null ) {
-            paramPair = paramsPaires(  httpOption) ;
+            paramPair = HttpParamsHandler.paramsPaires(  httpOption) ;
 //            paramPair = new ArrayList<NameValuePair>();
 //            Iterator<Entry> it = httpOption.params.entrySet().iterator();
 //            NameValuePair paramPair_ = null;
@@ -1681,8 +1140,7 @@ public class HttpRequestProxy {
 
                             }
 
-                            Object responseBody = httpClient.execute(httpPost, responseHandler);
-                            return responseBody;
+                            return httpClient.execute(httpPost, responseHandler);
                         }
                         finally {
                             // 释放连接
@@ -2029,7 +1487,7 @@ public class HttpRequestProxy {
         return httpPut(  "default",   url,   httpOption,  new BaseURLResponseHandler<T>(){
 
             @Override
-            public T handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+            public T handleResponse(HttpResponse response) throws IOException {
                 return ResponseUtil.handleResponse(url,response,resultType);
             }
         });
@@ -2037,7 +1495,7 @@ public class HttpRequestProxy {
 //                ( Map<String, File> )null,   headers,new ResponseHandler<T>(){
 //
 //                    @Override
-//                    public T handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+//                    public T handleResponse(HttpResponse response) throws IOException {
 //                        return ResponseUtil.handleResponse(response,resultType);
 //                    }
 //                });
@@ -2059,7 +1517,7 @@ public class HttpRequestProxy {
         return httpPut( "default",   url,   httpOption, new BaseURLResponseHandler<List<T>>(){
 
             @Override
-            public List<T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+            public List<T> handleResponse(HttpResponse response) throws IOException {
                 return ResponseUtil.handleListResponse(url,response,resultType);
             }
         });
@@ -2067,7 +1525,7 @@ public class HttpRequestProxy {
 //                ( Map<String, File> )null,   headers,new ResponseHandler<List<T>>(){
 //
 //                    @Override
-//                    public List<T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+//                    public List<T> handleResponse(HttpResponse response) throws IOException {
 //                        return ResponseUtil.handleListResponse(response,resultType);
 //                    }
 //                });
@@ -2089,7 +1547,7 @@ public class HttpRequestProxy {
         return httpPut( "default",   url,   httpOption, new BaseURLResponseHandler<Set<T>>(){
 
             @Override
-            public Set<T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+            public Set<T> handleResponse(HttpResponse response) throws IOException {
                 return ResponseUtil.handleSetResponse(url,response,resultType);
             }
         });
@@ -2097,7 +1555,7 @@ public class HttpRequestProxy {
 //                ( Map<String, File> )null,   headers,new ResponseHandler<Set<T>>(){
 //
 //                    @Override
-//                    public Set<T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+//                    public Set<T> handleResponse(HttpResponse response) throws IOException {
 //                        return ResponseUtil.handleSetResponse(response,resultType);
 //                    }
 //                });
@@ -2119,7 +1577,7 @@ public class HttpRequestProxy {
         return httpPut(  "default",   url,   httpOption,  new BaseURLResponseHandler<Map<K,T>>(){
 
             @Override
-            public Map<K,T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+            public Map<K,T> handleResponse(HttpResponse response) throws IOException {
                 return ResponseUtil.handleMapResponse(url,response,keyType,resultType);
             }
         });
@@ -2127,7 +1585,7 @@ public class HttpRequestProxy {
 //                ( Map<String, File> )null,   headers,new ResponseHandler<Map<K,T>>(){
 //
 //                    @Override
-//                    public Map<K,T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+//                    public Map<K,T> handleResponse(HttpResponse response) throws IOException {
 //                        return ResponseUtil.handleMapResponse(response,keyType,resultType);
 //                    }
 //                });
@@ -2149,7 +1607,7 @@ public class HttpRequestProxy {
         return httpPut( poolName,   url,   httpOption, new BaseURLResponseHandler<T>(){
 
             @Override
-            public T handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+            public T handleResponse(HttpResponse response) throws IOException {
                 return ResponseUtil.handleResponse(url,response,resultType);
             }
         });
@@ -2157,7 +1615,7 @@ public class HttpRequestProxy {
 //                ( Map<String, File> )null,   headers,new ResponseHandler<T>(){
 //
 //                    @Override
-//                    public T handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+//                    public T handleResponse(HttpResponse response) throws IOException {
 //                        return ResponseUtil.handleResponse(response,resultType);
 //                    }
 //                });
@@ -2179,7 +1637,7 @@ public class HttpRequestProxy {
         return httpPut( poolName,   url,   httpOption, new BaseURLResponseHandler<List<T>>(){
 
             @Override
-            public List<T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+            public List<T> handleResponse(HttpResponse response) throws IOException {
                 return ResponseUtil.handleListResponse(url,response,resultType);
             }
         });
@@ -2187,7 +1645,7 @@ public class HttpRequestProxy {
 //                ( Map<String, File> )null,   headers,new ResponseHandler<List<T>>(){
 //
 //                    @Override
-//                    public List<T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+//                    public List<T> handleResponse(HttpResponse response) throws IOException {
 //                        return ResponseUtil.handleListResponse(response,resultType);
 //                    }
 //                });
@@ -2217,7 +1675,7 @@ public class HttpRequestProxy {
         return httpPut( poolName,   url,   httpOption, new BaseURLResponseHandler<Set<T>>(){
 
             @Override
-            public Set<T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+            public Set<T> handleResponse(HttpResponse response) throws IOException {
                 return ResponseUtil.handleSetResponse(url,response,resultType);
             }
         });
@@ -2225,7 +1683,7 @@ public class HttpRequestProxy {
 //                ( Map<String, File> )null,   headers,new ResponseHandler<Set<T>>(){
 //
 //                    @Override
-//                    public Set<T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+//                    public Set<T> handleResponse(HttpResponse response) throws IOException {
 //                        return ResponseUtil.handleSetResponse(response,resultType);
 //                    }
 //                });
@@ -2247,7 +1705,7 @@ public class HttpRequestProxy {
         return httpPut( poolName,   url,   httpOption, new BaseURLResponseHandler<Map<K,T>>(){
 
             @Override
-            public Map<K,T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+            public Map<K,T> handleResponse(HttpResponse response) throws IOException {
                 return ResponseUtil.handleMapResponse(url,response,keyType,resultType);
             }
         });
@@ -2255,7 +1713,7 @@ public class HttpRequestProxy {
 //                ( Map<String, File> )null,   headers,new ResponseHandler<Map<K,T>>(){
 //
 //                    @Override
-//                    public Map<K,T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+//                    public Map<K,T> handleResponse(HttpResponse response) throws IOException {
 //                        return ResponseUtil.handleMapResponse(response,keyType,resultType);
 //                    }
 //                });
@@ -2367,7 +1825,7 @@ public class HttpRequestProxy {
         return httpPut(url, (String) null, (String) null, (Map) null,
                 (Map<String, File>) null, (Map) null, new BaseURLResponseHandler<T>() {
                     @Override
-                    public T handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                    public T handleResponse(HttpResponse response) throws IOException {
                         return ResponseUtil.handleResponse(url,response,resultType);
                     }
                 }) ;
@@ -2385,7 +1843,7 @@ public class HttpRequestProxy {
         return httpPut(url, (String) null, (String) null, (Map) null,
                 (Map<String, File>) null, (Map) null, new BaseURLResponseHandler<List<T>>() {
                     @Override
-                    public List<T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                    public List<T> handleResponse(HttpResponse response) throws IOException {
                         return ResponseUtil.handleListResponse(url,response,resultType);
                     }
                 }) ;
@@ -2403,7 +1861,7 @@ public class HttpRequestProxy {
         return httpPut(url, (String) null, (String) null, (Map) null,
                 (Map<String, File>) null, (Map) null, new BaseURLResponseHandler<Set<T>>() {
                     @Override
-                    public Set<T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                    public Set<T> handleResponse(HttpResponse response) throws IOException {
                         return ResponseUtil.handleSetResponse(url,response,resultType);
                     }
                 }) ;
@@ -2420,7 +1878,7 @@ public class HttpRequestProxy {
         return httpPut(url, (String) null, (String) null, (Map) null,
                 (Map<String, File>) null, (Map) null, new BaseURLResponseHandler<Map<K,T>>() {
                     @Override
-                    public Map<K,T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                    public Map<K,T> handleResponse(HttpResponse response) throws IOException {
                         return ResponseUtil.handleMapResponse(url,response,keyType,resultType);
                     }
                 }) ;
@@ -2438,7 +1896,7 @@ public class HttpRequestProxy {
         HttpOption httpOption = new HttpOption();
         return httpPut(  poolName,url, httpOption, new BaseURLResponseHandler<T>() {
                     @Override
-                    public T handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                    public T handleResponse(HttpResponse response) throws IOException {
                         return ResponseUtil.handleResponse(url,response,resultType);
                     }
                 }) ;
@@ -2456,7 +1914,7 @@ public class HttpRequestProxy {
         HttpOption httpOption = new HttpOption();
         return httpPut(  poolName,url, httpOption, new BaseURLResponseHandler<List<T>>() {
                     @Override
-                    public List<T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                    public List<T> handleResponse(HttpResponse response) throws IOException {
                         return ResponseUtil.handleListResponse(url,response,resultType);
                     }
                 }) ;
@@ -2474,7 +1932,7 @@ public class HttpRequestProxy {
         HttpOption httpOption = new HttpOption();
         return httpPut(  poolName,url,httpOption, new BaseURLResponseHandler<Set<T>>() {
                     @Override
-                    public Set<T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                    public Set<T> handleResponse(HttpResponse response) throws IOException {
                         return ResponseUtil.handleSetResponse(url,response,resultType);
                     }
                 }) ;
@@ -2491,7 +1949,7 @@ public class HttpRequestProxy {
         HttpOption httpOption = new HttpOption();
         return httpPut(  poolName,url, httpOption, new BaseURLResponseHandler<Map<K,T>>() {
                     @Override
-                    public Map<K,T> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                    public Map<K,T> handleResponse(HttpResponse response) throws IOException {
                         return ResponseUtil.handleMapResponse(url,response,keyType,resultType);
                     }
                 }) ;
@@ -2546,7 +2004,7 @@ public class HttpRequestProxy {
 //            int length = (httpOption.params == null ? 0 : httpOption.params.size()) + (httpOption.files == null ? 0 : httpOption.files.size());
 //
 //            int i = 0;
-            boolean hasdata = paramsHandle(multipartEntityBuilder,httpOption);
+            boolean hasdata = HttpParamsHandler.paramsHandle(multipartEntityBuilder,httpOption);
 
 //            if (httpOption.params != null) {
 //                Iterator<Entry> it = httpOption.params.entrySet().iterator();
@@ -2574,8 +2032,6 @@ public class HttpRequestProxy {
                         FileBody file = new FileBody(f);
                         multipartEntityBuilder.addPart(entry.getKey(), file);
                         hasdata = true;
-                    } else {
-
                     }
 
                     // System.out.println("post_key_file==> "+file);
@@ -2584,7 +2040,7 @@ public class HttpRequestProxy {
             if (hasdata)
                 httpEntity = multipartEntityBuilder.build();
         } else if (httpOption.params != null ) {
-            paramPair = paramsPaires(  httpOption) ;
+            paramPair = HttpParamsHandler.paramsPaires(  httpOption) ;
 //            paramPair = new ArrayList<NameValuePair>();
 //            Iterator<Entry> it = httpOption.params.entrySet().iterator();
 //            NameValuePair paramPair_ = null;
@@ -2622,8 +2078,7 @@ public class HttpRequestProxy {
 
                             }
 
-                            Object responseBody = httpClient.execute(httpPut, responseHandler);
-                            return responseBody;
+                            return httpClient.execute(httpPut, responseHandler);
                         }
                         finally {
                             // 释放连接
@@ -2996,7 +2451,7 @@ public class HttpRequestProxy {
 
      * @throws HttpProxyRequestException
      */
-    public static String httpDelete( String url,Object params,Map headers) throws HttpProxyRequestException{
+    public static String httpDeleteWithParams( String url,Object params,Map headers) throws HttpProxyRequestException{
         return httpDelete(  "default",   url, (String) null, (String) null, params,
                 headers);
 
@@ -3089,7 +2544,7 @@ public class HttpRequestProxy {
                 ContentType.APPLICATION_JSON);
         HttpParams httpParams = null;
         if (params != null) {
-            httpParams = httpParams( params);
+            httpParams = HttpParamsHandler.httpParams( params);
 //            Iterator<Entry> it = params.entrySet().iterator();
 //            for (int i = 0; it.hasNext(); i++) {
 //                Entry entry = it.next();
@@ -3376,34 +2831,34 @@ public class HttpRequestProxy {
                 "text/plain", Consts.UTF_8));
     }
 
-    public static String sendJsonBody(String poolname,String requestBody, String url) throws HttpProxyRequestException {
+//    public static String sendJsonBody(String poolname,String requestBody, String url) throws HttpProxyRequestException {
+//
+//        return  sendBody(   poolname, requestBody,   url,   null,ContentType.APPLICATION_JSON);
+//    }
 
-        return  sendBody(   poolname, requestBody,   url,   null,ContentType.APPLICATION_JSON);
-    }
+//    public static <T> T sendJsonBody(String poolname,String requestBody, String url,Class<T> resultType) throws HttpProxyRequestException {
+//
+//        return  sendBody(   poolname, requestBody,   url,   null,ContentType.APPLICATION_JSON,resultType);
+//    }
+//    public static <T> List<T> sendJsonBodyForList(String poolname,String requestBody, String url,Class<T> resultType) throws HttpProxyRequestException {
+//
+//        return  sendBodyForList(   poolname, requestBody,   url,   null,ContentType.APPLICATION_JSON,resultType);
+//    }
 
-    public static <T> T sendJsonBody(String poolname,String requestBody, String url,Class<T> resultType) throws HttpProxyRequestException {
+//    public static <T> List<T> sendJsonBodyForList(String poolname,String requestBody, String url, Map headers,Class<T> resultType) throws HttpProxyRequestException {
+//
+//        return  sendBodyForList(   poolname, requestBody,   url,   headers,ContentType.APPLICATION_JSON,resultType);
+//    }
 
-        return  sendBody(   poolname, requestBody,   url,   null,ContentType.APPLICATION_JSON,resultType);
-    }
-    public static <T> List<T> sendJsonBodyForList(String poolname,String requestBody, String url,Class<T> resultType) throws HttpProxyRequestException {
+//    public static <T> Set<T> sendJsonBodyForSet(String poolname,String requestBody, String url,Class<T> resultType) throws HttpProxyRequestException {
+//
+//        return  sendBodyForSet(   poolname, requestBody,   url,   null,ContentType.APPLICATION_JSON,resultType);
+//    }
 
-        return  sendBodyForList(   poolname, requestBody,   url,   null,ContentType.APPLICATION_JSON,resultType);
-    }
-
-    public static <T> List<T> sendJsonBodyForList(String poolname,String requestBody, String url, Map headers,Class<T> resultType) throws HttpProxyRequestException {
-
-        return  sendBodyForList(   poolname, requestBody,   url,   headers,ContentType.APPLICATION_JSON,resultType);
-    }
-
-    public static <T> Set<T> sendJsonBodyForSet(String poolname,String requestBody, String url,Class<T> resultType) throws HttpProxyRequestException {
-
-        return  sendBodyForSet(   poolname, requestBody,   url,   null,ContentType.APPLICATION_JSON,resultType);
-    }
-
-    public static <K,T> Map<K,T> sendJsonBodyForMap(String poolname,String requestBody, String url,Class<K> keyType,Class<T> resultType) throws HttpProxyRequestException {
-
-        return  sendBodyForMap(   poolname, requestBody,   url,   null,ContentType.APPLICATION_JSON, keyType,resultType);
-    }
+//    public static <K,T> Map<K,T> sendJsonBodyForMap(String poolname,String requestBody, String url,Class<K> keyType,Class<T> resultType) throws HttpProxyRequestException {
+//
+//        return  sendBodyForMap(   poolname, requestBody,   url,   null,ContentType.APPLICATION_JSON, keyType,resultType);
+//    }
     public static String sendJsonBody(String poolname,Object requestBody, String url) throws HttpProxyRequestException {
 
         return  sendBody(   poolname, object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON);
@@ -3417,7 +2872,7 @@ public class HttpRequestProxy {
 
         return  sendBody(   poolname, object2json(requestBody),   url,   headers,ContentType.APPLICATION_JSON,  resultType);
     }
-    public static <T> List<T> sendJsonBodyForList(String poolname,Object requestBody, String url,Map<String,String> headers,Class<T> resultType) throws HttpProxyRequestException {
+    public static <T> List<T> sendJsonBodyForList(String poolname,Object requestBody, String url,Map headers,Class<T> resultType) throws HttpProxyRequestException {
 
         return  sendBodyForList(   poolname, object2json(requestBody),   url,   headers,ContentType.APPLICATION_JSON,  resultType);
     }
@@ -3461,23 +2916,23 @@ public class HttpRequestProxy {
 
         return  sendBody(  poolname, object2json(requestBody),   url,   headers,ContentType.APPLICATION_JSON);
     }
-    public static String sendJsonBody(String poolname, String requestBody, String url, Map headers) throws HttpProxyRequestException {
-
-        return  sendBody(  poolname, requestBody,   url,   headers,ContentType.APPLICATION_JSON);
-    }
+//    public static String sendJsonBody(String poolname, String requestBody, String url, Map headers) throws HttpProxyRequestException {
+//
+//        return  sendBody(  poolname, requestBody,   url,   headers,ContentType.APPLICATION_JSON);
+//    }
     public static String sendStringBody(String requestBody, String url, Map headers) throws HttpProxyRequestException {
         return  sendBody("default",  requestBody,   url,   headers,ContentType.create(
                 "text/plain", Consts.UTF_8));
     }
 
-    public static String sendJsonBody(String requestBody, String url) throws HttpProxyRequestException {
-
-        return  sendBody( "default", requestBody,   url,   null,ContentType.APPLICATION_JSON);
-    }
-    public static <T> T sendJsonBody(String requestBody, String url,Class<T> resultType) throws HttpProxyRequestException {
-
-        return  sendBody( "default", requestBody,   url,   null,ContentType.APPLICATION_JSON,  resultType);
-    }
+//    public static String sendJsonBody(String requestBody, String url) throws HttpProxyRequestException {
+//
+//        return  sendBody( "default", requestBody,   url,   null,ContentType.APPLICATION_JSON);
+//    }
+//    public static <T> T sendJsonBody(String requestBody, String url,Class<T> resultType) throws HttpProxyRequestException {
+//
+//        return  sendBody( "default", requestBody,   url,   null,ContentType.APPLICATION_JSON,  resultType);
+//    }
     public static String sendJsonBody( String url) throws HttpProxyRequestException {
 
         return  sendBody( "default", (String)null,   url,   null,ContentType.APPLICATION_JSON);
@@ -3554,12 +3009,9 @@ public class HttpRequestProxy {
                         HttpPost httpPost = null;
                         try {
                             httpPost = HttpRequestUtil.getHttpPost(config, url, "", "", headers);
-                            if (httpEntity != null) {
-                                httpPost.setEntity(httpEntity);
-                            }
+                            httpPost.setEntity(httpEntity);
 
-                            Object responseBody = httpClient.execute(httpPost, responseHandler);
-                            return responseBody;
+                            return httpClient.execute(httpPost, responseHandler);
                         }
                         finally {
                             // 释放连接
@@ -3836,7 +3288,7 @@ public class HttpRequestProxy {
                     httpClient = null;
 //                    responseBody = httpClient.execute(httpPost, responseHandler);
                     httpAddress.recover();
-                    e = getException(  responseHandler,httpServiceHosts );
+                    e = HttpParamsHandler.getException(  responseHandler,httpServiceHosts );
                     break;
                 } catch (HttpHostConnectException ex) {
                     httpAddress.setStatus(1);
@@ -4074,8 +3526,7 @@ public class HttpRequestProxy {
                                 httpPost.setEntity(httpEntity);
                             }
 
-                            Object responseBody = httpClient.execute(httpPost, responseHandler);
-                            return responseBody;
+                            return httpClient.execute(httpPost, responseHandler);
                         }
                         finally {
                             // 释放连接
@@ -4259,7 +3710,7 @@ public class HttpRequestProxy {
 
             @Override
             public String handleResponse(final HttpResponse response)
-                    throws ClientProtocolException, IOException {
+                    throws IOException {
                 return ResponseUtil.handleStringResponse(url, response);
             }
 
@@ -4274,7 +3725,7 @@ public class HttpRequestProxy {
 
             @Override
             public T handleResponse(final HttpResponse response)
-                    throws ClientProtocolException, IOException {
+                    throws IOException {
                 return ResponseUtil.handleResponse( url, response, resultType);
             }
 
@@ -4287,7 +3738,7 @@ public class HttpRequestProxy {
 
             @Override
             public D handleResponse(final HttpResponse response)
-                    throws ClientProtocolException, IOException {
+                    throws IOException {
                 return ResponseUtil.handleResponse( url, response, containType,resultType);
             }
 
@@ -4295,28 +3746,38 @@ public class HttpRequestProxy {
 
     }
     public static <D,T> D httpPostForTypeObject(String url, Object params, final Class<D> containType, final Class<T> resultType) throws HttpProxyRequestException {
-        return httpPostForTypeObject("default", url, params,  containType, resultType);
+        return httpPostForTypeObject("default", url, params, (Map)null, containType, resultType);
 //        return httpPostforString(  poolName,url, params, (Map) null);
     }
     public static <D,T> D httpPostForTypeObject(String poolName,String url, Object params, final Class<D> containType, final Class<T> resultType) throws HttpProxyRequestException {
+        return httpPostForTypeObject(  poolName,  url,   params, (Map)null,  containType,  resultType);
+    }
+    public static <D,T> D httpPostForTypeObjectWithHeader(String url, Object params,Map header, final Class<D> containType, final Class<T> resultType) throws HttpProxyRequestException {
+        return httpPostForTypeObject("default", url, params, header, containType, resultType);
+//        return httpPostforString(  poolName,url, params, (Map) null);
+    }
+    public static <D,T> D httpPostForTypeObject(String poolName,String url, Object params, Map headers,final Class<D> containType, final Class<T> resultType) throws HttpProxyRequestException {
         HttpOption httpOption = new HttpOption();
 
         httpOption.params = params;
-
+        httpOption.headers = headers;
         return httpPost(  poolName,   url,  httpOption, new BaseURLResponseHandler<D>() {
             @Override
-            public D handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+            public D handleResponse(HttpResponse response) throws IOException {
                 return ResponseUtil.handleResponse(url,response,containType,resultType);
             }
         });
 //        return httpPostforString(  poolName,url, params, (Map) null);
     }
+
+
+
     public static <T> List<T> sendBodyForList(String poolname,String requestBody, String url, Map headers,ContentType contentType,final Class<T> resultType) throws HttpProxyRequestException {
         return sendBody(  poolname,  requestBody,   url, headers,  contentType, new BaseURLResponseHandler<List<T>>() {
 
             @Override
             public List<T> handleResponse(final HttpResponse response)
-                    throws ClientProtocolException, IOException {
+                    throws IOException {
                 return ResponseUtil.handleListResponse( url, response, resultType);
             }
 
@@ -4329,7 +3790,7 @@ public class HttpRequestProxy {
 
             @Override
             public Set<T> handleResponse(final HttpResponse response)
-                    throws ClientProtocolException, IOException {
+                    throws IOException {
                 return ResponseUtil.handleSetResponse( url, response, resultType);
             }
 
@@ -4342,7 +3803,7 @@ public class HttpRequestProxy {
 
             @Override
             public Map<K,T>  handleResponse(final HttpResponse response)
-                    throws ClientProtocolException, IOException {
+                    throws IOException {
                 return ResponseUtil.handleMapResponse( url, response, keyType,resultType);
             }
 
@@ -4374,12 +3835,9 @@ public class HttpRequestProxy {
                         HttpPut httpPost = null;
                         try {
                             httpPost = HttpRequestUtil.getHttpPut(config, url, "", "", headers);
-                            if (httpEntity != null) {
-                                httpPost.setEntity(httpEntity);
-                            }
+                            httpPost.setEntity(httpEntity);
 
-                            Object responseBody = httpClient.execute(httpPost, responseHandler);
-                            return responseBody;
+                            return httpClient.execute(httpPost, responseHandler);
                         }
                         finally {
                             // 释放连接
@@ -4551,7 +4009,7 @@ public class HttpRequestProxy {
 
             @Override
             public String handleResponse(final HttpResponse response)
-                    throws ClientProtocolException, IOException {
+                    throws IOException {
                 int status = response.getStatusLine().getStatusCode();
 
                 if (status >= 200 && status < 300) {

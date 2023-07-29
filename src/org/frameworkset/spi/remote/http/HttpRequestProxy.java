@@ -2884,6 +2884,22 @@ public class HttpRequestProxy {
 
 		return  sendBodyForList(   (String) null, object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON,  resultType);
 	}
+
+
+    public static <D,T> D sendJsonBodyTypeObject(String poolname,Object requestBody, String url,Map headers,Class<D> containerType,Class<T> resultType) throws HttpProxyRequestException {
+
+        return  sendBodyForTypeObject(   poolname, object2json(requestBody),   url,   headers,ContentType.APPLICATION_JSON, containerType, resultType);
+    }
+    public static <D,T> D sendJsonBodyTypeObject(String poolname,Object requestBody, String url,Class<D> containerType,Class<T> resultType) throws HttpProxyRequestException {
+
+        return  sendBodyForTypeObject(   poolname, object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON,containerType,  resultType);
+    }
+    public static <D,T> D sendJsonBodyTypeObject(Object requestBody, String url,Class<D> containerType,Class<T> resultType) throws HttpProxyRequestException {
+
+        return  sendBodyForTypeObject(   (String) null, object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON,containerType,  resultType);
+    }
+
+
     public static <T> Set<T> sendJsonBodyForSet(String poolname,Object requestBody, String url,Class<T> resultType) throws HttpProxyRequestException {
 
         return  sendBodyForSet(   poolname, object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON,  resultType);
@@ -3779,6 +3795,21 @@ public class HttpRequestProxy {
             public List<T> handleResponse(final HttpResponse response)
                     throws IOException {
                 return ResponseUtil.handleListResponse( url, response, resultType);
+            }
+
+        });
+
+    }
+
+
+    public static <D,T> D sendBodyForTypeObject(String poolname,String requestBody, String url, Map headers,ContentType contentType,final Class<D> containerType,final Class<T> resultType) throws HttpProxyRequestException {
+        return sendBody(  poolname,  requestBody,   url, headers,  contentType, new BaseURLResponseHandler<D>() {
+
+            @Override
+            public D handleResponse(final HttpResponse response)
+                    throws IOException {
+//                return ResponseUtil.handleListResponse( url, response, resultType);
+                return ResponseUtil.handleResponse(url,response,containerType,resultType);
             }
 
         });

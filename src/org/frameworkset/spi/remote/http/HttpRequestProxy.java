@@ -2886,17 +2886,17 @@ public class HttpRequestProxy {
 	}
 
 
-    public static <D,T> D sendJsonBodyTypeObject(String poolname,Object requestBody, String url,Map headers,Class<D> containerType,Class<T> resultType) throws HttpProxyRequestException {
+    public static <D,T> D sendJsonBodyTypeObject(String poolname, String url,Object requestBody,Map headers,Class<D> containerType,Class<T> resultType) throws HttpProxyRequestException {
 
-        return  sendBodyForTypeObject(   poolname, object2json(requestBody),   url,   headers,ContentType.APPLICATION_JSON, containerType, resultType);
+        return  sendBodyForTypeObject(   poolname,    url, object2json(requestBody),  headers,ContentType.APPLICATION_JSON, containerType, resultType);
     }
-    public static <D,T> D sendJsonBodyTypeObject(String poolname,Object requestBody, String url,Class<D> containerType,Class<T> resultType) throws HttpProxyRequestException {
+    public static <D,T> D sendJsonBodyTypeObject(String poolname, String url,Object requestBody,Class<D> containerType,Class<T> resultType) throws HttpProxyRequestException {
 
-        return  sendBodyForTypeObject(   poolname, object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON,containerType,  resultType);
+        return  sendBodyForTypeObject(   poolname,    url,  object2json(requestBody), null,ContentType.APPLICATION_JSON,containerType,  resultType);
     }
-    public static <D,T> D sendJsonBodyTypeObject(Object requestBody, String url,Class<D> containerType,Class<T> resultType) throws HttpProxyRequestException {
+    public static <D,T> D sendJsonBodyTypeObject( String url,Object requestBody,Class<D> containerType,Class<T> resultType) throws HttpProxyRequestException {
 
-        return  sendBodyForTypeObject(   (String) null, object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON,containerType,  resultType);
+        return  sendBodyForTypeObject(   (String) null,   url, object2json(requestBody), null,ContentType.APPLICATION_JSON,containerType,  resultType);
     }
 
 
@@ -3802,7 +3802,7 @@ public class HttpRequestProxy {
     }
 
 
-    public static <D,T> D sendBodyForTypeObject(String poolname,String requestBody, String url, Map headers,ContentType contentType,final Class<D> containerType,final Class<T> resultType) throws HttpProxyRequestException {
+    public static <D,T> D sendBodyForTypeObject(String poolname,String url,String requestBody,  Map headers,ContentType contentType,final Class<D> containerType,final Class<T> resultType) throws HttpProxyRequestException {
         return sendBody(  poolname,  requestBody,   url, headers,  contentType, new BaseURLResponseHandler<D>() {
 
             @Override

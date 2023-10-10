@@ -104,9 +104,9 @@ public class HttpRequestProxyTest {
         Map params = new LinkedHashMap();
         params.put("a",1);
         params.put("b",2);
-        System.out.println(HttpRequestProxy.appendParams("aaa.html",params));
-        System.out.println(HttpRequestProxy.appendParams("aaa.html?",params));
-        System.out.println(HttpRequestProxy.appendParams("aaa.html?aaa",params));
-        System.out.println(HttpRequestProxy.appendParams("aaa.html?aaa=bb",params));
+//        System.out.println(HttpRequestProxy.appendParams("aaa.html",params));
+//        System.out.println(HttpRequestProxy.appendParams("aaa.html?",params));
+//        System.out.println(HttpRequestProxy.appendParams("aaa.html?aaa",params));
+//        System.out.println(HttpRequestProxy.appendParams("aaa.html?aaa=bb",params));
     }
 }

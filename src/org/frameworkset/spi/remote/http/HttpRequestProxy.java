@@ -3846,9 +3846,9 @@ public class HttpRequestProxy {
 
         if(httpServiceHosts == null){
             if(logger.isWarnEnabled()){
-                logger.warn("Http Request Proxy is not properly initialized, please refer to the document: https://esdoc.bbossgroups.com/#/httpproxy?id=_32-http负载均衡器配置和启动");
+                logger.warn("HttpServiceHosts is null,Http Request Proxy is not properly initialized, please refer to the document: https://esdoc.bbossgroups.com/#/httpproxy?id=_32-http负载均衡器配置和启动");
             }
-            throw new HttpProxyRequestException("Http Request Proxy is not properly initialized, please refer to the document: https://esdoc.bbossgroups.com/#/httpproxy?id=_32-http负载均衡器配置和启动");
+            throw new HttpProxyRequestException("HttpServiceHosts is null,Http Request Proxy is not properly initialized, please refer to the document: https://esdoc.bbossgroups.com/#/httpproxy?id=_32-http负载均衡器配置和启动");
         }
     }
     public static <T> T putBody(String poolname,String requestBody, String url, final Map headers,ContentType contentType,final ResponseHandler<T> responseHandler) throws HttpProxyRequestException {

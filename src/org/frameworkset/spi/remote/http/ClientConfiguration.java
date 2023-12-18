@@ -102,7 +102,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	private transient CloseableHttpClient httpclient;
 	private transient RequestConfig requestConfig;
 	private int timeoutConnection = TIMEOUT_CONNECTION;
-	private int timeoutSocket = TIMEOUT_SOCKET;
+	private int timeoutSocket ;
 	private int connectionRequestTimeout = TIMEOUT_SOCKET;
 	private int retryTime = RETRY_TIME;
 	private int maxLineLength = 2000;
@@ -341,7 +341,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 					 f:defaultMaxPerRoute = "10"
 					 */
 					clientConfiguration.setTimeoutConnection(50000);
-					clientConfiguration.setTimeoutSocket(50000);
+					clientConfiguration.setTimeoutSocket(0);
 					clientConfiguration.setConnectionRequestTimeout(50000);
 					clientConfiguration.setRetryTime(-1);
 					clientConfiguration.setRetryInterval(-1);
@@ -377,7 +377,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 					 f:defaultMaxPerRoute = "10"
 					 */
 					clientConfiguration.setTimeoutConnection(5000);
-					clientConfiguration.setTimeoutSocket(5000);
+					clientConfiguration.setTimeoutSocket(0);
 					clientConfiguration.setConnectionRequestTimeout(5000);
 					clientConfiguration.setTimeToLive(3600000);
 					clientConfiguration.setEvictExpiredConnections(true);
@@ -764,7 +764,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 			int timeoutConnection = ClientConfiguration._getIntValue(name, "http.timeoutConnection", context, 50000);
 			log.append(",http.timeoutConnection=").append(timeoutConnection);
 			clientConfiguration.setTimeoutConnection(timeoutConnection);
-			int timeoutSocket = ClientConfiguration._getIntValue(name, "http.timeoutSocket", context, 50000);
+			int timeoutSocket = ClientConfiguration._getIntValue(name, "http.timeoutSocket", context, 0);
 			log.append(",http.timeoutSocket=").append(timeoutSocket);
 			clientConfiguration.setTimeoutSocket(timeoutSocket);
 			int connectionRequestTimeout = ClientConfiguration._getIntValue(name, "http.connectionRequestTimeout", context, 50000);

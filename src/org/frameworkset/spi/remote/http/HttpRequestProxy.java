@@ -16,10 +16,7 @@ import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
-import org.frameworkset.spi.remote.http.proxy.HttpAddress;
-import org.frameworkset.spi.remote.http.proxy.HttpProxyRequestException;
-import org.frameworkset.spi.remote.http.proxy.HttpServiceHosts;
-import org.frameworkset.spi.remote.http.proxy.NoHttpServerException;
+import org.frameworkset.spi.remote.http.proxy.*;
 import org.frameworkset.util.ResourceStartResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -2061,6 +2058,20 @@ public class HttpRequestProxy {
         return  sendBody( "default", object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON,resultType);
     }
 
+    public static <T> T sendJsonBody(Object requestBody, String url,Map headers,Class<T> resultType) throws HttpProxyRequestException {
+
+        return  sendBody( "default", object2json(requestBody),   url,   headers,ContentType.APPLICATION_JSON,resultType);
+    }
+
+    public static <T> T sendJsonBody(Object requestBody, String url,InvokeContext invokeContext,Class<T> resultType) throws HttpProxyRequestException {
+        if(invokeContext != null && invokeContext.getRequestContentType() == null){
+            invokeContext.setRequestContentType(ContentType.APPLICATION_JSON);
+        }
+        return  sendBody( "default", object2json(requestBody),   url,   invokeContext,resultType);
+    }
+
+
+
     public static <D,T> D sendJsonBody(Object requestBody, String url,Class<D> containType,Class<T> resultType) throws HttpProxyRequestException {
 
         return  sendBody( "default", object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON,containType,resultType);
@@ -2080,6 +2091,12 @@ public class HttpRequestProxy {
     public static String sendJsonBody(String requestBody, String url, Map headers ) throws HttpProxyRequestException {
 
         return  sendBody( "default", requestBody,   url,   headers,ContentType.APPLICATION_JSON);
+    }
+    public static String sendJsonBody(String requestBody, String url, InvokeContext invokeContext ) throws HttpProxyRequestException {
+        if(invokeContext != null && invokeContext.getRequestContentType() == null){
+            invokeContext.setRequestContentType(ContentType.APPLICATION_JSON);
+        }
+        return  sendBody( "default", requestBody,   url,  invokeContext);
     }
     public static <T> T sendJsonBody(String requestBody, String url, Map headers  ,ResponseHandler<T> responseHandler) throws HttpProxyRequestException {
 
@@ -2106,9 +2123,21 @@ public class HttpRequestProxy {
     public static <T> T sendBody(final String poolname,  String requestBody, String url,
                                  final Map headers, ContentType contentType,
                                  final ResponseHandler<T> responseHandler) throws HttpProxyRequestException {
+        InvokeContext invokeContext = new InvokeContext();
+        invokeContext.setHeaders(headers);
+        invokeContext.setRequestContentType(contentType);
+        return sendBody( poolname,   requestBody,  url,
+                 invokeContext,         responseHandler);
+       
+     
+    }
+
+    public static <T> T sendBody(final String poolname,  String requestBody, String url,
+                                 InvokeContext invokeContext,
+                                 final ResponseHandler<T> responseHandler) throws HttpProxyRequestException {
         final HttpEntity httpEntity = new StringEntity(
                 requestBody,
-                contentType);
+                invokeContext.getRequestContentType());
         injectBody(responseHandler, requestBody);
         return _handleRequest( poolname, url ,
                 responseHandler,new ExecuteRequest(){
@@ -2116,7 +2145,7 @@ public class HttpRequestProxy {
                     public Object execute(ClientConfiguration config, HttpClient httpClient,String url, int triesCount) throws Exception {
                         HttpPost httpPost = null;
                         try {
-                            httpPost = HttpRequestUtil.getHttpPost(config, url, "", "", headers);
+                            httpPost = HttpRequestUtil.getHttpPost(config, url, "", "", invokeContext.getHeaders());
                             httpPost.setEntity(httpEntity);
 
                             return httpClient.execute(httpPost, responseHandler);
@@ -2128,7 +2157,7 @@ public class HttpRequestProxy {
                         }
                     }
                 } );
-     
+
     }
 
     public static ClientConfiguration stopHttpClient(String poolName){
@@ -2487,7 +2516,30 @@ public class HttpRequestProxy {
         
     }
 
-   
+    public static String sendBody(String poolname, String requestBody, String url, final InvokeContext invokeContext) throws HttpProxyRequestException {
+        return sendBody(  poolname,  requestBody,   url, invokeContext, new BaseURLResponseHandler<String>() {
+
+            @Override
+            public String handleResponse(final HttpResponse response)
+                    throws IOException {
+                return ResponseUtil.handleStringResponse(url, response,invokeContext);
+            }
+
+        });
+
+    }
+    public static <T> T sendBody(String poolname,String requestBody, String url, InvokeContext invokeContext,final Class<T> resultType) throws HttpProxyRequestException {
+        return sendBody(  poolname,  requestBody,   url, invokeContext, new BaseURLResponseHandler<T>() {
+
+            @Override
+            public T handleResponse(final HttpResponse response)
+                    throws IOException {
+                return ResponseUtil.handleResponse( url, response, resultType);
+            }
+
+        });
+
+    }
    
     public static <T> T sendBody(String poolname,String requestBody, String url, Map headers,ContentType contentType,final Class<T> resultType) throws HttpProxyRequestException {
         return sendBody(  poolname,  requestBody,   url, headers,  contentType, new BaseURLResponseHandler<T>() {

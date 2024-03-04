@@ -21,7 +21,9 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.impl.io.EmptyInputStream;
 import org.apache.http.util.EntityUtils;
+import org.frameworkset.spi.remote.http.proxy.BBossEntityUtils;
 import org.frameworkset.spi.remote.http.proxy.HttpProxyRequestException;
+import org.frameworkset.spi.remote.http.proxy.InvokeContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,7 +85,7 @@ public class ResponseUtil {
 		}
 	}
 	public static <T> Set<T> handleSetResponse(String url,HttpResponse response, Class<T> resultType)
-			throws ClientProtocolException, IOException {
+			throws IOException {
 		int status = response.getStatusLine().getStatusCode();
 
 		if (status >= 200 && status < 300) {
@@ -101,25 +103,46 @@ public class ResponseUtil {
 				throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append( status).toString());
 		}
 	}
-	public static String handleStringResponse(String url,HttpResponse response)
-			throws ClientProtocolException, IOException {
+	public static String handleStringResponse(String url, HttpResponse response, InvokeContext invokeContext)
+			throws  IOException {
+        if(invokeContext == null || invokeContext.getResponseCharset() == null)
+            return handleStringResponse( url, response);
 		int status = response.getStatusLine().getStatusCode();
 
 		if (status >= 200 && status < 300) {
 			HttpEntity entity = response.getEntity();
-			return entity != null ? EntityUtils.toString(entity) : null;
+			return entity != null ? BBossEntityUtils.toString(entity,invokeContext.getResponseCharset()) : null;
 		} else {
 			HttpEntity entity = response.getEntity();
 			if (entity != null )
 				throw new HttpProxyRequestException(new StringBuilder().append("send request to ")
 						.append(url).append(" failed:")
-						.append(EntityUtils.toString(entity)).toString());
+						.append(BBossEntityUtils.toString(entity,invokeContext.getResponseCharset())).toString());
 			else
-				throw new HttpProxyRequestException(new StringBuilder().append("send request to ").append(url).append(",Unexpected response status: " ).append( status).toString());
+				throw new HttpProxyRequestException(new StringBuilder().append("send request to ")
+                        .append(url).append(",Unexpected response status: " ).append( status).toString());
 		}
 	}
+
+    public static String handleStringResponse(String url, HttpResponse response)
+            throws  IOException {
+        int status = response.getStatusLine().getStatusCode();
+
+        if (status >= 200 && status < 300) {
+            HttpEntity entity = response.getEntity();
+            return entity != null ? BBossEntityUtils.toString(entity) : null;
+        } else {
+            HttpEntity entity = response.getEntity();
+            if (entity != null )
+                throw new HttpProxyRequestException(new StringBuilder().append("send request to ")
+                        .append(url).append(" failed:")
+                        .append(BBossEntityUtils.toString(entity)).toString());
+            else
+                throw new HttpProxyRequestException(new StringBuilder().append("send request to ").append(url).append(",Unexpected response status: " ).append( status).toString());
+        }
+    }
 	public static <T> T handleResponse(String url,HttpResponse response, Class<T> resultType)
-			throws ClientProtocolException, IOException {
+			throws IOException {
 		if(resultType != null  ){
 			if(resultType.isAssignableFrom(String.class)) {
 				return (T) handleStringResponse(url, response);
@@ -252,7 +275,7 @@ public class ResponseUtil {
 	}
 
 	public static <D,T> D handleResponse(String url,HttpResponse response,Class<D> containType, Class<T> resultType)
-			throws ClientProtocolException, IOException {
+			throws IOException {
 		int status = response.getStatusLine().getStatusCode();
 
 		if (status >= 200 && status < 300) {

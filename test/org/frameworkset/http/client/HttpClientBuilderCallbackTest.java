@@ -49,7 +49,7 @@ public class HttpClientBuilderCallbackTest {
 
 			@Override
 			public void process(HttpRequest request, HttpContext context) throws HttpException, IOException {
-
+                request.addHeader("test","value");//添加自定义请求头
 			}
 		};
 		HttpClientBuilderCallback httpClientBuilderCallback = new HttpClientBuilderCallback() {

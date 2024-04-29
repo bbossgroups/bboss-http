@@ -3,10 +3,12 @@
  */
 package org.frameworkset.spi.remote.http;
 
+import com.frameworkset.util.SimpleStringUtil;
 import com.frameworkset.util.ValueCastUtil;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Consts;
 import org.apache.http.Header;
+import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
@@ -48,6 +50,7 @@ import org.slf4j.LoggerFactory;
 import javax.net.ssl.HostnameVerifier;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
@@ -140,6 +143,20 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	}
 
 	private Object httpClientBuilderCallback;
+
+    public Object getHttpRequestInterceptors() {
+        return httpRequestInterceptors;
+    }
+    /**
+     * http接口org.apache.http.HttpRequestInterceptor清单，多个用逗号分隔
+     */
+    public void setHttpRequestInterceptors(Object httpRequestInterceptors) {
+        this.httpRequestInterceptors = httpRequestInterceptors;
+    }
+    /**
+     * http接口org.apache.http.HttpRequestInterceptor清单，多个用逗号分隔
+     */
+    private Object httpRequestInterceptors;
 	public String getAuthAccount() {
 		return authAccount;
 	}
@@ -882,6 +899,13 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 			if(httpClientBuilderCallback != null){
 				clientConfiguration.setHttpClientBuilderCallback(httpClientBuilderCallback);
 			}
+            Object httpRequestInterceptors = ClientConfiguration._getObjectValue(name,"http.httpRequestInterceptors",context,null);
+            log.append(",http.httpRequestInterceptors=").append(httpRequestInterceptors);
+            if(httpRequestInterceptors != null){
+                clientConfiguration.setHttpRequestInterceptors(httpRequestInterceptors);
+            }
+
+            
 			clientConfiguration.setSupportedProtocols(supportedProtocols);
 			boolean evictExpiredConnections = ClientConfiguration._getBooleanValue(name, "http.evictExpiredConnections", context, true);
 			clientConfiguration.setEvictExpiredConnections(evictExpiredConnections);
@@ -1444,7 +1468,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 
 
 	}
-	private void customizeHttpBuilder(HttpClientBuilder builder ) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
+	private void customizeHttpBuilder(HttpClientBuilder builder ) throws Exception {
 		HttpClientBuilderCallback _httpClientBuilderCallback = null;
 		if(this.getHttpClientBuilderCallback() != null){
 			if(httpClientBuilderCallback instanceof String) {
@@ -1457,6 +1481,20 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 			}
 
 		}
+        else if(SimpleStringUtil.isNotEmpty(this.getHttpRequestInterceptors())){
+            String[] tmp = ((String)this.getHttpRequestInterceptors()).split(",");
+            HttpClientBuilderCallback httpClientBuilderCallback = new HttpClientBuilderCallback() {
+                @Override
+                public HttpClientBuilder customizeHttpClient(HttpClientBuilder builder, ClientConfiguration clientConfiguration) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+                    for(String i:tmp){
+                        HttpRequestInterceptor httpRequestInterceptor = (HttpRequestInterceptor) Class.forName(i).getDeclaredConstructor().newInstance();
+                        builder.addInterceptorLast(httpRequestInterceptor);
+                    }
+                    return builder;
+                }
+            };
+            _httpClientBuilderCallback = httpClientBuilderCallback;
+        }
 		if(_httpClientBuilderCallback != null){
 			_httpClientBuilderCallback.customizeHttpClient(builder,this);
 		}

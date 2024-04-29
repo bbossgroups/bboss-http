@@ -18,6 +18,8 @@ package org.frameworkset.spi.remote.http.callback;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
 
+import java.lang.reflect.InvocationTargetException;
+
 /**
  * <p>Description: </p>
  * <p></p>
@@ -27,5 +29,5 @@ import org.frameworkset.spi.remote.http.ClientConfiguration;
  * @version 1.0
  */
 public interface HttpClientBuilderCallback {
-	public HttpClientBuilder customizeHttpClient(HttpClientBuilder builder , ClientConfiguration clientConfiguration);
+	public HttpClientBuilder customizeHttpClient(HttpClientBuilder builder , ClientConfiguration clientConfiguration) throws Exception;
 }

@@ -1479,9 +1479,10 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 				_httpClientBuilderCallback = (HttpClientBuilderCallback) httpClientBuilderCallback;
 
 			}
-
+            _httpClientBuilderCallback.customizeHttpClient(builder,this);
 		}
-        else if(SimpleStringUtil.isNotEmpty(this.getHttpRequestInterceptors())){
+        
+        if(SimpleStringUtil.isNotEmpty(this.getHttpRequestInterceptors())){
             String[] tmp = ((String)this.getHttpRequestInterceptors()).split(",");
             HttpClientBuilderCallback httpClientBuilderCallback = new HttpClientBuilderCallback() {
                 @Override
@@ -1493,11 +1494,9 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
                     return builder;
                 }
             };
-            _httpClientBuilderCallback = httpClientBuilderCallback;
+            httpClientBuilderCallback.customizeHttpClient(builder,this);
         }
-		if(_httpClientBuilderCallback != null){
-			_httpClientBuilderCallback.customizeHttpClient(builder,this);
-		}
+		
 	}
 	private void initCredentialsProvider(HttpClientBuilder builder ){
 

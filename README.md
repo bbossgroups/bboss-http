@@ -58,7 +58,7 @@ httpproxy 案例：基于apollo进行配置管理、节点自动发现、路由�
 
 # 联系我们
 
-**Elasticsearch技术交流群：21220580,166471282**
+**技术交流群：21220580,166471282**
 
 <img src="https://esdoc.bbossgroups.com/images/qrcode.jpg"  height="200" width="200"><img src="https://esdoc.bbossgroups.com/images/douyin.png"  height="200" width="200"><img src="https://esdoc.bbossgroups.com/images/wvidio.png"  height="200" width="200">
 

@@ -48,7 +48,7 @@ public class ResponseUtil {
 			throws ClientProtocolException, IOException {
 		int status = response.getStatusLine().getStatusCode();
 
-		if (status >= 200 && status < 300) {
+		if (org.frameworkset.spi.remote.http.ResponseUtil.isHttpStatusOK( status)) {
 			HttpEntity entity = response.getEntity();
 			return entity != null ? converJson2Map(  entity,  keyType,  beanType) : null;
 		} else {
@@ -69,7 +69,7 @@ public class ResponseUtil {
 			throws ClientProtocolException, IOException {
 		int status = response.getStatusLine().getStatusCode();
 
-		if (status >= 200 && status < 300) {
+		if (org.frameworkset.spi.remote.http.ResponseUtil.isHttpStatusOK( status)) {
 			HttpEntity entity = response.getEntity();
 			return entity != null ? converJson2List(  entity,  resultType) : null;
 		} else {
@@ -88,7 +88,7 @@ public class ResponseUtil {
 			throws IOException {
 		int status = response.getStatusLine().getStatusCode();
 
-		if (status >= 200 && status < 300) {
+		if (org.frameworkset.spi.remote.http.ResponseUtil.isHttpStatusOK( status)) {
 			HttpEntity entity = response.getEntity();
 			return entity != null ? converJson2Set(  entity,  resultType) : null;
 		} else {
@@ -109,7 +109,7 @@ public class ResponseUtil {
             return handleStringResponse( url, response);
 		int status = response.getStatusLine().getStatusCode();
 
-		if (status >= 200 && status < 300) {
+		if (org.frameworkset.spi.remote.http.ResponseUtil.isHttpStatusOK( status)) {
 			HttpEntity entity = response.getEntity();
 			return entity != null ? BBossEntityUtils.toString(entity,invokeContext.getResponseCharset()) : null;
 		} else {
@@ -128,7 +128,7 @@ public class ResponseUtil {
             throws  IOException {
         int status = response.getStatusLine().getStatusCode();
 
-        if (status >= 200 && status < 300) {
+        if (org.frameworkset.spi.remote.http.ResponseUtil.isHttpStatusOK( status)) {
             HttpEntity entity = response.getEntity();
             return entity != null ? BBossEntityUtils.toString(entity) : null;
         } else {
@@ -258,7 +258,7 @@ public class ResponseUtil {
 		}
 		int status = response.getStatusLine().getStatusCode();
 
-		if (status >= 200 && status < 300) {
+		if (org.frameworkset.spi.remote.http.ResponseUtil.isHttpStatusOK( status)) {
 			HttpEntity entity = response.getEntity();
 			return entity != null ? converJson(  entity,  resultType) : null;
 		} else {
@@ -274,11 +274,14 @@ public class ResponseUtil {
 		}
 	}
 
+    public static boolean isHttpStatusOK(int status){
+        return status >= 200 && status < 400;
+    }
 	public static <D,T> D handleResponse(String url,HttpResponse response,Class<D> containType, Class<T> resultType)
 			throws IOException {
 		int status = response.getStatusLine().getStatusCode();
 
-		if (status >= 200 && status < 300) {
+		if (org.frameworkset.spi.remote.http.ResponseUtil.isHttpStatusOK( status)) {
 			HttpEntity entity = response.getEntity();
 			return entity != null ? converJson(  entity, containType, resultType) : null;
 		} else {

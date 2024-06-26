@@ -1303,7 +1303,7 @@ public class HttpRequestUtil {
                     throws ClientProtocolException, IOException {
                 int status = response.getStatusLine().getStatusCode();
 
-                if (status >= 200 && status < 300) {
+                if (org.frameworkset.spi.remote.http.ResponseUtil.isHttpStatusOK( status)) {
                     HttpEntity entity = response.getEntity();
                     return entity != null ? EntityUtils.toString(entity) : null;
                 } else {
@@ -1366,7 +1366,7 @@ public class HttpRequestUtil {
                     throws ClientProtocolException, IOException {
                 int status = response.getStatusLine().getStatusCode();
 
-                if (status >= 200 && status < 300) {
+                if (org.frameworkset.spi.remote.http.ResponseUtil.isHttpStatusOK( status)) {
                     HttpEntity entity = response.getEntity();
                     return entity != null ? EntityUtils.toString(entity) : null;
                 } else {

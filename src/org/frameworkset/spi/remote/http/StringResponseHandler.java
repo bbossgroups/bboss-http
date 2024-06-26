@@ -18,7 +18,7 @@ public class StringResponseHandler extends StatusResponseHandler implements URLR
              throws ClientProtocolException, IOException {
          int status = initStatus(  response);
 
-         if (status >= 200 && status < 300) {
+         if (org.frameworkset.spi.remote.http.ResponseUtil.isHttpStatusOK( status)) {
              HttpEntity entity = response.getEntity();
 
              return entity != null ? EntityUtils.toString(entity) : null;

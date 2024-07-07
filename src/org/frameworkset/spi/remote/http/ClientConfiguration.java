@@ -61,10 +61,7 @@ import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -96,9 +93,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	private static final DefaultHttpRequestRetryHandler defaultHttpRequestRetryHandler = new ConnectionResetHttpRequestRetryHandler();
 	private static final Logger logger = LoggerFactory.getLogger(ClientConfiguration.class);
 	private static RequestConfig defaultRequestConfig;
-	private static HttpClient defaultHttpclient;
-	private static final Map<String, ClientConfiguration> clientConfigs = new HashMap<String, ClientConfiguration>();
-	private static final Map<String, ClientConfiguration> healthClientConfigs = new HashMap<String, ClientConfiguration>();
+	private static final Map<String, ClientConfiguration> clientConfigs = new LinkedHashMap<>();
 	private static BaseApplicationContext context;
 	private static boolean emptyContext;
 	private static ClientConfiguration defaultClientConfiguration;
@@ -1455,7 +1450,6 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		httpclient = builder.build();
 		if (this.beanName.equals("default")) {
 			defaultRequestConfig = requestConfig;
-			defaultHttpclient = httpclient;
 		}
 		clientConfigs.put(beanName, this);
 //		ShutdownUtil.addShutdownHook(new Runnable() {

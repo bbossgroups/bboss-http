@@ -3,6 +3,7 @@
  */
 package org.frameworkset.spi.remote.http;
 
+import java.util.concurrent.ConcurrentHashMap;
 import com.frameworkset.util.SimpleStringUtil;
 import com.frameworkset.util.ValueCastUtil;
 import org.apache.commons.codec.binary.Base64;
@@ -93,7 +94,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	private static final DefaultHttpRequestRetryHandler defaultHttpRequestRetryHandler = new ConnectionResetHttpRequestRetryHandler();
 	private static final Logger logger = LoggerFactory.getLogger(ClientConfiguration.class);
 	private static RequestConfig defaultRequestConfig;
-	private static final Map<String, ClientConfiguration> clientConfigs = new LinkedHashMap<>();
+	private static final Map<String, ClientConfiguration> clientConfigs = new ConcurrentHashMap();
 	private static BaseApplicationContext context;
 	private static boolean emptyContext;
 	private static ClientConfiguration defaultClientConfiguration;

@@ -15,6 +15,7 @@ package org.frameworkset.spi.remote.http;
  * limitations under the License.
  */
 
+import java.util.concurrent.ConcurrentHashMap;
 import com.frameworkset.util.SimpleStringUtil;
 
 import java.time.Instant;
@@ -82,7 +83,7 @@ public class TimeUtil {
     }
     private static DateTimeFormatter dateTimeFormatter;
     private static DateTimeFormatter dateTimeFormatterDefault = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS'Z'");
-    private static Map<String,DateTimeFormatter> dateTimeFormatterMap = new LinkedHashMap<>();
+    private static Map<String,DateTimeFormatter> dateTimeFormatterMap = new ConcurrentHashMap();
     private static Object lock = new Object();
     public static DateTimeFormatter getDateTimeFormatter(){
         if(dateTimeFormatter != null){

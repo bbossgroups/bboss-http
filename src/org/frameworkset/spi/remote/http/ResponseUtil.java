@@ -57,7 +57,7 @@ public class ResponseUtil {
 				if (logger.isDebugEnabled()) {
 					logger.debug(new StringBuilder().append("Request url:").append(url).append(",status:").append(status).toString());
 				}
-				throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",error:").append(EntityUtils.toString(entity)).toString());
+				throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",status:").append(status).append(",error:").append(EntityUtils.toString(entity)).toString());
 			}
 			else
 				throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append( status).toString());
@@ -78,7 +78,7 @@ public class ResponseUtil {
 				if (logger.isDebugEnabled()) {
 					logger.debug(new StringBuilder().append("Request url:").append(url).append(",status:").append(status).toString());
 				}
-				throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",error:").append(EntityUtils.toString(entity)).toString());
+				throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",status:").append(status).append(",error:").append(EntityUtils.toString(entity)).toString());
 			}
 			else
 				throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append( status).toString());
@@ -97,7 +97,7 @@ public class ResponseUtil {
 				if (logger.isDebugEnabled()) {
 					logger.debug(new StringBuilder().append("Request url:").append(url).append(",status:").append(status).toString());
 				}
-				throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",error:").append(EntityUtils.toString(entity)).toString());
+				throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",status:").append(status).append(",error:").append(EntityUtils.toString(entity)).toString());
 			}
 			else
 				throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append( status).toString());
@@ -116,7 +116,7 @@ public class ResponseUtil {
 			HttpEntity entity = response.getEntity();
 			if (entity != null )
 				throw new HttpProxyRequestException(new StringBuilder().append("send request to ")
-						.append(url).append(" failed:")
+						.append(url).append(" failed,").append("status=").append(status).append(":")
 						.append(BBossEntityUtils.toString(entity,invokeContext.getResponseCharset())).toString());
 			else
 				throw new HttpProxyRequestException(new StringBuilder().append("send request to ")
@@ -135,7 +135,7 @@ public class ResponseUtil {
             HttpEntity entity = response.getEntity();
             if (entity != null )
                 throw new HttpProxyRequestException(new StringBuilder().append("send request to ")
-                        .append(url).append(" failed:")
+                        .append(url).append(" failed,").append("status=").append(status).append(":")
                         .append(BBossEntityUtils.toString(entity)).toString());
             else
                 throw new HttpProxyRequestException(new StringBuilder().append("send request to ").append(url).append(",Unexpected response status: " ).append( status).toString());
@@ -267,15 +267,20 @@ public class ResponseUtil {
 				if (logger.isDebugEnabled()) {
 					logger.debug(new StringBuilder().append("Request url:").append(url).append(",status:").append(status).toString());
 				}
-				throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",error:").append(EntityUtils.toString(entity)).toString());
+				throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",error,").append("status=").append(status).append(":").append(EntityUtils.toString(entity)).toString());
 			}
 			else
 				throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append( status).toString());
 		}
 	}
 
+    /**
+     * 2xx状态为正常状态
+     * @param status
+     * @return
+     */
     public static boolean isHttpStatusOK(int status){
-        return status >= 200 && status < 400;
+        return status >= 200 && status < 300;
     }
 	public static <D,T> D handleResponse(String url,HttpResponse response,Class<D> containType, Class<T> resultType)
 			throws IOException {
@@ -290,7 +295,7 @@ public class ResponseUtil {
 				if (logger.isDebugEnabled()) {
 					logger.debug(new StringBuilder().append("Request url:").append(url).append(",status:").append(status).toString());
 				}
-				throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",error:").append(EntityUtils.toString(entity)).toString());
+				throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",error,").append("status=").append(status).append(":").append(EntityUtils.toString(entity)).toString());
 			}
 			else
 				throw new HttpProxyRequestException(new StringBuilder().append("Request url:").append(url).append(",Unexpected response status: ").append( status).toString());

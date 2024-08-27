@@ -1674,8 +1674,24 @@ public class HttpRequestProxy {
 
     }
 
+    public static String httpPostFileforString(String poolname, String url,  Object params,
+                                               Map<String, File> files, Map headers) throws HttpProxyRequestException {
+
+        return httpPost(  poolname,   url,   (String)null,   (String)null,   params,
+                files,  headers,new StringResponseHandler() );
 
 
+    }
+
+
+    public static String httpPostFileforString(String url,  Object params,
+                                               Map<String, File> files, Map headers) throws HttpProxyRequestException {
+
+        return httpPost(  "default",   url,   (String)null,   (String)null,   params,
+                files,  headers,new StringResponseHandler() );
+
+
+    }
 
     /**
      * 公用delete方法

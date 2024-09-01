@@ -512,12 +512,12 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 			StringBuilder msg = new StringBuilder();
 
 
-			msg.append("Start HttpPools From Apollo by AwaredChange failed: Please add compile dependency to build.gradle in gralde project: \r\ncompile \"com.bbossgroups.plugins:bboss-plugin-httpproxy-apollo:5.7.7\"")
+			msg.append("Start HttpPools From Apollo by AwaredChange failed: Please add compile dependency to build.gradle in gralde project: \r\ncompile \"com.bbossgroups.plugins:bboss-plugin-apollo:6.3.2\"")
 					.append(" \r\nor Add compile dependency to pom.xml in maven project: \r\n    " )
 					.append( "    <dependency>\n"  )
 					.append("            <groupId>com.bbossgroups.plugins</groupId>\n"  )
-					.append("            <artifactId>bboss-plugin-httpproxy-apollo</artifactId>\n"  )
-					.append("            <version>6.0.1</version>\n"  )
+					.append("            <artifactId>bboss-plugin-apollo</artifactId>\n"  )
+					.append("            <version>6.3.2</version>\n"  )
 					.append("        </dependency>");
 			logger.error(msg.toString(),e);
 			throw new IllegalArgumentException(msg.toString(),e);
@@ -586,6 +586,100 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		}
 		return resourceStartResult;
 	}
+
+
+    public static ResourceStartResult startHttpPoolsFromNacosAwaredChange(String namespace, String serverAddr, String dataId, String group, long timeOut,
+                                                                          Map<String,String> pros){
+        String apolloAwaredChangeListener = "org.frameworkset.nacos.HttpProxyConfigChangeListener";
+        try {
+            Class t = Class.forName(apolloAwaredChangeListener);
+        } catch (ClassNotFoundException e) {
+            StringBuilder msg = new StringBuilder();
+
+
+            msg.append("Start HttpPools From Apollo by AwaredChange failed: Please add compile dependency to build.gradle in gralde project: \r\ncompile \"com.bbossgroups.plugins:bboss-plugin-nacos:6.3.2\"")
+                    .append(" \r\nor Add compile dependency to pom.xml in maven project: \r\n    " )
+                    .append( "    <dependency>\n"  )
+                    .append("            <groupId>com.bbossgroups.plugins</groupId>\n"  )
+                    .append("            <artifactId>bboss-plugin-nacos</artifactId>\n"  )
+                    .append("            <version>6.3.2</version>\n"  )
+                    .append("        </dependency>");
+            logger.error(msg.toString(),e);
+            throw new IllegalArgumentException(msg.toString(),e);
+        }
+
+        return startHttpPoolsFromNacos(namespace,   serverAddr,   dataId,   group,   timeOut,  apolloAwaredChangeListener,  pros);
+    }
+    public static ResourceStartResult startHttpPoolsFromNacos(String namespace, String serverAddr, String dataId, String group, long timeOut,Map<String,String> pros){
+        return startHttpPoolsFromNacos(namespace,   serverAddr,   dataId,   group,   timeOut,  (String)null,  pros);
+    }
+    public static ResourceStartResult startHttpPoolsFromNacos(String namespace, String serverAddr, String dataId, String group,
+                                                              long timeOut,String configChangeListener,Map<String,String> pros){
+        ResourceStartResult resourceStartResult = new HttpResourceStartResult();
+//        if(namespace == null || namespace.equals(""))
+//        {
+//            if(logger.isWarnEnabled()) {
+//                StringBuilder message = new StringBuilder();
+//                message.append("Ignore start HttpPools from Apollo: namespaces is empty!");
+//                logger.warn(message.toString());
+//            }
+//            return resourceStartResult;
+//        }
+        PropertiesContainer propertiesContainer = new PropertiesContainer();
+        propertiesContainer.addConfigPropertiesFromNacos(  namespace,   serverAddr,   dataId,   group,   timeOut,  configChangeListener,  pros);
+        propertiesContainer.afterLoaded(propertiesContainer);
+        //http.poolNames = scedule,elastisearch
+        String poolNames = propertiesContainer.getProperty("http.poolNames");
+        if(poolNames == null){
+            //load default http pool config
+            try {
+                makeDefualtClientConfiguration(resourceStartResult,null,"default", propertiesContainer);
+                String health = ClientConfiguration._getStringValue("default", "http.health", propertiesContainer, null);
+                if(health != null && !health.equals("")){
+                    makeDefualtClientConfiguration(resourceStartResult,getHealthPoolName(null),"default", propertiesContainer);
+                }
+            }
+            catch (Exception e){
+                if(logger.isErrorEnabled()) {
+                    StringBuilder message = new StringBuilder();
+                    message.append("Start HttpPools from Nacos[namespace=").append(namespace)
+                            .append(",serverAddr=").append(serverAddr).append(",dataId=").append(dataId).append(",group=").append(group)
+                            .append(",timeOut=").append(timeOut)
+                            .append(",configChangeListener=").append(configChangeListener)
+                            .append(",pros=").append(pros != null ?SimpleStringUtil.object2json(pros):"").append("] failed:");
+                    logger.error(message.toString(), e);
+                }
+            }
+        }
+        else{
+            String[] poolNames_ = poolNames.split(",");
+            for(String poolName:poolNames_){
+                poolName = poolName.trim();
+                if(poolName.equals("")){
+                    poolName = "default";
+                }
+                try {
+                    makeDefualtClientConfiguration(resourceStartResult,null,poolName, propertiesContainer);
+                    String health = ClientConfiguration._getStringValue(poolName, "http.health", propertiesContainer, null);
+                    if(health != null && !health.equals("")){
+                        makeDefualtClientConfiguration(resourceStartResult,getHealthPoolName(poolName),poolName, propertiesContainer);
+                    }
+                }
+                catch (Exception e){
+                    if(logger.isErrorEnabled()) {
+                        StringBuilder message = new StringBuilder();
+                        message.append("Start HttpPools from Nacos[namespace=").append(namespace)
+                                .append(",serverAddr=").append(serverAddr).append(",dataId=").append(dataId).append(",group=").append(group)
+                                .append(",timeOut=").append(timeOut)
+                                .append(",configChangeListener=").append(configChangeListener)
+                                .append(",pros=").append(pros != null ?SimpleStringUtil.object2json(pros):"").append("] failed:");
+                        logger.error(message.toString(), e);
+                    }
+                }
+            }
+        }
+        return resourceStartResult;
+    }
 	public static ResourceStartResult startHttpPools(String configFile){
 		ResourceStartResult resourceStartResult = new HttpResourceStartResult();
 		if(configFile == null || configFile.equals(""))

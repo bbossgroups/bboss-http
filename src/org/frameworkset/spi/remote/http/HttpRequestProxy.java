@@ -61,7 +61,19 @@ public class HttpRequestProxy {
     }
 
 
+    public static ResourceStartResult startHttpPoolsFromNacos(String namespace, String serverAddr, String dataId, String group, long timeOut,Map<String,String> pros){
+        return HttpRequestUtil.startHttpPoolsFromNacos(  namespace,   serverAddr,   dataId,   group,   timeOut,  pros);
+    }
+    public static ResourceStartResult startHttpPoolsFromNacos(String namespace, String serverAddr, String dataId, String group,
+                                                              long timeOut,String configChangeListener,Map<String,String> pros){
+        return HttpRequestUtil.startHttpPoolsFromNacos( namespace,   serverAddr,   dataId,   group,
+                timeOut,  configChangeListener,  pros);
+    }
 
+    public static ResourceStartResult startHttpPoolsFromNacosAwaredChange(String namespace, String serverAddr, String dataId, String group, long timeOut,
+                                                                          Map<String,String> pros){
+        return HttpRequestUtil.startHttpPoolsFromNacosAwaredChange( namespace,   serverAddr,   dataId,   group,   timeOut,  pros);
+    }
 
 
     public static String httpGetforString(String url) throws HttpProxyRequestException {

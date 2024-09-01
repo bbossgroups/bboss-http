@@ -72,6 +72,20 @@ public class HttpRequestUtil {
         return ClientConfiguration.startHttpPoolsFromApollo(namespaces,configChangeListener);
     }
 
+    public static ResourceStartResult startHttpPoolsFromNacos(String namespace, String serverAddr, String dataId, String group, long timeOut,Map<String,String> pros){
+        return ClientConfiguration.startHttpPoolsFromNacos(  namespace,   serverAddr,   dataId,   group,   timeOut,  pros);
+    }
+    public static ResourceStartResult startHttpPoolsFromNacosAwaredChange(String namespace, String serverAddr, String dataId, String group, long timeOut,
+                                                                          Map<String,String> pros){
+        return ClientConfiguration.startHttpPoolsFromNacosAwaredChange(  namespace,   serverAddr,   dataId,   group,   timeOut,
+          pros);
+    }
+    public static ResourceStartResult startHttpPoolsFromNacos(String namespace, String serverAddr, String dataId, String group,
+                                                              long timeOut,String configChangeListener,Map<String,String> pros){
+        return ClientConfiguration.startHttpPoolsFromNacos(  namespace,   serverAddr,   dataId,   group,
+          timeOut,  configChangeListener,  pros);
+    }
+
     public static ResourceStartResult startHttpPools(Map<String,Object>  configs){
         return ClientConfiguration.startHttpPools(  configs);
     }

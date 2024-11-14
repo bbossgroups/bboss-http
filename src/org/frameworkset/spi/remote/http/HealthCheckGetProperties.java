@@ -66,12 +66,18 @@ public class HealthCheckGetProperties implements GetProperties {
 				|| property.endsWith("http.validateAfterInactivity")){
 			return -1;
 		}*/
-		if(property.endsWith("http.defaultMaxPerRoute"))
-			return 50;
+        Object config = context.getExternalObjectProperty(property);
+        if(config == null)
+            return config;
+		if(property.endsWith("http.defaultMaxPerRoute")) {
+            Integer tmp = Integer.parseInt(String.valueOf(config));
+            return tmp > 5?5:tmp;
+        }
 		else if(property.endsWith("http.maxTotal")){
-			return 500;
+            Integer tmp = Integer.parseInt(String.valueOf(config));
+			return tmp > 100? 100:tmp;
 		}
-		return context.getExternalObjectProperty(property);
+		return config;
 	}
 
 	@Override

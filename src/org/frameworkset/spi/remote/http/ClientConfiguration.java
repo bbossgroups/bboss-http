@@ -700,8 +700,9 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 			try {
 				makeDefualtClientConfiguration(resourceStartResult,null,"default", propertiesContainer);
 				String health = ClientConfiguration._getStringValue("default", "http.health", propertiesContainer, null);
+                //初始化派生的健康检查数据源
 				if(health != null && !health.equals("")){
-					makeDefualtClientConfiguration(resourceStartResult,getHealthPoolName(null),"default", propertiesContainer);
+					makeDefualtClientConfiguration(resourceStartResult,getHealthPoolName("default"),"default", propertiesContainer);
 				}
 			}
 			catch (Exception e){
@@ -812,6 +813,16 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 			return name;
 		}
 	}
+
+    /**
+     * 
+     * @param resourceStartResult
+     * @param healthPoolname 为空代表初始化正式数据源name，不为空代表初始化name的健康检查数据源
+     * @param name
+     * @param context
+     * @return
+     * @throws Exception
+     */
 	static ClientConfiguration makeDefualtClientConfiguration(ResourceStartResult resourceStartResult,String healthPoolname,String name, GetProperties context) throws Exception {
 		ClientConfiguration clientConfiguration = _get(  healthPoolname,  name);
 
@@ -826,6 +837,9 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 			if (clientConfiguration != null) {
 				return clientConfiguration;
 			}
+            if(healthPoolname != null && !(context instanceof HealthCheckGetProperties) ){
+                context = new HealthCheckGetProperties(context);
+            }
 			clientConfiguration = new ClientConfiguration();
 			clientConfiguration.setContextProperties(context);
 			/**

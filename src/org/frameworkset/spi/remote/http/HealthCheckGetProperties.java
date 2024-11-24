@@ -71,14 +71,45 @@ public class HealthCheckGetProperties implements GetProperties {
             return config;
 		if(property.endsWith("http.defaultMaxPerRoute")) {
             Integer tmp = Integer.parseInt(String.valueOf(config));
+            
             return tmp > 5?5:tmp;
         }
 		else if(property.endsWith("http.maxTotal")){
-            Integer tmp = Integer.parseInt(String.valueOf(config));
-			return tmp > 100? 100:tmp;
+            Integer maxTotal = Integer.parseInt(String.valueOf(config));
+            int ret = 0;
+            String key = null;
+            String defaultKey = null;
+            if(property.equals("http.maxTotal")){
+                key = "http.defaultMaxPerRoute";
+                defaultKey = "default.http.defaultMaxPerRoute";
+            }
+            else{
+                key = property.substring(0,property.indexOf("http.maxTotal"))+ "http.defaultMaxPerRoute";
+            }
+            Object defaultMaxPerRoute_ = context.getExternalObjectProperty(key);
+            if(defaultMaxPerRoute_ == null){
+                defaultMaxPerRoute_ = context.getExternalObjectProperty(defaultKey);
+            }
+            if(defaultMaxPerRoute_ != null) {
+                Integer defaultMaxPerRoute = Integer.parseInt(String.valueOf(defaultMaxPerRoute_));
+                int tmp = defaultMaxPerRoute > 5 ? 5 : defaultMaxPerRoute;
+                ret = maxTotal / defaultMaxPerRoute * tmp;
+            }
+            else{
+                ret = maxTotal > 100? 100: maxTotal;
+            }
+			return ret;
 		}
 		return config;
 	}
+    public static void main(String[] args){
+        String property = "log.http.maxTotal";
+        String key = property.substring(0,property.indexOf("http.maxTotal"))+ "http.defaultMaxPerRoute";
+        System.out.println(key);
+        int per = 5;
+        int max = 55 / 10 * per;
+        System.out.println(max);
+    }
 
 	@Override
 	public Object getExternalObjectProperty(String property, Object defaultValue) {

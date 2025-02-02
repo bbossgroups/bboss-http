@@ -3,6 +3,7 @@
  */
 package org.frameworkset.spi.remote.http;
 
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ConcurrentHashMap;
 import com.frameworkset.util.SimpleStringUtil;
 import com.frameworkset.util.ValueCastUtil;
@@ -86,6 +87,10 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	private final static int DEFAULT_validateAfterInactivity = -1;
 	public static final String http_authAccount = "http.authAccount";
 	public static final String http_authPassword = "http.authPassword";
+
+    public static final String http_apiKeyId = "http.apiKeyId";
+    public static final String http_apiKeySecret = "http.apiKeySecret";
+    
 	public static final String http_healthCheck_prex = "__healthCheck_";
 
 
@@ -113,7 +118,28 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	private Boolean soReuseAddress = false;
 	private String hostnameVerifierString;
 	private GetProperties contextProperties;
+    private String authAccount;
+    private String authPassword;
+    private String apiKeyId;
 
+
+    private String apiKeySecret;
+
+    public String getApiKeyId() {
+        return apiKeyId;
+    }
+
+    public void setApiKeyId(String apiKeyId) {
+        this.apiKeyId = apiKeyId;
+    }
+
+    public String getApiKeySecret() {
+        return apiKeySecret;
+    }
+
+    public void setApiKeySecret(String apiKeySecret) {
+        this.apiKeySecret = apiKeySecret;
+    }
 	public String getEncodedAuthCharset() {
 		return encodedAuthCharset;
 	}
@@ -123,6 +149,9 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	}
 
 	private String encodedAuthCharset = "US-ASCII";
+
+    private String encodedapiKeySecretCharset = "UTF-8";
+    
 	/**
 	 * 向后兼容的basic安全签名机制，v6.1.2以及之后的版本采用http组件内置的basic签名认证机制，但是有些http服务端对安全认证
 	 * 的实现不是很规范，会导致http basic security机制不能正常工作，因此设置这个向老版本兼容的配置
@@ -169,8 +198,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		this.authPassword = authPassword;
 	}
 
-	private String authAccount;
-	private String authPassword;
+
 	/**
 	 * 单位毫秒：
 	 */
@@ -865,19 +893,41 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 				clientConfiguration.setAuthAccount(authAccount);
 			}
 
-//			httpServiceHosts.setAuthAccount(authAccount);
 			log.append("http.authAccount=").append(authAccount);
 
 			String authPassword = ClientConfiguration._getStringValue(name, "http.authPassword", context, null);
 			if(authPassword != null && !authPassword.equals("")){
 				clientConfiguration.setAuthPassword(authPassword);
+                if(PropertiesContainer.showPassword)
+                    log.append(",http.authPassword=").append(authPassword);
+                else
+                    log.append(",http.authPassword=******");
 			}
-			if(PropertiesContainer.showPassword)
-				log.append(",http.authPassword=").append(authPassword);
-			else
-				log.append(",http.authPassword=******");
+			
 
-			String encodedAuthCharset = ClientConfiguration._getStringValue(name, "http.encodedAuthCharset", context, "US-ASCII");
+
+
+
+            String apiKeyId = ClientConfiguration._getStringValue(name, "http.apiKeyId", context, null);
+            if(apiKeyId != null && !apiKeyId.equals("")){
+                clientConfiguration.setApiKeyId(apiKeyId);
+            }
+
+            log.append("http.apiKeyId=").append(apiKeyId);
+
+            
+            String apiKeySecret = ClientConfiguration._getStringValue(name, "http.apiKeySecret", context, null);
+            if(apiKeySecret != null && !apiKeySecret.equals("")){
+                clientConfiguration.setApiKeySecret(apiKeySecret);
+                if(PropertiesContainer.showPassword)
+                    log.append(",http.apiKeySecret=").append(apiKeySecret);
+                else
+                    log.append(",http.apiKeySecret=******");
+            }
+            
+
+
+            String encodedAuthCharset = ClientConfiguration._getStringValue(name, "http.encodedAuthCharset", context, "US-ASCII");
 			if(encodedAuthCharset != null && !encodedAuthCharset.equals("")){
 				clientConfiguration.setEncodedAuthCharset(encodedAuthCharset);
 			}
@@ -1623,6 +1673,15 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 				builder.setDefaultHeaders(headers);
 			}
 		}
+        else{
+            if(SimpleStringUtil.isNotEmpty(getApiKeyId())){
+                String apiKeyAuth =getAPIHeader(  encodedAuthCharset ,  apiKeyId,   apiKeySecret);
+                BasicHeader header =  new BasicHeader("Authorization", apiKeyAuth);
+                List<Header> headers = new ArrayList<Header>();
+                headers.add(header);
+                builder.setDefaultHeaders(headers);
+            }
+        }
 	}
 	public static String getHeader(String encodedAuthCharset ,String user, String password) {
 		String auth = user + ":" + password;
@@ -1635,6 +1694,18 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 			return "Basic " + new String(encodedAuth);
 		}
 	}
+
+    public static String getAPIHeader(String encodedAuthCharset ,String apiKeyId, String apiKeySecret) {
+        String auth = apiKeyId + ":" + apiKeySecret;
+        if(encodedAuthCharset != null && !encodedAuthCharset.equals("")) {
+            byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(Charset.forName(encodedAuthCharset)));
+            return "ApiKey " + new String(encodedAuth);
+        }
+        else{
+            byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(StandardCharsets.UTF_8));
+            return "ApiKey " + new String(encodedAuth);
+        }
+    }
 	private void buildRetryHandler(HttpClientBuilder builder) {
 		if(automaticRetriesDisabled) {
 			builder.disableAutomaticRetries();

@@ -58,9 +58,10 @@ public class RequestKerberosUrlUtilsParams extends BaseRequestKerberosUrlUtils{
         Set<Principal> princ = new HashSet<Principal>(1);
         princ.add(new KerberosPrincipal(kerberosConfig.getPrincipal()));
         Subject sub = new Subject(false, princ, new HashSet<Object>(), new HashSet<Object>());
-         
+        
+        
         //认证模块：Krb5Login
-        LoginContext lc = new LoginContext("Krb5Login", sub, null, configuration);
+        LoginContext lc = new LoginContext(getLoginContextName(), sub, null, configuration);
         lc.login();
         Subject serviceSubject = lc.getSubject();
         return serviceSubject;

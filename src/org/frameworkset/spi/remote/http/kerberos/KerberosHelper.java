@@ -49,6 +49,9 @@ public class KerberosHelper {
                 if(key.equals("principal")){
                     kerberosConfig.setPrincipal((String)entry.getValue());
                 }
+                else if(key.equals("loginContextName")){
+                    kerberosConfig.setLoginContextName((String)entry.getValue());
+                }                
                 else if(key.equals("keytab")){
                     kerberosConfig.setKeytab((String)entry.getValue());
                 }

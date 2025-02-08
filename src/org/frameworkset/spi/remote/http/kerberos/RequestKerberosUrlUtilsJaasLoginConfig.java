@@ -80,66 +80,13 @@ public class RequestKerberosUrlUtilsJaasLoginConfig extends BaseRequestKerberosU
         builder.setDefaultCredentialsProvider(credentialsProvider);
        
     }
-    
-
-    public HttpResponse get(HttpClient spnegoHttpClient ,final String url) {
-        try {
-
-            Subject serviceSubject = getSubject();
-            return Subject.doAs(serviceSubject, new PrivilegedAction<HttpResponse>() {
-                HttpResponse httpResponse = null;
-
-                @Override
-                public HttpResponse run() {
-                    try {
-                        HttpUriRequest request = new HttpGet(url);
-//                        HttpClient spnegoHttpClient = buildSpengoHttpClient();
-                        httpResponse = spnegoHttpClient.execute(request);
-                        return httpResponse;
-                    } catch (IOException ioe) {
-                        ioe.printStackTrace();
-                    }
-                    return httpResponse;
-                }
-            });
-        } catch (Exception le) {
-            le.printStackTrace();
-        }
-        return null;
-    }
-
-    public HttpResponse post(HttpClient spnegoHttpClient ,final String url, final String params) {
-        try {
-
-            Subject serviceSubject = getSubject();
-            return Subject.doAs(serviceSubject, new PrivilegedAction<HttpResponse>() {
-                HttpResponse httpResponse = null;
-
-                @Override
-                public HttpResponse run() {
-                    try {
-                        HttpPost httpPost = new HttpPost();
-                        httpPost.setEntity(new StringEntity(params, ContentType.APPLICATION_JSON));
-                        httpResponse = spnegoHttpClient.execute(httpPost);
-                        return httpResponse;
-                    } catch (IOException ioe) {
-                        ioe.printStackTrace();
-                    }
-                    return httpResponse;
-                }
-            });
-        } catch (Exception le) {
-            le.printStackTrace();
-        }
-        return null;
-    }
-
+      
     @Override
     protected Subject getSubject() throws LoginException {
         String property = System.getProperty("java.security.auth.login.config");
         if (null != property) {
             //认证模块：Krb5Login
-            LoginContext lc = new LoginContext("Krb5Login", null, null, configuration);
+            LoginContext lc = new LoginContext(getLoginContextName(), null, null, configuration);
             lc.login();
             return lc.getSubject();
         }

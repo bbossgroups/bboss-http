@@ -77,32 +77,15 @@ public abstract class BaseRequestKerberosUrlUtils {
 //        return httpClient;
     }
 
-    protected abstract Subject getSubject() throws LoginException ;
-
-    public <T> T callRestUrl(ClientConfiguration clientConfiguration, HttpClient spnegoHttpClient, String url, HttpRequestProxy.ExecuteRequest executeRequest,int triesCount) throws Exception {
-       
-        try {
-          
-            Subject serviceSubject = getSubject();
-            return Subject.doAs(serviceSubject, new PrivilegedAction<T>() {
-
-                @Override
-                public T run() {
-                    try {
-                        return (T) executeRequest.execute(clientConfiguration, spnegoHttpClient, url, triesCount);
-                    } catch (Exception e) {
-                        throw new KerberosCallException(e);
-                    }
-                }
-            });
-        } catch (KerberosCallException le) {
-            throw (Exception) le.getCause();
-        } catch (Exception le) {
-            throw le;
+    protected String getLoginContextName(){
+        String name = kerberosConfig.getLoginContextName();
+        if(name == null || name.equals("")){
+            name = "Krb5Login";
         }
-
+        return name;
     }
-
+    protected abstract Subject getSubject() throws LoginException ;
+ 
     public <T> T callRestUrl(KerberosCallback<T> kerberosCallback) throws Exception {
 
         try {

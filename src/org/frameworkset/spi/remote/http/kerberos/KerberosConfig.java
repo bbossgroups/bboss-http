@@ -45,7 +45,7 @@ public class KerberosConfig {
     http.kerberos.isInitiator=true
     http.kerberos.debug=true
      */
-
+    private String loginContextName = "Krb5Login";
     private String principal;
     private String keytab;
     private String krb5Location;
@@ -180,5 +180,13 @@ public class KerberosConfig {
 
     public void setConfigMode(int configMode) {
         this.configMode = configMode;
+    }
+
+    public String getLoginContextName() {
+        return loginContextName;
+    }
+
+    public void setLoginContextName(String loginContextName) {
+        this.loginContextName = loginContextName;
     }
 }

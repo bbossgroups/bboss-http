@@ -15,8 +15,11 @@ package org.frameworkset.http.client;
  * limitations under the License.
  */
 
-import org.frameworkset.spi.remote.http.HttpRequestUtil;
+import org.frameworkset.spi.remote.http.HttpRequestProxy;
+import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * <p>Description: </p>
@@ -27,9 +30,16 @@ import org.junit.Test;
  * @version 1.0
  */
 public class StartHttpPoolFromFile {
-	@Test
+    private static Logger logger = LoggerFactory.getLogger(StartHttpPoolFromFile.class);
+	@Before
 	public void test(){
 		//启动连接池
-		HttpRequestUtil.startHttpPools("application.properties");
+        HttpRequestProxy.startHttpPools("application.properties");
 	}
+    @Test
+    public void testKerberos(){
+        String response = HttpRequestProxy.httpGetforString("default","/");
+        logger.info(response);
+        
+    }
 }

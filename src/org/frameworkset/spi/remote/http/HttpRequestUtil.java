@@ -23,6 +23,8 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
+import org.frameworkset.spi.remote.http.kerberos.BaseRequestKerberosUrlUtils;
+import org.frameworkset.spi.remote.http.kerberos.KerberosCallback;
 import org.frameworkset.spi.remote.http.proxy.HttpProxyRequestException;
 import org.frameworkset.util.ResourceStartResult;
 import org.slf4j.Logger;
@@ -300,6 +302,26 @@ public class HttpRequestUtil {
        return httpGet(  poolname,   url,   cookie,   userAgent,   headers, responseHandler);
     }
 
+    private static interface ExecuteRequest<T>{
+        T execute() throws Exception;
+    }
+    private  static <T> T _executeRequest(ClientConfiguration config,ExecuteRequest<T> executeRequest)  throws Exception{
+        T responseBody = null;
+        BaseRequestKerberosUrlUtils baseRequestKerberosUrlUtils = config.getRequestKerberosUrlUtils();
+        if(baseRequestKerberosUrlUtils == null) {
+            responseBody = executeRequest.execute();
+        }
+        else{
+             
+            responseBody = baseRequestKerberosUrlUtils.callRestUrl(new KerberosCallback<T>() {
+                @Override
+                public T call() throws Exception {
+                    return executeRequest.execute();
+                }
+            });
+        }
+        return responseBody;
+    }
     /**
      * get请求URL
      *
@@ -313,23 +335,45 @@ public class HttpRequestUtil {
 
         T responseBody = null;
         ClientConfiguration config = ClientConfiguration.getClientConfiguration(poolname);
-            try {
-                httpClient = getHttpClient(config);
-                httpGet = getHttpGet(config, url, cookie, userAgent, headers);
-                if(responseHandler != null && responseHandler instanceof URLResponseHandler){
-                    ((URLResponseHandler)responseHandler).setUrl(url);
+        try {
+            httpClient = getHttpClient(config);
+            httpGet = getHttpGet(config, url, cookie, userAgent, headers);
+            if(responseHandler != null && responseHandler instanceof URLResponseHandler){
+                ((URLResponseHandler)responseHandler).setUrl(url);
+            }
+            final HttpClient tempHttpClient = httpClient;
+            final HttpGet tempHttpGet = httpGet;
+            responseBody = _executeRequest(  config, new ExecuteRequest<T>() {
+                @Override
+                public T execute() throws Exception {
+                    return tempHttpClient.execute(tempHttpGet, responseHandler);
                 }
-                responseBody = httpClient.execute(httpGet, responseHandler);
+            });
+//            BaseRequestKerberosUrlUtils baseRequestKerberosUrlUtils = config.getRequestKerberosUrlUtils();
+//            if(baseRequestKerberosUrlUtils == null) {
+//                responseBody = httpClient.execute(httpGet, responseHandler);
+//            }
+//            else{
+//                final HttpClient tempHttpClient = httpClient;
+//                final HttpGet tempHttpGet = httpGet;
+//                responseBody = baseRequestKerberosUrlUtils.callRestUrl(new KerberosCallback<T>() {
+//                    @Override
+//                    public T call() throws Exception {
+//                        return tempHttpClient.execute(tempHttpGet, responseHandler);
+//                    }
+//                });
+//            }
+            
 
-            }
-            catch (Exception e) {               
-                throw   e;
-            }finally {
-                // 释放连接
-                if(httpGet!=null)
-                    httpGet.releaseConnection();
-                httpClient = null;
-            }
+        }
+        catch (Exception e) {               
+            throw   e;
+        }finally {
+            // 释放连接
+            if(httpGet!=null)
+                httpGet.releaseConnection();
+            httpClient = null;
+        }
 
         return responseBody;
 
@@ -410,7 +454,15 @@ public class HttpRequestUtil {
                 if(responseHandler != null && responseHandler instanceof URLResponseHandler){
                     ((URLResponseHandler)responseHandler).setUrl(url);
                 }
-                responseBody = httpClient.execute(httpHead, responseHandler);
+                final HttpClient tempHttpClient = httpClient;
+                final HttpHead tempHttpHead = httpHead;
+                responseBody = _executeRequest(  config, new ExecuteRequest<T>() {
+                    @Override
+                    public T execute() throws Exception {
+                        return tempHttpClient.execute(tempHttpHead, responseHandler);
+                    }
+                });
+//                responseBody = httpClient.execute(httpHead, responseHandler);
 
             }
             catch (Exception e) {
@@ -664,7 +716,15 @@ public class HttpRequestUtil {
                 if(responseHandler != null && responseHandler instanceof URLResponseHandler){
                     ((URLResponseHandler)responseHandler).setUrl(url);
                 }
-                responseBody = httpClient.execute(httpPost, responseHandler);
+                final HttpClient tempHttpClient = httpClient;
+                final HttpPost tempHttpPost = httpPost;
+                responseBody = _executeRequest(  config, new ExecuteRequest<T>() {
+                    @Override
+                    public T execute() throws Exception {
+                        return tempHttpClient.execute(tempHttpPost, responseHandler);
+                    }
+                });
+//                responseBody = httpClient.execute(httpPost, responseHandler);
 
             }
             catch (Exception e) {               
@@ -867,7 +927,15 @@ public class HttpRequestUtil {
                 if(responseHandler != null && responseHandler instanceof URLResponseHandler){
                     ((URLResponseHandler)responseHandler).setUrl(url);
                 }
-                responseBody = httpClient.execute(httpPut, responseHandler);
+                final HttpClient tempHttpClient = httpClient;
+                final HttpPut tempHttpPut = httpPut;
+                responseBody = _executeRequest(  config, new ExecuteRequest<T>() {
+                    @Override
+                    public T execute() throws Exception {
+                        return tempHttpClient.execute(tempHttpPut, responseHandler);
+                    }
+                });
+//                responseBody = httpClient.execute(httpPut, responseHandler);
             }
             catch (Exception e) {               
                 throw   e;
@@ -1111,7 +1179,15 @@ public class HttpRequestUtil {
                     if(responseHandler != null && responseHandler instanceof URLResponseHandler){
                         ((URLResponseHandler)responseHandler).setUrl(url);
                     }
-                    responseBody = httpClient.execute(httpDeleteWithBody, responseHandler);
+                    final HttpClient tempHttpClient = httpClient;
+                    final HttpDeleteWithBody tempHttpDeleteWithBody = httpDeleteWithBody;
+                    responseBody = _executeRequest(  config, new ExecuteRequest<T>() {
+                        @Override
+                        public T execute() throws Exception {
+                            return tempHttpClient.execute(tempHttpDeleteWithBody, responseHandler);
+                        }
+                    });
+//                    responseBody = httpClient.execute(httpDeleteWithBody, responseHandler);
                 }
                 else {
                     httpDelete = getHttpDelete(config, url, cookie, userAgent, headers);
@@ -1121,7 +1197,15 @@ public class HttpRequestUtil {
                     if(responseHandler != null && responseHandler instanceof URLResponseHandler){
                         ((URLResponseHandler)responseHandler).setUrl(url);
                     }
-                    responseBody = httpClient.execute(httpDelete, responseHandler);
+                    final HttpClient tempHttpClient = httpClient;
+                    final HttpDelete tempHttpDelete = httpDelete;
+                    responseBody = _executeRequest(  config, new ExecuteRequest<T>() {
+                        @Override
+                        public T execute() throws Exception {
+                            return tempHttpClient.execute(tempHttpDelete, responseHandler);
+                        }
+                    });
+//                    responseBody = httpClient.execute(httpDelete, responseHandler);
                 }
 
             }
@@ -1236,7 +1320,15 @@ public class HttpRequestUtil {
                 if(responseHandler != null && responseHandler instanceof URLResponseHandler){
                     ((URLResponseHandler)responseHandler).setUrl(url);
                 }
-                responseBody = httpClient.execute(httpPost,responseHandler);
+                final HttpClient tempHttpClient = httpClient;
+                final HttpPost tempHttpPost = httpPost;
+                responseBody = _executeRequest(  config, new ExecuteRequest<T>() {
+                    @Override
+                    public T execute() throws Exception {
+                        return tempHttpClient.execute(tempHttpPost, responseHandler);
+                    }
+                });
+//                responseBody = httpClient.execute(httpPost,responseHandler);
             }
             catch (Exception e) {               
                 throw   e;
@@ -1295,7 +1387,15 @@ public class HttpRequestUtil {
                 if(responseHandler != null && responseHandler instanceof URLResponseHandler){
                     ((URLResponseHandler)responseHandler).setUrl(url);
                 }
-                responseBody = httpClient.execute(httpPost,responseHandler);
+                final HttpClient tempHttpClient = httpClient;
+                final HttpEntityEnclosingRequestBase tempHttpPost = httpPost;
+                responseBody = _executeRequest(  config, new ExecuteRequest<T>() {
+                    @Override
+                    public T execute() throws Exception {
+                        return tempHttpClient.execute(tempHttpPost, responseHandler);
+                    }
+                });
+//                responseBody = httpClient.execute(httpPost,responseHandler);
             }
             catch (Exception e) {
                 throw   e;
@@ -1340,7 +1440,7 @@ public class HttpRequestUtil {
 
     public static <T> T putBody(String poolname,String requestBody, String url, Map headers,ContentType contentType, ResponseHandler<T> responseHandler) throws Exception {
         HttpClient httpClient = null;
-        HttpPut httpPost = null;
+        HttpPut httpPut = null;
 
 
         HttpEntity httpEntity = new StringEntity(
@@ -1350,21 +1450,29 @@ public class HttpRequestUtil {
         T responseBody = null;
             try {
                 httpClient = getHttpClient(config);
-                httpPost = getHttpPut(config, url, "", "", headers);
+                httpPut = getHttpPut(config, url, "", "", headers);
                 if (httpEntity != null) {
-                    httpPost.setEntity(httpEntity);
+                    httpPut.setEntity(httpEntity);
                 }
                 if(responseHandler != null && responseHandler instanceof URLResponseHandler){
                     ((URLResponseHandler)responseHandler).setUrl(url);
                 }
-                responseBody = httpClient.execute(httpPost,responseHandler);
+                final HttpClient tempHttpClient = httpClient;
+                final HttpPut tempHttpPut = httpPut;
+                responseBody = _executeRequest(  config, new ExecuteRequest<T>() {
+                    @Override
+                    public T execute() throws Exception {
+                        return tempHttpClient.execute(tempHttpPut, responseHandler);
+                    }
+                });
+//                responseBody = httpClient.execute(httpPost,responseHandler);
             }
             catch (Exception e) {               
                 throw   e;
             } finally {
                 // 释放连接
-            	if(httpPost != null)
-            		httpPost.releaseConnection();
+            	if(httpPut != null)
+            		httpPut.releaseConnection();
                 httpClient = null;
             }
 

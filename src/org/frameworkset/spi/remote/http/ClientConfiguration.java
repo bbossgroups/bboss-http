@@ -40,6 +40,7 @@ import org.frameworkset.spi.assemble.GetProperties;
 import org.frameworkset.spi.assemble.MapGetProperties;
 import org.frameworkset.spi.assemble.PropertiesContainer;
 import org.frameworkset.spi.remote.http.callback.HttpClientBuilderCallback;
+import org.frameworkset.spi.remote.http.kerberos.*;
 import org.frameworkset.spi.remote.http.proxy.ExceptionWare;
 import org.frameworkset.spi.remote.http.proxy.HttpHostDiscover;
 import org.frameworkset.spi.remote.http.proxy.HttpServiceHosts;
@@ -124,11 +125,17 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 
 
     private String apiKeySecret;
+    
+    private KerberosConfig kerberosConfig;
+    private BaseRequestKerberosUrlUtils requestKerberosUrlUtils;
 
     public String getApiKeyId() {
         return apiKeyId;
     }
 
+    public BaseRequestKerberosUrlUtils getRequestKerberosUrlUtils(){
+        return this.requestKerberosUrlUtils;
+    }
     public void setApiKeyId(String apiKeyId) {
         this.apiKeyId = apiKeyId;
     }
@@ -144,7 +151,15 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		return encodedAuthCharset;
 	}
 
-	public void setEncodedAuthCharset(String encodedAuthCharset) {
+    public void setKerberosConfig(KerberosConfig kerberosConfig) {
+        this.kerberosConfig = kerberosConfig;
+    }
+
+    public KerberosConfig getKerberosConfig() {
+        return kerberosConfig;
+    }
+
+    public void setEncodedAuthCharset(String encodedAuthCharset) {
 		this.encodedAuthCharset = encodedAuthCharset;
 	}
 
@@ -493,7 +508,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 
 	}
 
-	private static String _getStringValue(String poolName, String propertyName, GetProperties context, String defaultValue) throws Exception {
+	public static String _getStringValue(String poolName, String propertyName, GetProperties context, String defaultValue) throws Exception {
 		Object _value = null;
 		if (poolName.equals("default")) {
 			_value = context.getExternalPropertyWithNS(poolName,propertyName);
@@ -505,6 +520,19 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		}
 		return ValueCastUtil.toString(_value,defaultValue);
 	}
+
+    public static Map<String,Object> _getValuesWithPrex(String poolName, String propertyNamePrex, GetProperties context) throws Exception {
+        Map<String,Object> _value = null;
+        if (poolName.equals("default")) {
+            _value = context.getExternalProperties(poolName,propertyNamePrex,true);
+            if (_value == null)
+                _value =  context.getExternalProperties(poolName,poolName + "." + propertyNamePrex,true);
+
+        } else {
+            _value =  context.getExternalProperties(poolName,poolName + "." + propertyNamePrex,true);
+        }
+        return _value;
+    }
 
 	private static Object _getObjectValue(String poolName, String propertyName, GetProperties context, Object defaultValue) throws Exception {
 		Object _value = null;
@@ -924,8 +952,11 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
                 else
                     log.append(",http.apiKeySecret=******");
             }
-            
 
+            KerberosConfig kerberosConfig = KerberosHelper.buildKerberosConfig(name,context,healthPoolname,log);
+            if(kerberosConfig != null){
+                clientConfiguration.setKerberosConfig(kerberosConfig);
+            }
 
             String encodedAuthCharset = ClientConfiguration._getStringValue(name, "http.encodedAuthCharset", context, "US-ASCII");
 			if(encodedAuthCharset != null && !encodedAuthCharset.equals("")){
@@ -1163,6 +1194,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 
 				clientConfiguration.httpServiceHosts = httpServiceHosts;
 			}
+            
 			if(logger.isInfoEnabled()){
 					logger.info("Http Pool[{}] config:{}", rname(healthPoolname,name), log.toString());
 			}
@@ -1578,7 +1610,20 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		// Create an HttpClient with the given custom dependencies and configuration.
 		HttpClientBuilder builder = HttpClients.custom();
 
-		initCredentialsProvider(  builder );
+        //启用kerberos认证
+        if(kerberosConfig != null){
+            if(kerberosConfig.getConfigMode() == KerberosConfig.CONFIG_MODE_PARAMS){
+                requestKerberosUrlUtils = new RequestKerberosUrlUtilsParams(kerberosConfig);
+                
+            }
+            else{
+                requestKerberosUrlUtils = new RequestKerberosUrlUtilsJaasLoginConfig(kerberosConfig);
+            }
+            requestKerberosUrlUtils.buildSpengoHttpClient(builder);
+        }
+        else {
+            initCredentialsProvider(builder);
+        }
 		if(evictExpiredConnections)
 			builder.evictExpiredConnections();
 		if (keepAlive > 0)//设置链接保活策略

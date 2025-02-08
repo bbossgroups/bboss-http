@@ -16,6 +16,8 @@ import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
+import org.frameworkset.spi.remote.http.kerberos.BaseRequestKerberosUrlUtils;
+import org.frameworkset.spi.remote.http.kerberos.KerberosCallback;
 import org.frameworkset.spi.remote.http.proxy.*;
 import org.frameworkset.util.ResourceStartResult;
 import org.slf4j.Logger;
@@ -2276,10 +2278,22 @@ public class HttpRequestProxy {
                     }
 
                     httpClient = HttpRequestUtil.getHttpClient(config);
-
-                    responseBody = (T)executeRequest.execute( config,httpClient,url,triesCount);
-                    httpClient = null;
-//                    responseBody = httpClient.execute(httpPost, responseHandler);
+                    BaseRequestKerberosUrlUtils baseRequestKerberosUrlUtils = config.getRequestKerberosUrlUtils();
+                    if(baseRequestKerberosUrlUtils == null) {
+                        responseBody = (T) executeRequest.execute(config, httpClient, url, triesCount);
+                    }
+                    else{
+//                        requestBody = baseRequestKerberosUrlUtils.callRestUrl(config,httpClient,url,executeRequest,triesCount);
+                        final String tempUrl = url;
+                        final HttpClient tempHttpClient = httpClient;
+                        final int tempTriesCount = triesCount;
+                        responseBody = baseRequestKerberosUrlUtils.callRestUrl(new KerberosCallback<T>() {
+                            @Override
+                            public T call() throws Exception{
+                                return (T) executeRequest.execute(config, tempHttpClient, tempUrl, tempTriesCount);
+                            }
+                        });
+                    }
                     httpAddress.recover();
                     e = HttpParamsHandler.getException(  responseHandler,httpServiceHosts );
                     break;
@@ -2784,7 +2798,7 @@ public class HttpRequestProxy {
 
     }
 
-    private interface ExecuteRequest{
+    public static interface ExecuteRequest{
         Object execute(ClientConfiguration config,HttpClient httpClient ,String url, int triesCount) throws Exception;
     }
 

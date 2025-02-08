@@ -13,6 +13,7 @@ public class TestHttpRequestbody {
     public void init(){
         HttpRequestProxy.startHttpPools("application.properties");
     }
+    
     @Test
     public void testHttpJsonRequestbody() throws Exception {
         System.out.println(HttpRequestUtil.sendJsonBody("{\"id\":\"15284b36-3404-4bf8-8f14-c2114f2d97fb\",\"data\":\"国产j2ee框架 bboss\"}","http://localhost:9096/xmlrequest/xml/echohttpjson.page"));

@@ -51,7 +51,10 @@ public class KerberosHelper {
                 }
                 else if(key.equals("loginContextName")){
                     kerberosConfig.setLoginContextName((String)entry.getValue());
-                }                
+                }
+                else if(key.equals("useSubjectCredsOnly")){
+                    kerberosConfig.setUseSubjectCredsOnly((String)entry.getValue());
+                }
                 else if(key.equals("keytab")){
                     kerberosConfig.setKeytab((String)entry.getValue());
                 }

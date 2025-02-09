@@ -60,6 +60,9 @@ public class KerberosConfig {
     private String doNotPrompt = "true";
     private String isInitiator = "true";
     private String debug = "false";
+
+
+    private String useSubjectCredsOnly ;
     private Map<String,String> exts;
 
     /**
@@ -71,6 +74,13 @@ public class KerberosConfig {
 
     public String getPrincipal() {
         return principal;
+    }
+    public String getUseSubjectCredsOnly() {
+        return useSubjectCredsOnly;
+    }
+
+    public void setUseSubjectCredsOnly(String useSubjectCredsOnly) {
+        this.useSubjectCredsOnly = useSubjectCredsOnly;
     }
 
     public void setPrincipal(String principal) {

@@ -15,6 +15,7 @@ package org.frameworkset.spi.remote.http.kerberos;
  * limitations under the License.
  */
 
+import com.frameworkset.util.SimpleStringUtil;
 import org.apache.http.auth.AuthSchemeProvider;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
@@ -48,6 +49,9 @@ public abstract class BaseRequestKerberosUrlUtils {
     public BaseRequestKerberosUrlUtils(KerberosConfig kerberosConfig) {
         this.kerberosConfig = kerberosConfig;
         System.setProperty("java.security.krb5.conf", kerberosConfig.getKrb5Location());
+        if(SimpleStringUtil.isNotEmpty(kerberosConfig.getUseSubjectCredsOnly())){
+            System.setProperty("javax.security.auth.useSubjectCredsOnly", kerberosConfig.getUseSubjectCredsOnly());
+        }
         if (kerberosConfig.getDebug() != null && kerberosConfig.getDebug().equals("true")) {
             System.setProperty("sun.security.spnego.debug", "true");
             System.setProperty("sun.security.krb5.debug", "true");

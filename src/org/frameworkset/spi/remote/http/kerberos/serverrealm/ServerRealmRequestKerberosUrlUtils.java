@@ -72,5 +72,10 @@ public  class ServerRealmRequestKerberosUrlUtils extends BaseRequestKerberosUrlU
     public void afterStart() {
         this.serverRealmClientHelper.authenticate();
     }
+    @Override
+    public void close() {
+        
+        this.serverRealmClientHelper.close();
+    }
  
 }

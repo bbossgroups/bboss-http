@@ -89,6 +89,11 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	private final static int DEFAULT_validateAfterInactivity = -1;
 	public static final String http_authAccount = "http.authAccount";
 	public static final String http_authPassword = "http.authPassword";
+    public static final String http_hosts = "http.hosts";
+    public static final String http_health = "http.health";
+    public static final String http_discover_service = "http.discoverService";
+    
+    
 
     public static final String http_apiKeyId = "http.apiKeyId";
     public static final String http_apiKeySecret = "http.apiKeySecret";
@@ -419,10 +424,11 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 					clientConfiguration.setBeanName(name);
 
 					clientConfiguration.afterPropertiesSet();
+//                    clientConfiguration.afterStart();
 					clientConfigs.put(name, clientConfiguration);
 					if(resourceStartResult != null)
 						resourceStartResult.addResourceStartResult(name);
-                    clientConfiguration.afterStart();
+                    
 					if(logger.isInfoEnabled()){
 						logger.info("Make http pool[{}] use default config completed!",name);
 					}
@@ -949,7 +955,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
                 clientConfiguration.setApiKeyId(apiKeyId);
             }
 
-            log.append("http.apiKeyId=").append(apiKeyId);
+            log.append(",http.apiKeyId=").append(apiKeyId);
 
             
             String apiKeySecret = ClientConfiguration._getStringValue(name, "http.apiKeySecret", context, null);
@@ -1216,16 +1222,23 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
                 ClientConfiguration tmp = clientConfigs.get(name);
                 clientConfiguration.setRequestKerberosUrlUtils(tmp.getRequestKerberosUrlUtils());
             }
-			clientConfiguration.afterPropertiesSet();
-			//初始化http发现服务组件
-			if(healthPoolname == null && httpServiceHosts != null)
-				httpServiceHosts.after(name,context);
+            try {
+                clientConfiguration.afterPropertiesSet();
+
+                //初始化http发现服务组件
+                if (healthPoolname == null) {
+                    httpServiceHosts.after(name, context);
+                }
+            }
+            catch (Exception e){
+                clientConfiguration.close(true);
+                throw e;
+            }
             
 			clientConfigs.put(rname(healthPoolname,name), clientConfiguration);
 			if(resourceStartResult != null)
 				resourceStartResult.addResourceStartResult(rname(healthPoolname,name));
-            if(healthPoolname == null )
-                clientConfiguration.afterStart();
+            
            
 
 		}
@@ -1265,30 +1278,44 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	}
 	private boolean closed = false;
 	public synchronized void close(){
-		if(closed)
-			return;
-		closed = true;
-		if(httpServiceHosts != null){
-			httpServiceHosts.close();
-			httpServiceHosts = null;
-		}
-		try {
-			Thread.sleep(100);
-		}
-		catch (InterruptedException e){
-
-		}
-		if(this.httpclient != null){
-			try {
-				httpclient.close();
-				httpclient = null;
-			} catch (IOException e) {
-				logger.warn("stop http pool "+ this.getBeanName() + " failed:",e);
-			}
-
-		}
+		close(false);
 
 	}
+
+    public synchronized void close(boolean fromException){
+        if(closed)
+            return;
+        closed = true;
+        if(this.requestKerberosUrlUtils != null){
+            requestKerberosUrlUtils.close();
+        }
+        if(httpServiceHosts != null){
+            httpServiceHosts.close();
+            httpServiceHosts = null;
+        }
+        try {
+            Thread.sleep(100);
+        }
+        catch (InterruptedException e){
+
+        }
+        if(this.httpclient != null){
+            try {
+                httpclient.close();
+                httpclient = null;
+            } catch (IOException e) {
+                logger.warn("stop http pool "+ this.getBeanName() + " failed:",e);
+            }
+
+        }
+        if(!fromException) {
+            logger.info("Http pool " + this.getBeanName() + " stopped.");
+        }
+        else{
+            logger.info("Http pool " + this.getBeanName() + " terminated abnormally!");
+        }
+
+    }
 	public static ResourceStartResult bootHealthCheckClientConfiguations(String[] serverNames, GetProperties context) {
 		ResourceStartResult resourceStartResult = new HttpResourceStartResult();
 		//初始化Http连接池
@@ -1329,6 +1356,12 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		return clientConfigs.get(poolname);
 
 	}
+
+    /**
+     * 获取连接池配置对象
+     * @param poolname
+     * @return
+     */
 	public static ClientConfiguration getClientConfiguration(String poolname) {
 		loadClientConfiguration();
 		if (poolname == null)

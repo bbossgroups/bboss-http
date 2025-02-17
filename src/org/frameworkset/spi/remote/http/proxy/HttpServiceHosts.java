@@ -171,7 +171,7 @@ public class HttpServiceHosts {
 		else if(this.exceptionWare != null){
 			exceptionWare.setHttpServiceHosts(this);
 		}
-
+        clientConfiguration.afterStart();
 		if(httpServiceHostsConfig.getHealthCheckInterval() > 0 && httpServiceHostsConfig.getHealth() != null && !this.httpServiceHostsConfig.getHealth().equals("")) {
 			if(logger.isInfoEnabled()) {
 				logger.info(new StringBuilder().append("Start Http pool[")

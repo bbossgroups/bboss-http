@@ -60,7 +60,9 @@ public class ServerRealmClientHelper {
             this.cookieNow = cookie;
         }
     }
-
+    public void close() {
+        serverRealmKerberosUtil.close();
+    }
     private long getTokenExpireTime(String cookie) {
         long expireTime = -1L;
         if (null == cookie) {

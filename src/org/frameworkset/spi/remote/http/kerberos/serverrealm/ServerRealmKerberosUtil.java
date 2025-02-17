@@ -333,6 +333,12 @@ public class ServerRealmKerberosUtil {
         }
 
     }
+
+    public void close() {
+        if(refreshTGTSingleton != null)
+            refreshTGTSingleton.shutdown();
+    }
+
     public class RefreshTgtThread implements Runnable 
     {
         private KerberosConfig kerberosConfig;
@@ -372,13 +378,18 @@ public class ServerRealmKerberosUtil {
         }
         public void shutdown(){
             if(esService != null){
-                esService.shutdown();
+                try {
+                    esService.shutdown();
+                }
+                catch (Exception e){
+                    LOG.warn("Shutdown kerberos RefreshTGTThread ThreadPool failed:",e);
+                }
+                
             }
         }
 
         public void startRefreshThread(  ) {
             if (esService == null) {
-                Class var0 = RefreshTGTSingleton.class;
                 synchronized(RefreshTGTSingleton.class) {
                     if (esService == null) {
                         esService = Executors.newFixedThreadPool(1, new ThreadFactory() {
@@ -419,7 +430,7 @@ public class ServerRealmKerberosUtil {
         String realm = null;
         try {
             ServerRealmKerberosThreadLocal.setAuthenticateLocal();
-            realm = HttpRequestProxy.httpGetforString(clientConfiguration.getBeanName(), this.serverRealmPath);
+            realm = HttpRequestProxy.httpGetforString(clientConfiguration, this.serverRealmPath);
         }
         finally {
             ServerRealmKerberosThreadLocal.clearAuthenticateLocal();

@@ -124,4 +124,7 @@ public abstract class BaseRequestKerberosUrlUtils implements HttpClientBuilderCa
     public void afterStart() {
         
     }
+
+    public void close() {
+    }
 }

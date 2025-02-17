@@ -46,7 +46,7 @@ public class RequestKerberosUrlUtilsJaasLoginConfig extends BaseRequestKerberosU
 
     public RequestKerberosUrlUtilsJaasLoginConfig(KerberosConfig kerberosConfig, ClientConfiguration clientConfiguration) {
         super(kerberosConfig,  clientConfiguration);
-        configuration = Configuration.getConfiguration();
+//        configuration = Configuration.getConfiguration();
         System.setProperty("java.security.auth.login.config", kerberosConfig.getLoginConfig());
 
     }

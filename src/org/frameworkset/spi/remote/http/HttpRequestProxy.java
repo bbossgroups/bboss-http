@@ -96,6 +96,10 @@ public class HttpRequestProxy {
         return httpGetforString(poolname, url, (String) null, (String) null, (Map) null);
     }
 
+    public static String httpGetforString(ClientConfiguration clientConfiguration, String url) throws HttpProxyRequestException {
+        return httpGetforString(clientConfiguration, url, (String) null, (String) null, (Map) null);
+    }
+
     public static <T> T httpGetforObject(String poolname, String url,final Class<T> resultType) throws HttpProxyRequestException {
         return httpGetforString(poolname, url, (String) null, (String) null, (Map) null, new BaseURLResponseHandler<T>() {
 
@@ -395,6 +399,10 @@ public class HttpRequestProxy {
     public static String httpGetforString(String poolname, String url, String cookie, String userAgent, Map headers) throws HttpProxyRequestException{
         return  httpGetforString(poolname, url, cookie, userAgent, headers,new StringResponseHandler()) ;
     }
+
+    public static String httpGetforString(ClientConfiguration clientConfiguration, String url, String cookie, String userAgent, Map headers) throws HttpProxyRequestException{
+        return  httpGetforString(clientConfiguration, url, cookie, userAgent, headers,new StringResponseHandler()) ;
+    }
     /**
      * get请求URL
      *
@@ -403,6 +411,10 @@ public class HttpRequestProxy {
      */
     public static <T> T httpGetforString(String poolname, String url, String cookie, String userAgent, Map headers,ResponseHandler<T> responseHandler) throws HttpProxyRequestException {
        return httpGet(  poolname,   url,   cookie,   userAgent,  (Map)null, headers, responseHandler);
+    }
+
+    public static <T> T httpGetforString(ClientConfiguration clientConfiguration, String url, String cookie, String userAgent, Map headers,ResponseHandler<T> responseHandler) throws HttpProxyRequestException {
+        return httpGet(  clientConfiguration,   url,   cookie,   userAgent,  (Map)null, headers, responseHandler);
     }
 
     /**
@@ -424,6 +436,36 @@ public class HttpRequestProxy {
         //拼接get请求参数
         url = HttpParamsHandler.appendParams(url,params);
         return _handleRequest( poolname,  url ,
+                responseHandler,new ExecuteRequest(){
+                    @Override
+                    public Object execute(ClientConfiguration config, HttpClient httpClient,String url, int triesCount) throws Exception {
+                        HttpGet httpGet = null;
+                        try {
+                            httpGet = HttpRequestUtil.getHttpGet(config, url, cookie, userAgent, headers);
+
+                            return httpClient.execute(httpGet, responseHandler);
+                        }
+                        finally {
+                            // 释放连接
+                            if (httpGet != null)
+                                httpGet.releaseConnection();
+                        }
+                    }
+                } );
+
+
+    }
+
+    /**
+     * get请求URL
+     *
+     * @param url
+     * @throws HttpProxyRequestException
+     */
+    public static <T> T httpGet(ClientConfiguration clientConfiguration, String url, final String cookie,final  String userAgent,final  Object params,final  Map headers,final ResponseHandler<T> responseHandler) throws HttpProxyRequestException {
+        //拼接get请求参数
+        url = HttpParamsHandler.appendParams(url,params);
+        return _handleRequest( clientConfiguration,  url ,
                 responseHandler,new ExecuteRequest(){
                     @Override
                     public Object execute(ClientConfiguration config, HttpClient httpClient,String url, int triesCount) throws Exception {
@@ -2209,10 +2251,29 @@ public class HttpRequestProxy {
     private static <T> T _handleRequest(String poolname, String url,
 
                                    ResponseHandler<T> responseHandler,ExecuteRequest executeRequest) throws HttpProxyRequestException {
+
+        ClientConfiguration config = ClientConfiguration.getClientConfiguration(poolname);
+
+        return  _handleRequest(  config,   url,
+                                          responseHandler,  executeRequest)  ;
+
+    }
+
+    /**
+     * 公共处理请求方法
+     * @param url
+     * @param responseHandler
+     * @param executeRequest
+     * @param <T>
+     * @return
+     * @throws HttpProxyRequestException
+     */
+    private static <T> T _handleRequest(ClientConfiguration config, String url,
+
+                                        ResponseHandler<T> responseHandler,ExecuteRequest executeRequest) throws HttpProxyRequestException {
         HttpClient httpClient = null;
 
-        final ClientConfiguration config = ClientConfiguration.getClientConfiguration(poolname);
-
+        String poolname = config.getBeanName();
 //        int RETRY_TIME = config.getRetryTime();
         T responseBody = null;
         String endpoint = null;
@@ -2224,7 +2285,7 @@ public class HttpRequestProxy {
             endpoint = url;
             HttpAddress httpAddress = null;
             HttpServiceHosts httpServiceHosts = config.getHttpServiceHosts();
-            assertCheck(  httpServiceHosts,endpoint ,poolname);
+            assertCheck(  httpServiceHosts,endpoint ,config.getBeanName());
             do {
 
                 try {

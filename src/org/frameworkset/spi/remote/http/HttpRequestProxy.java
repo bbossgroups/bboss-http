@@ -1950,34 +1950,6 @@ public class HttpRequestProxy {
                 "text/plain", Consts.UTF_8));
     }
 
-//    public static String sendJsonBody(String poolname,String requestBody, String url) throws HttpProxyRequestException {
-//
-//        return  sendBody(   poolname, requestBody,   url,   null,ContentType.APPLICATION_JSON);
-//    }
-
-//    public static <T> T sendJsonBody(String poolname,String requestBody, String url,Class<T> resultType) throws HttpProxyRequestException {
-//
-//        return  sendBody(   poolname, requestBody,   url,   null,ContentType.APPLICATION_JSON,resultType);
-//    }
-//    public static <T> List<T> sendJsonBodyForList(String poolname,String requestBody, String url,Class<T> resultType) throws HttpProxyRequestException {
-//
-//        return  sendBodyForList(   poolname, requestBody,   url,   null,ContentType.APPLICATION_JSON,resultType);
-//    }
-
-//    public static <T> List<T> sendJsonBodyForList(String poolname,String requestBody, String url, Map headers,Class<T> resultType) throws HttpProxyRequestException {
-//
-//        return  sendBodyForList(   poolname, requestBody,   url,   headers,ContentType.APPLICATION_JSON,resultType);
-//    }
-
-//    public static <T> Set<T> sendJsonBodyForSet(String poolname,String requestBody, String url,Class<T> resultType) throws HttpProxyRequestException {
-//
-//        return  sendBodyForSet(   poolname, requestBody,   url,   null,ContentType.APPLICATION_JSON,resultType);
-//    }
-
-//    public static <K,T> Map<K,T> sendJsonBodyForMap(String poolname,String requestBody, String url,Class<K> keyType,Class<T> resultType) throws HttpProxyRequestException {
-//
-//        return  sendBodyForMap(   poolname, requestBody,   url,   null,ContentType.APPLICATION_JSON, keyType,resultType);
-//    }
     public static String sendJsonBody(String poolname,Object requestBody, String url) throws HttpProxyRequestException {
 
         return  sendBody(   poolname, object2json(requestBody),   url,   null,ContentType.APPLICATION_JSON);
@@ -2051,23 +2023,13 @@ public class HttpRequestProxy {
 
         return  sendBody(  poolname, object2json(requestBody),   url,   headers,ContentType.APPLICATION_JSON);
     }
-//    public static String sendJsonBody(String poolname, String requestBody, String url, Map headers) throws HttpProxyRequestException {
-//
-//        return  sendBody(  poolname, requestBody,   url,   headers,ContentType.APPLICATION_JSON);
-//    }
+
     public static String sendStringBody(String requestBody, String url, Map headers) throws HttpProxyRequestException {
         return  sendBody("default",  requestBody,   url,   headers,ContentType.create(
                 "text/plain", Consts.UTF_8));
     }
 
-//    public static String sendJsonBody(String requestBody, String url) throws HttpProxyRequestException {
-//
-//        return  sendBody( "default", requestBody,   url,   null,ContentType.APPLICATION_JSON);
-//    }
-//    public static <T> T sendJsonBody(String requestBody, String url,Class<T> resultType) throws HttpProxyRequestException {
-//
-//        return  sendBody( "default", requestBody,   url,   null,ContentType.APPLICATION_JSON,  resultType);
-//    }
+
     public static String sendJsonBody( String url) throws HttpProxyRequestException {
 
         return  sendBody( "default", (String)null,   url,   null,ContentType.APPLICATION_JSON);

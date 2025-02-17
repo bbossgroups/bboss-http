@@ -28,6 +28,7 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
 import org.frameworkset.spi.remote.http.HttpRequestProxy;
+import org.frameworkset.spi.remote.http.callback.HttpClientBuilderCallback;
 
 import javax.security.auth.Subject;
 import javax.security.auth.login.Configuration;
@@ -42,12 +43,15 @@ import java.security.PrivilegedAction;
  * @author biaoping.yin
  * @Date 2025/2/7
  */
-public abstract class BaseRequestKerberosUrlUtils {
+public abstract class BaseRequestKerberosUrlUtils implements HttpClientBuilderCallback {
     protected KerberosConfig kerberosConfig;
-    protected Configuration configuration;
 
-    public BaseRequestKerberosUrlUtils(KerberosConfig kerberosConfig) {
+    protected Configuration configuration;
+    protected ClientConfiguration clientConfiguration;
+
+    public BaseRequestKerberosUrlUtils(KerberosConfig kerberosConfig,ClientConfiguration clientConfiguration) {
         this.kerberosConfig = kerberosConfig;
+        this.clientConfiguration = clientConfiguration;
         System.setProperty("java.security.krb5.conf", kerberosConfig.getKrb5Location());
         if(SimpleStringUtil.isNotEmpty(kerberosConfig.getUseSubjectCredsOnly())){
             System.setProperty("javax.security.auth.useSubjectCredsOnly", kerberosConfig.getUseSubjectCredsOnly());
@@ -57,7 +61,10 @@ public abstract class BaseRequestKerberosUrlUtils {
             System.setProperty("sun.security.krb5.debug", "true");
         }
     }
-
+    @Override
+    public HttpClientBuilder customizeHttpClient(HttpClientBuilder builder , ClientConfiguration clientConfiguration) throws Exception{
+        return builder;
+    }
     //模拟curl使用kerberos认证
     public  void buildSpengoHttpClient(HttpClientBuilder builder) {
 //        HttpClientBuilder builder = HttpClientBuilder.create();
@@ -112,5 +119,9 @@ public abstract class BaseRequestKerberosUrlUtils {
             throw le;
         }
 
+    }
+
+    public void afterStart() {
+        
     }
 }

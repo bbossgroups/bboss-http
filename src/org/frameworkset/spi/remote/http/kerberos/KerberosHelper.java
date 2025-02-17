@@ -16,11 +16,18 @@ package org.frameworkset.spi.remote.http.kerberos;
  */
 
 import com.frameworkset.util.SimpleStringUtil;
+import com.sun.security.auth.login.ConfigFile;
 import org.frameworkset.spi.assemble.GetProperties;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
 import org.frameworkset.spi.remote.http.HttpRuntimeException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.security.auth.login.AppConfigurationEntry;
+import java.io.File;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -31,7 +38,48 @@ import java.util.Map;
  * @Date 2025/2/7
  */
 public class KerberosHelper {
-    
+    private static final Logger LOG = LoggerFactory.getLogger(KerberosHelper.class);
+    public static AppConfigurationEntry[] readAppConfigurationEntryFromFile(KerberosConfig kerberosConfig) {
+        AppConfigurationEntry[] entries = null;
+        File jaasConfigFile = new File(kerberosConfig.getLoginConfig());
+        if (jaasConfigFile.exists() && jaasConfigFile.isFile()) {
+            ConfigFile configFile = new ConfigFile(jaasConfigFile.toURI());
+            LOG.info(String.format(Locale.ENGLISH, "Get application configuration entry use by application name %s.", kerberosConfig.getLoginContextName()));
+            entries = configFile.getAppConfigurationEntry(kerberosConfig.getLoginContextName());
+            if (entries == null || entries.length <= 0) {
+                LOG.info(String.format(Locale.ENGLISH, "Get application configuration entry use by application name %s.", "Client"));
+            }
+        }
+
+        return entries;
+    }
+    public static AppConfigurationEntry[] getAppConfigurationEntry(KerberosConfig kerberosConfig) {
+        if(kerberosConfig.getConfigMode() == KerberosConfig.CONFIG_MODE_JAAS_LOGIN_CONFIG){
+            return readAppConfigurationEntryFromFile(  kerberosConfig);
+        }
+        else {
+            return new AppConfigurationEntry[]{new AppConfigurationEntry("com.sun.security.auth.module.Krb5LoginModule",
+                    AppConfigurationEntry.LoginModuleControlFlag.REQUIRED, new HashMap<String, Object>() {
+                {
+                    put("useTicketCache", kerberosConfig.getUseTicketCache());
+                    if (SimpleStringUtil.isNotEmpty(kerberosConfig.getKeytab()))
+                        put("useKeyTab", "true");
+                    put("keyTab", kerberosConfig.getKeytab());
+                    //Krb5 in GSS API needs to be refreshed so it does not throw the error
+                    //Specified version of key is not available
+                    put("refreshKrb5Config", kerberosConfig.getRefreshKrb5Config());
+                    put("principal", kerberosConfig.getPrincipal());
+                    put("storeKey", kerberosConfig.getStoreKey());
+                    put("doNotPrompt", kerberosConfig.getDoNotPrompt());
+                    put("isInitiator", kerberosConfig.getIsInitiator());
+                    put("debug", kerberosConfig.getDebug());
+                    if (kerberosConfig.getExts() != null && !kerberosConfig.getExts().isEmpty()) {
+                        putAll(kerberosConfig.getExts());
+                    }
+                }
+            })};
+        }
+    }
     public static KerberosConfig buildKerberosConfig(String name, GetProperties context,String healthPoolname,StringBuilder log ) throws Exception {
         Map<String,Object> kerberosConfigs = ClientConfiguration._getValuesWithPrex(name, "http.kerberos", context);
         KerberosConfig kerberosConfig = null;
@@ -48,6 +96,9 @@ public class KerberosHelper {
 
                 if(key.equals("principal")){
                     kerberosConfig.setPrincipal((String)entry.getValue());
+                }
+                else if(key.equals("provider")){
+                    kerberosConfig.setProvider((String)entry.getValue());
                 }
                 else if(key.equals("loginContextName")){
                     kerberosConfig.setLoginContextName((String)entry.getValue());

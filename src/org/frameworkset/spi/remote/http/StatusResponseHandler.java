@@ -37,8 +37,8 @@ public abstract class StatusResponseHandler {
 	protected RuntimeException throwException(int status, HttpEntity entity) throws IOException {
 
 		if (entity != null ) {
-			if(_logger.isDebugEnabled()) {
-				_logger.debug(new StringBuilder().append("Request url:").append(url).append(",status:").append(status).toString());
+			if(_logger.isErrorEnabled()) {
+				_logger.error(new StringBuilder().append("Request url:").append(url).append(",status:").append(status).toString());
 			}
 			return new HttpProxyRequestException(EntityUtils.toString(entity));
 		}

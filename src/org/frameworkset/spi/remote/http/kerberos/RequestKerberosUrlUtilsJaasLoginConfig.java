@@ -15,31 +15,24 @@ package org.frameworkset.spi.remote.http.kerberos;
  * limitations under the License.
  */
 
-import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthSchemeProvider;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.AuthSchemes;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.config.Lookup;
 import org.apache.http.config.RegistryBuilder;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.auth.SPNegoSchemeFactory;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.frameworkset.spi.remote.http.ClientConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.security.auth.Subject;
+import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
-import java.io.IOException;
 import java.security.Principal;
-import java.security.PrivilegedAction;
 
 /**
  * <p>Description: </p>
@@ -50,10 +43,10 @@ import java.security.PrivilegedAction;
  */
 public class RequestKerberosUrlUtilsJaasLoginConfig extends BaseRequestKerberosUrlUtils {
     private static Logger logger = LoggerFactory.getLogger(RequestKerberosUrlUtilsJaasLoginConfig.class);
-  
 
-    public RequestKerberosUrlUtilsJaasLoginConfig(KerberosConfig kerberosConfig) {
-        super(kerberosConfig);
+    public RequestKerberosUrlUtilsJaasLoginConfig(KerberosConfig kerberosConfig, ClientConfiguration clientConfiguration) {
+        super(kerberosConfig,  clientConfiguration);
+        configuration = Configuration.getConfiguration();
         System.setProperty("java.security.auth.login.config", kerberosConfig.getLoginConfig());
 
     }

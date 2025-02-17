@@ -62,6 +62,9 @@ public class KerberosConfig {
     private String debug = "false";
 
 
+
+    private String provider = null;
+
     private String useSubjectCredsOnly ;
     private Map<String,String> exts;
 
@@ -106,7 +109,13 @@ public class KerberosConfig {
     public String getUseTicketCache() {
         return useTicketCache;
     }
+    public String getProvider() {
+        return provider;
+    }
 
+    public void setProvider(String provider) {
+        this.provider = provider;
+    }
     public void setUseTicketCache(String useTicketCache) {
         this.useTicketCache = useTicketCache;
     }

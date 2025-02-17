@@ -41,6 +41,7 @@ import org.frameworkset.spi.assemble.MapGetProperties;
 import org.frameworkset.spi.assemble.PropertiesContainer;
 import org.frameworkset.spi.remote.http.callback.HttpClientBuilderCallback;
 import org.frameworkset.spi.remote.http.kerberos.*;
+import org.frameworkset.spi.remote.http.kerberos.hw.HWRequestKerberosUrlUtils;
 import org.frameworkset.spi.remote.http.proxy.ExceptionWare;
 import org.frameworkset.spi.remote.http.proxy.HttpHostDiscover;
 import org.frameworkset.spi.remote.http.proxy.HttpServiceHosts;
@@ -128,6 +129,10 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
     
     private KerberosConfig kerberosConfig;
     private BaseRequestKerberosUrlUtils requestKerberosUrlUtils;
+
+    public void setRequestKerberosUrlUtils(BaseRequestKerberosUrlUtils requestKerberosUrlUtils) {
+        this.requestKerberosUrlUtils = requestKerberosUrlUtils;
+    }
 
     public String getApiKeyId() {
         return apiKeyId;
@@ -417,6 +422,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 					clientConfigs.put(name, clientConfiguration);
 					if(resourceStartResult != null)
 						resourceStartResult.addResourceStartResult(name);
+                    clientConfiguration.afterStart();
 					if(logger.isInfoEnabled()){
 						logger.info("Make http pool[{}] use default config completed!",name);
 					}
@@ -451,6 +457,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 					clientConfigs.put(name, clientConfiguration);
 					if(resourceStartResult != null)
 						resourceStartResult.addResourceStartResult(name);
+//                    clientConfiguration.afterStart();
 					if(logger.isInfoEnabled()){
 						logger.info("Make http pool[{}] use default config completed!",name);
 					}
@@ -893,6 +900,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 			if (clientConfiguration != null) {
 				return clientConfiguration;
 			}
+            
             if(healthPoolname != null && !(context instanceof HealthCheckGetProperties) ){
                 context = new HealthCheckGetProperties(context);
             }
@@ -953,9 +961,15 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
                     log.append(",http.apiKeySecret=******");
             }
 
-            KerberosConfig kerberosConfig = KerberosHelper.buildKerberosConfig(name,context,healthPoolname,log);
-            if(kerberosConfig != null){
-                clientConfiguration.setKerberosConfig(kerberosConfig);
+            if(healthPoolname == null) {
+                KerberosConfig kerberosConfig = KerberosHelper.buildKerberosConfig(name, context, healthPoolname, log);
+                if (kerberosConfig != null) {
+                    clientConfiguration.setKerberosConfig(kerberosConfig);
+                }
+            }
+            else{
+                ClientConfiguration tmp = clientConfigs.get(name);
+                clientConfiguration.setKerberosConfig(tmp.getKerberosConfig());
             }
 
             String encodedAuthCharset = ClientConfiguration._getStringValue(name, "http.encodedAuthCharset", context, "US-ASCII");
@@ -1198,14 +1212,21 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 			if(logger.isInfoEnabled()){
 					logger.info("Http Pool[{}] config:{}", rname(healthPoolname,name), log.toString());
 			}
+            if(healthPoolname != null){
+                ClientConfiguration tmp = clientConfigs.get(name);
+                clientConfiguration.setRequestKerberosUrlUtils(tmp.getRequestKerberosUrlUtils());
+            }
 			clientConfiguration.afterPropertiesSet();
 			//初始化http发现服务组件
 			if(healthPoolname == null && httpServiceHosts != null)
 				httpServiceHosts.after(name,context);
-
+            
 			clientConfigs.put(rname(healthPoolname,name), clientConfiguration);
 			if(resourceStartResult != null)
 				resourceStartResult.addResourceStartResult(rname(healthPoolname,name));
+            if(healthPoolname == null )
+                clientConfiguration.afterStart();
+           
 
 		}
 		return clientConfiguration;
@@ -1612,12 +1633,15 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 
         //启用kerberos认证
         if(kerberosConfig != null){
-            if(kerberosConfig.getConfigMode() == KerberosConfig.CONFIG_MODE_PARAMS){
-                requestKerberosUrlUtils = new RequestKerberosUrlUtilsParams(kerberosConfig);
-                
-            }
-            else{
-                requestKerberosUrlUtils = new RequestKerberosUrlUtilsJaasLoginConfig(kerberosConfig);
+            if(requestKerberosUrlUtils == null) {
+                if (kerberosConfig.getProvider() != null && kerberosConfig.getProvider().equals("HW")) {
+                    requestKerberosUrlUtils = new HWRequestKerberosUrlUtils(kerberosConfig, this);
+                } else if (kerberosConfig.getConfigMode() == KerberosConfig.CONFIG_MODE_PARAMS) {
+                    requestKerberosUrlUtils = new RequestKerberosUrlUtilsParams(kerberosConfig, this);
+
+                } else {
+                    requestKerberosUrlUtils = new RequestKerberosUrlUtilsJaasLoginConfig(kerberosConfig, this);
+                }
             }
             requestKerberosUrlUtils.buildSpengoHttpClient(builder);
         }
@@ -1656,6 +1680,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 			defaultRequestConfig = requestConfig;
 		}
 		clientConfigs.put(beanName, this);
+        
 //		ShutdownUtil.addShutdownHook(new Runnable() {
 //			@Override
 //			public void run() {
@@ -1666,6 +1691,11 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 
 
 	}
+    public void afterStart(){
+        if(requestKerberosUrlUtils != null){
+            requestKerberosUrlUtils.afterStart();
+        }
+    }
 	private void customizeHttpBuilder(HttpClientBuilder builder ) throws Exception {
 		HttpClientBuilderCallback _httpClientBuilderCallback = null;
 		if(this.getHttpClientBuilderCallback() != null){
@@ -1693,6 +1723,9 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
                 }
             };
             httpClientBuilderCallback.customizeHttpClient(builder,this);
+        }
+        if(requestKerberosUrlUtils != null){
+            requestKerberosUrlUtils.customizeHttpClient(builder,this);
         }
 		
 	}

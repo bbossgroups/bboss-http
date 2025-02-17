@@ -1,4 +1,4 @@
-package org.frameworkset.spi.remote.http.kerberos.hw;
+package org.frameworkset.spi.remote.http.kerberos.serverrealm;
 /**
  * Copyright 2025 bboss
  * <p>
@@ -18,7 +18,6 @@ package org.frameworkset.spi.remote.http.kerberos.hw;
 import org.apache.http.Header;
 import org.apache.http.HttpMessage;
 import org.apache.http.HttpResponse;
-import org.apache.http.message.AbstractHttpMessage;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,19 +33,19 @@ import java.util.Base64;
  * @author biaoping.yin
  * @Date 2025/2/16
  */
-public class HWClientHelper {
-    private Logger logger = LoggerFactory.getLogger(HWClientHelper.class);
+public class ServerRealmClientHelper {
+    private Logger logger = LoggerFactory.getLogger(ServerRealmClientHelper.class);
     private String cookieNow;
     private Object cookieLock = new Object();
     private long tokenValidityPeriod;
     private long tokenWillExpireTime;
     private long createSTTime;
-    private HWKerberosUtil hwKerberosUtil;
-    public HWClientHelper(ClientConfiguration clientConfiguration){
-        hwKerberosUtil = new HWKerberosUtil(clientConfiguration);
+    private ServerRealmKerberosUtil serverRealmKerberosUtil;
+    public ServerRealmClientHelper(ClientConfiguration clientConfiguration){
+        serverRealmKerberosUtil = new ServerRealmKerberosUtil(clientConfiguration);
     }
     public void authenticate() {
-        hwKerberosUtil.authenticate();
+        serverRealmKerberosUtil.authenticate();
     }
     public String getCookie() {
         synchronized (cookieLock) {
@@ -54,7 +53,7 @@ public class HWClientHelper {
         }
     }
     public Subject getSubj() {
-        return hwKerberosUtil.getSubj();
+        return serverRealmKerberosUtil.getSubj();
     }
     public void setCookie(String cookie) {
         synchronized (cookieLock) {
@@ -131,11 +130,11 @@ public class HWClientHelper {
     }
 
     private String getNewToken() {
-        byte[] tokenN = hwKerberosUtil.initiateSecurityContext(hwKerberosUtil.getSubj(), this.hwKerberosUtil.getServerRealm());
+        byte[] tokenN = serverRealmKerberosUtil.initiateSecurityContext(serverRealmKerberosUtil.getSubj(), this.serverRealmKerberosUtil.getServerRealm());
 
         for(int times = 0; null == tokenN && times < 3; ++times) {
             logger.debug("InitiateSecurityContext again.");
-            tokenN = hwKerberosUtil.initiateSecurityContext(hwKerberosUtil.getSubj(), this.hwKerberosUtil.getServerRealm());
+            tokenN = serverRealmKerberosUtil.initiateSecurityContext(serverRealmKerberosUtil.getSubj(), this.serverRealmKerberosUtil.getServerRealm());
         }
 
         if (null == tokenN) {

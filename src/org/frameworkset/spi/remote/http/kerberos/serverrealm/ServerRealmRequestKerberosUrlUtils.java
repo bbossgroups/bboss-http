@@ -1,4 +1,4 @@
-package org.frameworkset.spi.remote.http.kerberos.hw;
+package org.frameworkset.spi.remote.http.kerberos.serverrealm;
 /**
  * Copyright 2025 bboss
  * <p>
@@ -15,7 +15,6 @@ package org.frameworkset.spi.remote.http.kerberos.hw;
  * limitations under the License.
  */
 
-import org.apache.http.HttpMessage;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
 import org.frameworkset.spi.remote.http.kerberos.BaseRequestKerberosUrlUtils;
@@ -33,23 +32,23 @@ import javax.security.auth.login.LoginException;
  * @author biaoping.yin
  * @Date 2025/2/7
  */
-public  class HWRequestKerberosUrlUtils extends BaseRequestKerberosUrlUtils {
+public  class ServerRealmRequestKerberosUrlUtils extends BaseRequestKerberosUrlUtils {
 
-    private HWClientHelper hwClientHelper;
-    public HWRequestKerberosUrlUtils(KerberosConfig kerberosConfig,ClientConfiguration clientConfiguration) {
+    private ServerRealmClientHelper serverRealmClientHelper;
+    public ServerRealmRequestKerberosUrlUtils(KerberosConfig kerberosConfig, ClientConfiguration clientConfiguration) {
         super(kerberosConfig,  clientConfiguration);
-        hwClientHelper = new HWClientHelper( clientConfiguration);
+        serverRealmClientHelper = new ServerRealmClientHelper( clientConfiguration);
     }
  
     @Override
     protected Subject getSubject() throws LoginException {
-        return hwClientHelper.getSubj();
+        return serverRealmClientHelper.getSubj();
     }
 
     @Override
     public HttpClientBuilder customizeHttpClient(HttpClientBuilder builder , ClientConfiguration clientConfiguration) throws Exception{
-        builder.addInterceptorLast(new HWKerberosHttpRequestInterceptor(this.hwClientHelper));
-        builder.addInterceptorLast(new HWKerberosHttpResponseInterceptor(this.hwClientHelper));
+        builder.addInterceptorLast(new ServerRealmKerberosHttpRequestInterceptor(this.serverRealmClientHelper));
+        builder.addInterceptorLast(new ServerRealmKerberosHttpResponseInterceptor(this.serverRealmClientHelper));
         return builder;
     }
 
@@ -71,7 +70,7 @@ public  class HWRequestKerberosUrlUtils extends BaseRequestKerberosUrlUtils {
 
     @Override
     public void afterStart() {
-        this.hwClientHelper.authenticate();
+        this.serverRealmClientHelper.authenticate();
     }
  
 }

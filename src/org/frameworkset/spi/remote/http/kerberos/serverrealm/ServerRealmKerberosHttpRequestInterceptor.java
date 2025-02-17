@@ -1,4 +1,4 @@
-package org.frameworkset.spi.remote.http.kerberos.hw;
+package org.frameworkset.spi.remote.http.kerberos.serverrealm;
 /**
  * Copyright 2025 bboss
  * <p>
@@ -16,8 +16,8 @@ package org.frameworkset.spi.remote.http.kerberos.hw;
  */
 
 import org.apache.http.HttpException;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpResponseInterceptor;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.protocol.HttpContext;
 
 import java.io.IOException;
@@ -29,26 +29,26 @@ import java.io.IOException;
  * @author biaoping.yin
  * @Date 2025/2/16
  */
-public class HWKerberosHttpResponseInterceptor implements HttpResponseInterceptor {
-    private HWClientHelper hwClientHelper;
-    public HWKerberosHttpResponseInterceptor(HWClientHelper hwClientHelper){
-        this.hwClientHelper = hwClientHelper;
+public class ServerRealmKerberosHttpRequestInterceptor implements HttpRequestInterceptor {
+    private ServerRealmClientHelper serverRealmClientHelper;
+    public ServerRealmKerberosHttpRequestInterceptor(ServerRealmClientHelper serverRealmClientHelper){
+        this.serverRealmClientHelper = serverRealmClientHelper;
     }
     /**
-     * Processes a response.
-     * On the server side, this step is performed before the response is
-     * sent to the client. On the client side, this step is performed
+     * Processes a request.
+     * On the client side, this step is performed before the request is
+     * sent to the server. On the server side, this step is performed
      * on incoming messages before the message body is evaluated.
      *
-     * @param response the response to postprocess
-     * @param context  the context for the request
+     * @param request the request to preprocess
+     * @param context the context for the request
      * @throws HttpException in case of an HTTP protocol violation
      * @throws IOException   in case of an I/O error
      */
     @Override
-    public void process(HttpResponse response, HttpContext context) throws HttpException, IOException {
-        if(HWKerberosThreadLocal.getAuthenticateLocal() == null) {
-            hwClientHelper.setCookie(response);
+    public void process(HttpRequest request, HttpContext context) throws HttpException, IOException {
+        if(ServerRealmKerberosThreadLocal.getAuthenticateLocal() == null) { // 安全接口无需添加认证头
+            serverRealmClientHelper.addSecurityHeaders(request);
         }
     }
 }

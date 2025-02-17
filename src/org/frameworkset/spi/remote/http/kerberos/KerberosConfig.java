@@ -63,7 +63,7 @@ public class KerberosConfig {
 
 
 
-    private String provider = null;
+    private String serverRealmPath = null;
 
     private String useSubjectCredsOnly ;
     private Map<String,String> exts;
@@ -109,12 +109,12 @@ public class KerberosConfig {
     public String getUseTicketCache() {
         return useTicketCache;
     }
-    public String getProvider() {
-        return provider;
+    public String getServerRealmPath() {
+        return serverRealmPath;
     }
 
-    public void setProvider(String provider) {
-        this.provider = provider;
+    public void setServerRealmPath(String serverRealmPath) {
+        this.serverRealmPath = serverRealmPath;
     }
     public void setUseTicketCache(String useTicketCache) {
         this.useTicketCache = useTicketCache;

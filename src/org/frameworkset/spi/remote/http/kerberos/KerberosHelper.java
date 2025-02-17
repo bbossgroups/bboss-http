@@ -97,8 +97,8 @@ public class KerberosHelper {
                 if(key.equals("principal")){
                     kerberosConfig.setPrincipal((String)entry.getValue());
                 }
-                else if(key.equals("provider")){
-                    kerberosConfig.setProvider((String)entry.getValue());
+                else if(key.equals("serverRealmPath")){
+                    kerberosConfig.setServerRealmPath((String)entry.getValue());
                 }
                 else if(key.equals("loginContextName")){
                     kerberosConfig.setLoginContextName((String)entry.getValue());

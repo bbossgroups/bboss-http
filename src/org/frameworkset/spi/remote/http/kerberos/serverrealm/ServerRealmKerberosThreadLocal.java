@@ -1,4 +1,4 @@
-package org.frameworkset.spi.remote.http.kerberos.hw;
+package org.frameworkset.spi.remote.http.kerberos.serverrealm;
 /**
  * Copyright 2025 bboss
  * <p>
@@ -22,7 +22,7 @@ package org.frameworkset.spi.remote.http.kerberos.hw;
  * @author biaoping.yin
  * @Date 2025/2/16
  */
-public class HWKerberosThreadLocal {
+public class ServerRealmKerberosThreadLocal {
     private static ThreadLocal<Object> authenticateLocal = new ThreadLocal<>();
     private static Object object = new Object();
     public static void setAuthenticateLocal(){

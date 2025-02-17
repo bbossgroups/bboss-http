@@ -1,4 +1,4 @@
-package org.frameworkset.spi.remote.http.kerberos.hw;
+package org.frameworkset.spi.remote.http.kerberos.serverrealm;
 /**
  * Copyright 2025 bboss
  * <p>
@@ -15,8 +15,7 @@ package org.frameworkset.spi.remote.http.kerberos.hw;
  * limitations under the License.
  */
 
-import com.sun.security.auth.login.ConfigFile;
-import org.apache.http.client.HttpClient;
+import com.frameworkset.util.SimpleStringUtil;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
 import org.frameworkset.spi.remote.http.HttpRequestProxy;
 import org.frameworkset.spi.remote.http.kerberos.KerberosConfig;
@@ -29,7 +28,6 @@ import javax.security.auth.Subject;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.kerberos.KerberosTicket;
 import javax.security.auth.login.AppConfigurationEntry;
-import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.PrivilegedAction;
@@ -45,17 +43,21 @@ import java.util.concurrent.ThreadFactory;
  * @author biaoping.yin
  * @Date 2025/2/16
  */
-public class HWKerberosUtil {
-    private static final Logger LOG = LoggerFactory.getLogger(HWClientHelper.class);
+public class ServerRealmKerberosUtil {
+    private static final Logger LOG = LoggerFactory.getLogger(ServerRealmClientHelper.class);
     private String serverRealm;
     private Subject subj = null;
     private final Object SUBJECT_LOCK = new Object();
     private ClientConfiguration clientConfiguration; 
+    private KerberosConfig kerberosConfig;
     private RefreshTGTSingleton refreshTGTSingleton;
-    private String ELASTICSEARCH_SERVERREALM_PATH = System.getProperty("elasticsearch.server.realm.path", "/elasticsearch/serverrealm");
+    private String serverRealmPath = "/elasticsearch/serverrealm";
 
-    public HWKerberosUtil(ClientConfiguration clientConfiguration){
+    public ServerRealmKerberosUtil(ClientConfiguration clientConfiguration){
         this.clientConfiguration = clientConfiguration;
+        this.kerberosConfig = clientConfiguration.getKerberosConfig();
+        if(SimpleStringUtil.isNotEmpty(kerberosConfig.getServerRealmPath()))
+            this.serverRealmPath = kerberosConfig.getServerRealmPath();
     }
     private final Map<String, String> KERBEROS_OPTIONS = new HashMap(6);
 
@@ -233,7 +235,7 @@ public class HWKerberosUtil {
     }
 
 
-    public synchronized void getTGT(KerberosConfig kerberosConfig) {
+    public synchronized void getTGT() {
         try {
             if (KERBEROS_OPTIONS.isEmpty()) {
                 initKerberosOptions(kerberosConfig);
@@ -309,12 +311,12 @@ public class HWKerberosUtil {
         }
     }
 
-    private void getTGTwithRetry(KerberosConfig kerberosConfig) throws InterruptedException {
+    private void getTGTwithRetry() throws InterruptedException {
         int count = 1;
 
         while(count <= 3) {
             try {
-                getTGT(  kerberosConfig);
+                getTGT(  );
                 LOG.info("TGT refresh at: " + new Date(System.currentTimeMillis()));
                 break;
             } catch (Exception var2) {
@@ -351,7 +353,7 @@ public class HWKerberosUtil {
                             LOG.warn("nextRefresh:" + new Date(nextRefresh) + " is in the past: exiting refresh thread. Check clock sync between this host and KDC - (KDC's clock is likely ahead of this host). Manual intervention will be required for this client to successfully authenticate. In case of TGT being expiring, try to refresh TGT right now.");
                         }
 
-                        getTGTwithRetry(kerberosConfig);
+                        getTGTwithRetry();
                     } catch (Exception var6) {
                         LOG.error("Failed to refresh TGT: refresh thread exiting now.", var6);
                     }
@@ -364,6 +366,11 @@ public class HWKerberosUtil {
         private KerberosConfig kerberosConfig;
         private RefreshTGTSingleton(  KerberosConfig kerberosConfig) {
             this.kerberosConfig = kerberosConfig;
+        }
+        public void shutdown(){
+            if(esService != null){
+                esService.shutdown();
+            }
         }
 
         public void startRefreshThread(  ) {
@@ -391,12 +398,12 @@ public class HWKerberosUtil {
         int times = 0;
         synchronized(SUBJECT_LOCK) {
             if(refreshTGTSingleton == null){
-                refreshTGTSingleton = new RefreshTGTSingleton(clientConfiguration.getKerberosConfig());
+                refreshTGTSingleton = new RefreshTGTSingleton(kerberosConfig);
                 refreshTGTSingleton.startRefreshThread();
             }
             while(subjectWillExpire(subj) && times < 3) {
                 LOG.debug("Subject is not ok ,retry get new TGT.");
-                getTGT(clientConfiguration.getKerberosConfig());
+                getTGT();
                 ++times;
             }
         }
@@ -406,11 +413,11 @@ public class HWKerberosUtil {
 //        int times1 = 0;
         String realm = null;
         try {
-            HWKerberosThreadLocal.setAuthenticateLocal();
-            realm = HttpRequestProxy.httpGetforString(clientConfiguration.getBeanName(), ELASTICSEARCH_SERVERREALM_PATH);
+            ServerRealmKerberosThreadLocal.setAuthenticateLocal();
+            realm = HttpRequestProxy.httpGetforString(clientConfiguration.getBeanName(), this.serverRealmPath);
         }
         finally {
-            HWKerberosThreadLocal.clearAuthenticateLocal();
+            ServerRealmKerberosThreadLocal.clearAuthenticateLocal();
         }
 //        for(realm = null; null == realm && times1 < 3; ++times1) {
 //            realm = this.getRealm(((Node)this.nodes.get(index)).getHost().toHostString());
@@ -426,9 +433,19 @@ public class HWKerberosUtil {
 //        }
 
         if (realm != null && !realm.isEmpty()) {
-            if (realm.toLowerCase(Locale.ENGLISH).startsWith("elasticsearch/hadoop.")) {
+//            if (realm.toLowerCase(Locale.ENGLISH).startsWith("elasticsearch/hadoop.")) {
+//                this.serverRealm = realm;
+//            } else {
+//                this.serverRealm = "elasticsearch/hadoop." + realm.toLowerCase(Locale.ENGLISH) + "@" + realm.toUpperCase(Locale.ENGLISH);
+//            }
+
+            if (realm.toLowerCase(Locale.ENGLISH).indexOf("@") > 0) {
                 this.serverRealm = realm;
-            } else {
+            }
+            else if (realm.toLowerCase(Locale.ENGLISH).startsWith("elasticsearch/hadoop.")) { //适配华为elasticsearch
+                this.serverRealm = realm;
+            }
+            else { //适配华为elasticsearch
                 this.serverRealm = "elasticsearch/hadoop." + realm.toLowerCase(Locale.ENGLISH) + "@" + realm.toUpperCase(Locale.ENGLISH);
             }
 

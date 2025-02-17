@@ -41,7 +41,7 @@ import org.frameworkset.spi.assemble.MapGetProperties;
 import org.frameworkset.spi.assemble.PropertiesContainer;
 import org.frameworkset.spi.remote.http.callback.HttpClientBuilderCallback;
 import org.frameworkset.spi.remote.http.kerberos.*;
-import org.frameworkset.spi.remote.http.kerberos.hw.HWRequestKerberosUrlUtils;
+import org.frameworkset.spi.remote.http.kerberos.serverrealm.ServerRealmRequestKerberosUrlUtils;
 import org.frameworkset.spi.remote.http.proxy.ExceptionWare;
 import org.frameworkset.spi.remote.http.proxy.HttpHostDiscover;
 import org.frameworkset.spi.remote.http.proxy.HttpServiceHosts;
@@ -1634,8 +1634,8 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
         //启用kerberos认证
         if(kerberosConfig != null){
             if(requestKerberosUrlUtils == null) {
-                if (kerberosConfig.getProvider() != null && kerberosConfig.getProvider().equals("HW")) {
-                    requestKerberosUrlUtils = new HWRequestKerberosUrlUtils(kerberosConfig, this);
+                if (SimpleStringUtil.isNotEmpty(kerberosConfig.getServerRealmPath())) {
+                    requestKerberosUrlUtils = new ServerRealmRequestKerberosUrlUtils(kerberosConfig, this);
                 } else if (kerberosConfig.getConfigMode() == KerberosConfig.CONFIG_MODE_PARAMS) {
                     requestKerberosUrlUtils = new RequestKerberosUrlUtilsParams(kerberosConfig, this);
 

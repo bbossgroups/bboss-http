@@ -58,6 +58,9 @@ public class ServerRealmKerberosUtil {
         this.kerberosConfig = clientConfiguration.getKerberosConfig();
         if(SimpleStringUtil.isNotEmpty(kerberosConfig.getServerRealmPath()))
             this.serverRealmPath = kerberosConfig.getServerRealmPath();
+        if(SimpleStringUtil.isNotEmpty(kerberosConfig.getServerRealm())){
+            handleRealm(this.kerberosConfig.getServerRealm());
+        }
     }
     private final Map<String, String> KERBEROS_OPTIONS = new HashMap(6);
 
@@ -407,7 +410,9 @@ public class ServerRealmKerberosUtil {
                 ++times;
             }
         }
-
+        if(SimpleStringUtil.isNotEmpty(serverRealm)){
+            return;
+        }
         
 //        int index = 0;
 //        int times1 = 0;
@@ -438,20 +443,23 @@ public class ServerRealmKerberosUtil {
 //            } else {
 //                this.serverRealm = "elasticsearch/hadoop." + realm.toLowerCase(Locale.ENGLISH) + "@" + realm.toUpperCase(Locale.ENGLISH);
 //            }
-
-            if (realm.toLowerCase(Locale.ENGLISH).indexOf("@") > 0) {
-                this.serverRealm = realm;
-            }
-            else if (realm.toLowerCase(Locale.ENGLISH).startsWith("elasticsearch/hadoop.")) { //适配华为elasticsearch
-                this.serverRealm = realm;
-            }
-            else { //适配华为elasticsearch
-                this.serverRealm = "elasticsearch/hadoop." + realm.toLowerCase(Locale.ENGLISH) + "@" + realm.toUpperCase(Locale.ENGLISH);
-            }
-
+            handleRealm(realm);
+             
             LOG.info("Initialize the client successfully.");
         } else {
             throw new IllegalArgumentException("Get ServerRealm failed.");
+        }
+    }
+    
+    private void handleRealm(String realm){
+        if (realm.toLowerCase(Locale.ENGLISH).indexOf("@") > 0) {
+            this.serverRealm = realm;
+        }
+        else if (realm.toLowerCase(Locale.ENGLISH).startsWith("elasticsearch/hadoop.")) { //适配华为elasticsearch
+            this.serverRealm = realm;
+        }
+        else { //适配华为elasticsearch
+            this.serverRealm = "elasticsearch/hadoop." + realm.toLowerCase(Locale.ENGLISH) + "@" + realm.toUpperCase(Locale.ENGLISH);
         }
     }
 

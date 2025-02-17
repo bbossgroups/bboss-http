@@ -1634,7 +1634,8 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
         //启用kerberos认证
         if(kerberosConfig != null){
             if(requestKerberosUrlUtils == null) {
-                if (SimpleStringUtil.isNotEmpty(kerberosConfig.getServerRealmPath())) {
+                if (SimpleStringUtil.isNotEmpty(kerberosConfig.getServerRealmPath()) 
+                        || SimpleStringUtil.isNotEmpty(kerberosConfig.getServerRealm())) {
                     requestKerberosUrlUtils = new ServerRealmRequestKerberosUrlUtils(kerberosConfig, this);
                 } else if (kerberosConfig.getConfigMode() == KerberosConfig.CONFIG_MODE_PARAMS) {
                     requestKerberosUrlUtils = new RequestKerberosUrlUtilsParams(kerberosConfig, this);

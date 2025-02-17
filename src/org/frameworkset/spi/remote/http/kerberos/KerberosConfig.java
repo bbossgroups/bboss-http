@@ -63,8 +63,8 @@ public class KerberosConfig {
 
 
 
-    private String serverRealmPath = null;
-
+    private String serverRealmPath;
+    private String serverRealm;
     private String useSubjectCredsOnly ;
     private Map<String,String> exts;
 
@@ -207,5 +207,13 @@ public class KerberosConfig {
 
     public void setLoginContextName(String loginContextName) {
         this.loginContextName = loginContextName;
+    }
+
+    public String getServerRealm() {
+        return serverRealm;
+    }
+
+    public void setServerRealm(String serverRealm) {
+        this.serverRealm = serverRealm;
     }
 }

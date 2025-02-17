@@ -100,6 +100,10 @@ public class KerberosHelper {
                 else if(key.equals("serverRealmPath")){
                     kerberosConfig.setServerRealmPath((String)entry.getValue());
                 }
+                else if(key.equals("serverRealm")){
+                    kerberosConfig.setServerRealm((String)entry.getValue());
+                }
+                
                 else if(key.equals("loginContextName")){
                     kerberosConfig.setLoginContextName((String)entry.getValue());
                 }

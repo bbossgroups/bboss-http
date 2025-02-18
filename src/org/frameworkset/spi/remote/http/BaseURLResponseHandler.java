@@ -15,6 +15,8 @@ package org.frameworkset.spi.remote.http;
  * limitations under the License.
  */
 
+import org.frameworkset.spi.remote.http.callback.ExecuteIntercepter;
+
 /**
  * <p>Description: </p>
  * <p></p>
@@ -30,8 +32,13 @@ public abstract class BaseURLResponseHandler<T> implements URLResponseHandler<T>
      */
     protected boolean enableSetRequestBody;
     protected String requestBody;
-
-
+    private ExecuteIntercepter executeIntercepter; 
+    public ExecuteIntercepter getExecuteIntercepter(){
+        return executeIntercepter;
+    }
+    public void setExecuteIntercepter(ExecuteIntercepter executeIntercepter){
+        this.executeIntercepter = executeIntercepter;
+    }
 
     protected boolean truncateLogBody;
 	public String getUrl() {

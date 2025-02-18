@@ -16,6 +16,7 @@ import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
+import org.frameworkset.spi.remote.http.callback.ExecuteIntercepter;
 import org.frameworkset.spi.remote.http.kerberos.BaseRequestKerberosUrlUtils;
 import org.frameworkset.spi.remote.http.kerberos.KerberosCallback;
 import org.frameworkset.spi.remote.http.proxy.*;
@@ -2280,12 +2281,19 @@ public class HttpRequestProxy {
         Throwable e = null;
         int triesCount = 0;
         StringBuilder requestBody = trucateData( responseHandler);
-
+        ExecuteIntercepter executeIntercepter = null;
+        URLResponseHandler urlResponseHandler = null;
+        if(responseHandler != null && responseHandler instanceof URLResponseHandler){
+            urlResponseHandler =((URLResponseHandler)responseHandler);
+            executeIntercepter = urlResponseHandler.getExecuteIntercepter();
+        }
         if(!url.startsWith("http://") && !url.startsWith("https://")) {
             endpoint = url;
             HttpAddress httpAddress = null;
             HttpServiceHosts httpServiceHosts = config.getHttpServiceHosts();
             assertCheck(  httpServiceHosts,endpoint ,config.getBeanName());
+           
+            
             do {
 
                 try {
@@ -2296,12 +2304,15 @@ public class HttpRequestProxy {
                     if(logger.isDebugEnabled()){
                         logger.debug("Send request {}",url);
                     }
-                    if(responseHandler != null && responseHandler instanceof URLResponseHandler){
-                        ((URLResponseHandler)responseHandler).setUrl(url);
+                    if(urlResponseHandler != null){
+                        urlResponseHandler.setUrl(url);
                     }
 
                     httpClient = HttpRequestUtil.getHttpClient(config);
                     BaseRequestKerberosUrlUtils baseRequestKerberosUrlUtils = config.getRequestKerberosUrlUtils();
+                    if(executeIntercepter != null){
+                        executeIntercepter.before(url,urlResponseHandler,triesCount);
+                    }
                     if(baseRequestKerberosUrlUtils == null) {
                         responseBody = (T) executeRequest.execute(config, httpClient, url, triesCount);
                     }
@@ -2319,6 +2330,7 @@ public class HttpRequestProxy {
                     }
                     httpAddress.recover();
                     e = HttpParamsHandler.getException(  responseHandler,httpServiceHosts );
+                    
                     break;
                 } catch (HttpHostConnectException ex) {
                     httpAddress.setStatus(1);
@@ -2413,7 +2425,9 @@ public class HttpRequestProxy {
                     break;
                 }  finally {
                     // 释放连接
-
+                    if(executeIntercepter != null){
+                        executeIntercepter.after(url,urlResponseHandler,triesCount,responseBody,e);
+                    }
                     httpClient = null;
                 }
 
@@ -2426,10 +2440,17 @@ public class HttpRequestProxy {
                     logger.debug("Send request {}",url);
                 }
                 httpClient = HttpRequestUtil.getHttpClient(config);
+               
                 if(responseHandler != null && responseHandler instanceof URLResponseHandler){
-                    ((URLResponseHandler)responseHandler).setUrl(url);
+                    urlResponseHandler.setUrl(url);
+                }
+                if(executeIntercepter != null){
+                    executeIntercepter.before(url,urlResponseHandler,triesCount);
                 }
                 responseBody = (T)executeRequest.execute( config,httpClient,url,triesCount);
+                if(executeIntercepter != null){
+                    executeIntercepter.after(url,urlResponseHandler,triesCount,responseBody,null);
+                }
 //                httpPost = HttpRequestUtil.getHttpPost(config, url, "", "", headers);
 //                if (httpEntity != null) {
 //                    httpPost.setEntity(httpEntity);
@@ -2439,12 +2460,17 @@ public class HttpRequestProxy {
 
             } catch (Exception ex) {
                 e = ex;
+                if(executeIntercepter != null){
+                    executeIntercepter.after(url,urlResponseHandler,triesCount,responseBody,e);
+                }
+                 
             } finally {
                 // 释放连接
 
                 httpClient = null;
             }
         }
+        
         if (e != null){
             HttpProxyRequestException httpProxyRequestException = null;
             if(requestBody == null) {

@@ -7,7 +7,7 @@ import org.apache.http.client.ClientProtocolException;
 import java.io.IOException;
 import java.util.Map;
 
-public class MapResponseHandler extends BaseResponseHandler implements URLResponseHandler<Map> {
+public class MapResponseHandler extends BaseResponseHandler<Map> implements URLResponseHandler<Map> {
 
 	public MapResponseHandler() {
 		// TODO Auto-generated constructor stub

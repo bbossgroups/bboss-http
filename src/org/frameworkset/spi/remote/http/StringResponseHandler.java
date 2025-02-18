@@ -7,7 +7,7 @@ import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
 
-public class StringResponseHandler extends StatusResponseHandler implements URLResponseHandler<String> {
+public class StringResponseHandler extends StatusResponseHandler<String> implements URLResponseHandler<String> {
 
 	public StringResponseHandler() {
 		// TODO Auto-generated constructor stub

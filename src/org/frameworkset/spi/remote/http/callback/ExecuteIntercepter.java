@@ -1,6 +1,6 @@
-package org.frameworkset.spi.remote.http;
+package org.frameworkset.spi.remote.http.callback;
 /**
- * Copyright 2020 bboss
+ * Copyright 2025 bboss
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,17 @@ package org.frameworkset.spi.remote.http;
  * limitations under the License.
  */
 
-import org.apache.http.client.ResponseHandler;
-import org.frameworkset.spi.remote.http.callback.ExecuteIntercepter;
+import org.frameworkset.spi.remote.http.URLResponseHandler;
 
 /**
  * <p>Description: </p>
  * <p></p>
- * <p>Copyright (c) 2020</p>
- * @Date 2020/2/27 15:40
+ *
  * @author biaoping.yin
- * @version 1.0
+ * @Date 2025/2/18
  */
-public interface URLResponseHandler<T> extends ResponseHandler<T> {
-	void setUrl(String url);
-	String getUrl();
-    ExecuteIntercepter getExecuteIntercepter();
-    void setExecuteIntercepter(ExecuteIntercepter executeIntercepter);
-    
+public interface ExecuteIntercepter {
+    void before(String url,URLResponseHandler urlResponseHandler,int triesCount);
+    void after(String url,URLResponseHandler urlResponseHandler,int triesCount,Object response,Throwable e);
+
 }

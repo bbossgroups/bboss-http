@@ -9,7 +9,7 @@ import java.util.List;
 
 import static org.frameworkset.spi.remote.http.ResponseUtil.entityEmpty;
 
-public abstract class BaseResponseHandler extends StatusResponseHandler {
+public abstract class BaseResponseHandler<T> extends StatusResponseHandler<T> {
 
 
     /**

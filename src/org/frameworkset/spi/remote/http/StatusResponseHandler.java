@@ -3,13 +3,14 @@ package org.frameworkset.spi.remote.http;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
+import org.frameworkset.spi.remote.http.callback.ExecuteIntercepter;
 import org.frameworkset.spi.remote.http.proxy.HttpProxyRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-public abstract class StatusResponseHandler {
+public abstract class StatusResponseHandler<T> implements URLResponseHandler<T>{
 	private static Logger _logger =  LoggerFactory.getLogger(StatusResponseHandler.class);
 	protected int reponseStatus;
 	public int getReponseStatus() {
@@ -25,7 +26,7 @@ public abstract class StatusResponseHandler {
 		return reponseStatus;
 	}
 	protected String url;
-
+    private ExecuteIntercepter executeIntercepter;
 	public void setUrl(String url) {
 		this.url = url;
 	}
@@ -33,6 +34,13 @@ public abstract class StatusResponseHandler {
 	public String getUrl() {
 		return url;
 	}
+    
+    public ExecuteIntercepter getExecuteIntercepter(){
+        return executeIntercepter;
+    }
+    public void setExecuteIntercepter(ExecuteIntercepter executeIntercepter){
+        this.executeIntercepter = executeIntercepter;
+    }
 
 	protected RuntimeException throwException(int status, HttpEntity entity) throws IOException {
 

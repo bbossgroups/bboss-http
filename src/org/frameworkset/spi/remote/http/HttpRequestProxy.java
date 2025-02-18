@@ -2279,6 +2279,7 @@ public class HttpRequestProxy {
         T responseBody = null;
         String endpoint = null;
         Throwable e = null;
+        Throwable httpResponseStatusException = null;
         int triesCount = 0;
         StringBuilder requestBody = trucateData( responseHandler);
         ExecuteIntercepter executeIntercepter = null;
@@ -2329,7 +2330,7 @@ public class HttpRequestProxy {
                         });
                     }
                     httpAddress.recover();
-                    e = HttpParamsHandler.getException(  responseHandler,httpServiceHosts );
+                    httpResponseStatusException = HttpParamsHandler.getException(  responseHandler,httpServiceHosts );
                     
                     break;
                 } catch (HttpHostConnectException ex) { // 1
@@ -2470,9 +2471,31 @@ public class HttpRequestProxy {
                 httpClient = null;
             }
         }
-        
+        HttpProxyRequestException httpProxyRequestException = null;
+        if(httpResponseStatusException != null){
+            if(requestBody == null) {
+                if (httpResponseStatusException instanceof HttpProxyRequestException)
+                    httpProxyRequestException = (HttpProxyRequestException) httpResponseStatusException;
+                else {
+                    httpProxyRequestException = new HttpProxyRequestException("Send request Url:" + url, httpResponseStatusException);
+                    httpProxyRequestException.setHttpResponseStatusException(httpResponseStatusException);
+                }
+                
+            }
+            else{
+
+                if (httpResponseStatusException instanceof HttpProxyRequestException) {
+                    httpProxyRequestException = new HttpProxyRequestException(requestBody.toString(),httpResponseStatusException);
+                }
+                else {
+                    httpProxyRequestException = new HttpProxyRequestException(requestBody.append("\r\nSend request Url:").append(url).toString(), httpResponseStatusException);
+                    httpProxyRequestException.setHttpResponseStatusException(httpResponseStatusException);
+                }
+            }
+            throw httpProxyRequestException;
+        }
         if (e != null){
-            HttpProxyRequestException httpProxyRequestException = null;
+            
             if(requestBody == null) {
                 if (e instanceof HttpProxyRequestException)
                     httpProxyRequestException = (HttpProxyRequestException) e;

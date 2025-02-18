@@ -26,10 +26,20 @@ import org.frameworkset.spi.remote.http.HttpRuntimeException;
  * @version 1.0
  */
 public class HttpProxyRequestException extends HttpRuntimeException {
+    private Throwable httpResponseStatusException;
+    
 	public HttpProxyRequestException() {
 	}
 
-	public HttpProxyRequestException(String message) {
+    public Throwable getHttpResponseStatusException() {
+        return httpResponseStatusException;
+    }
+
+    public void setHttpResponseStatusException(Throwable httpResponseStatusException) {
+        this.httpResponseStatusException = httpResponseStatusException;
+    }
+
+    public HttpProxyRequestException(String message) {
 		super(message);
 	}
 

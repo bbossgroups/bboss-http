@@ -527,8 +527,8 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 		Object _value = null;
 		if (poolName.equals("default")) {
 			_value = context.getExternalPropertyWithNS(poolName,propertyName);
-			if (_value == null)
-				_value =  context.getExternalPropertyWithNS(poolName,poolName + "." + propertyName);
+//			if (_value == null)
+//				_value =  context.getExternalPropertyWithNS(poolName,poolName + "." + propertyName);
 
 		} else {
 			_value =  context.getExternalPropertyWithNS(poolName,poolName + "." + propertyName);
@@ -549,21 +549,37 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
         return _value;
     }
 
-	private static Object _getObjectValue(String poolName, String propertyName, GetProperties context, Object defaultValue) throws Exception {
-		Object _value = null;
-		if (poolName.equals("default")) {
-			_value =  context.getExternalObjectProperty(propertyName);
-			if (_value == null)
-				_value = context.getExternalObjectProperty(poolName + "." + propertyName);
+    private static Object _getObjectValue(String poolName, String propertyName, GetProperties context, Object defaultValue) throws Exception {
+        Object _value = null;
+        if (poolName.equals("default")) {
+            _value =  context.getExternalObjectPropertyWithNS(poolName,propertyName);
+//            if (_value == null)
+//                _value = context.getExternalObjectPropertyWithNS(poolName,poolName + "." + propertyName);
 
-		} else {
-			_value = context.getExternalObjectProperty(poolName + "." + propertyName);
-		}
-		if (_value == null) {
-			return defaultValue;
-		}
-		return _value;
-	}
+        } else {
+            _value = context.getExternalObjectPropertyWithNS(poolName,poolName + "." + propertyName);
+        }
+        if (_value == null) {
+            return defaultValue;
+        }
+        return _value;
+    }
+
+//	private static Object _getObjectValue(String poolName, String propertyName, GetProperties context, Object defaultValue) throws Exception {
+//		Object _value = null;
+//		if (poolName.equals("default")) {
+//			_value =  context.getExternalObjectProperty(propertyName);
+//			if (_value == null)
+//				_value = context.getExternalObjectProperty(poolName + "." + propertyName);
+//
+//		} else {
+//			_value = context.getExternalObjectProperty(poolName + "." + propertyName);
+//		}
+//		if (_value == null) {
+//			return defaultValue;
+//		}
+//		return _value;
+//	}
 
 	private static HostnameVerifier _getHostnameVerifier(String hostnameVerifier) throws Exception {
 

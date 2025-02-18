@@ -2332,7 +2332,7 @@ public class HttpRequestProxy {
                     e = HttpParamsHandler.getException(  responseHandler,httpServiceHosts );
                     
                     break;
-                } catch (HttpHostConnectException ex) {
+                } catch (HttpHostConnectException ex) { // 1
                     httpAddress.setStatus(1);
                     e = new NoHttpServerException(ex);
                     if (!httpServiceHosts.reachEnd(triesCount )) {//失败尝试下一个地址
@@ -2342,7 +2342,7 @@ public class HttpRequestProxy {
                         break;
                     }
 
-                } catch (UnknownHostException ex) {
+                } catch (UnknownHostException ex) { // 2
                     httpAddress.setStatus(1);
                     e = new NoHttpServerException(ex);
                     if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
@@ -2353,7 +2353,7 @@ public class HttpRequestProxy {
                     }
 
                 }
-                catch (NoRouteToHostException ex) {
+                catch (NoRouteToHostException ex) { // 3
                     httpAddress.setStatus(1);
                     e = new NoHttpServerException(ex);
                     if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
@@ -2364,7 +2364,7 @@ public class HttpRequestProxy {
                     }
 
                 }
-                catch (NoHttpResponseException ex) {
+                catch (NoHttpResponseException ex) { // 4
                     httpAddress.setStatus(1);
                     e = new NoHttpServerException(ex);
                     if (!httpServiceHosts.reachEnd(triesCount ))  {//失败尝试下一个地址
@@ -2375,12 +2375,12 @@ public class HttpRequestProxy {
                     }
 
                 }
-                catch (ConnectionPoolTimeoutException ex){//连接池获取connection超时，直接抛出
+                catch (ConnectionPoolTimeoutException ex){//连接池获取connection超时，直接抛出  // 5
 
                     e = handleConnectionPoolTimeOutException(poolname,url, config,ex);
                     break;
                 }
-                catch (ConnectTimeoutException connectTimeoutException){
+                catch (ConnectTimeoutException connectTimeoutException){  // 6
                     httpAddress.setStatus(1);
                     e = handleConnectionTimeOutException(poolname,url,config,connectTimeoutException);
                     if (!httpServiceHosts.reachEnd(triesCount )) {//失败尝试下一个地址
@@ -2391,16 +2391,16 @@ public class HttpRequestProxy {
                     }
                 }
 
-                catch (SocketTimeoutException ex) {
+                catch (SocketTimeoutException ex) {  // 7
                     e = handleSocketTimeoutException(poolname,url,config, ex);
                     break;
                 }
-                catch (NoHttpServerException ex){
+                catch (NoHttpServerException ex){  // 8
                     e = ex;
 
                     break;
                 }
-                catch (ClientProtocolException ex){
+                catch (ClientProtocolException ex){  // 9
                     httpAddress.setStatus(1);
                     e = ex;
                     if(logger.isErrorEnabled())
@@ -2416,11 +2416,11 @@ public class HttpRequestProxy {
 //                            .append("] handle failed: must use http/https protocol port such as 9200,do not use other transport such as 9300.").toString(),ex);
                 }
 
-                catch (Exception ex) {
+                catch (Exception ex) {  // 10
                     e = ex;
                     break;
                 }
-                catch (Throwable ex) {
+                catch (Throwable ex) { //11
                     e = ex;
                     break;
                 }  finally {

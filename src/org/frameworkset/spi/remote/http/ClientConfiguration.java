@@ -93,6 +93,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
     public static final String http_health = "http.health";
     public static final String http_discover_service = "http.discoverService";
     public static final String http_exception_ware = "http.exceptionWare";
+    public static final String http_fail_all_continue = "http.failAllContinue";
     
     
 

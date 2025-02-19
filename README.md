@@ -12,8 +12,6 @@ https://esdoc.bbossgroups.com/#/bboss-build
 
  http连接池
 
- http服务调用组件-HttpRequestUtil
-
  http负载均衡组件-HttpRequestProxy  使用参考文档https://esdoc.bbossgroups.com/#/httpproxy
 
  负载均衡组件特点：
@@ -24,7 +22,7 @@ https://esdoc.bbossgroups.com/#/bboss-build
 
  3.服务容灾故障恢复
 
- 4.服务自动发现（zk，etcd，consul，eureka，db，其他第三方注册中心）
+ 4.服务自动发现（apollo，nacos，可以扩展到zk，etcd，consul，eureka，db以及其他第三方注册中心）
 
  5.路由规则动态切换
 
@@ -40,7 +38,7 @@ https://esdoc.bbossgroups.com/#/bboss-build
 
  多个地址用逗号分隔
 
- 6.服务安全认证（配置basic账号和口令）
+ 6.服务安全认证（支持basic认证、Kerberos认证）
 
  7.主备路由/异地灾备特色
 
@@ -50,11 +48,19 @@ https://esdoc.bbossgroups.com/#/bboss-build
 
 https://esdoc.bbossgroups.com/#/httpproxy
 
-httpproxy 案例：基于apollo进行配置管理、节点自动发现、路由规则自动切换，源码地址如下
+httpproxy 案例：
+
+基于apollo进行配置管理、节点自动发现、路由规则自动切换，源码地址如下
 
      https://gitee.com/bboss/httpproxy-apollo 
 
      https://github.com/bbossgroups/httpproxy-apollo
+
+基于nacos进行配置管理、节点自动发现、路由规则自动切换，源码地址如下
+
+https://gitee.com/bboss/httpproxy-nacos
+
+https://github.com/bbossgroups/httpproxy-nacos
 
 # 联系我们
 

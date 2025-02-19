@@ -7,11 +7,6 @@ gradle clean publishToMavenLocal
 https://esdoc.bbossgroups.com/#/bboss-build
 
 # bboss httpproxy
- bboss http  project.
- 包含的功能有：
-
- http连接池
-
  http负载均衡组件-HttpRequestProxy  使用参考文档https://esdoc.bbossgroups.com/#/httpproxy
 
  负载均衡组件特点：
@@ -52,9 +47,9 @@ httpproxy 案例：
 
 基于apollo进行配置管理、节点自动发现、路由规则自动切换，源码地址如下
 
-     https://gitee.com/bboss/httpproxy-apollo 
+https://gitee.com/bboss/httpproxy-apollo 
 
-     https://github.com/bbossgroups/httpproxy-apollo
+https://github.com/bbossgroups/httpproxy-apollo
 
 基于nacos进行配置管理、节点自动发现、路由规则自动切换，源码地址如下
 

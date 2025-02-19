@@ -42,7 +42,7 @@ public  class ServerRealmRequestKerberosUrlUtils extends BaseRequestKerberosUrlU
  
     @Override
     protected Subject getSubject() throws LoginException {
-        return serverRealmClientHelper.getSubj();
+        return serverRealmClientHelper.getSubject();
     }
 
     @Override

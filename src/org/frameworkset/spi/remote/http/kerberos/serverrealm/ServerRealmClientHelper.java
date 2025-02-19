@@ -52,8 +52,8 @@ public class ServerRealmClientHelper {
             return cookieNow;
         }
     }
-    public Subject getSubj() {
-        return serverRealmKerberosUtil.getSubj();
+    public Subject getSubject() {
+        return serverRealmKerberosUtil.getSubject();
     }
     public void setCookie(String cookie) {
         synchronized (cookieLock) {
@@ -66,18 +66,21 @@ public class ServerRealmClientHelper {
     private long getTokenExpireTime(String cookie) {
         long expireTime = -1L;
         if (null == cookie) {
-            logger.debug("Cookie is null.");
+            if(logger.isDebugEnabled())
+                logger.debug("Cookie is null.");
             return expireTime;
         } else {
             String[] cookieSplit = cookie.split("&e=");
             if (cookieSplit.length < 2) {
-                logger.error("Cookie format is wrong.");
+                if(logger.isErrorEnabled())
+                    logger.error("Cookie format is wrong.");
                 return expireTime;
             } else {
                 try {
                     expireTime = Long.parseLong(cookieSplit[1].split("&s")[0]);
-                } catch (Exception var6) {
-                    logger.error("Cookie format is wrong," + var6);
+                } catch (Exception exception) {
+                    if(logger.isErrorEnabled())
+                        logger.error("Cookie format is wrong," , exception);
                 }
 
                 return expireTime;
@@ -104,7 +107,8 @@ public class ServerRealmClientHelper {
             double tokenLeftTime = 7200000.0 > leftTime ? 7200000.0 : leftTime;
             boolean tokenExpire = (double)(this.tokenWillExpireTime - System.currentTimeMillis()) < tokenLeftTime;
             if (tokenExpire) {
-                logger.debug("Token will expire.");
+                if(logger.isDebugEnabled())
+                    logger.debug("Token will expire.");
             }
 
             return tokenExpire;
@@ -119,24 +123,27 @@ public class ServerRealmClientHelper {
             if (cookieNow != null && !this.tokenWillExpire()) {
                 abstractHttpMessage.addHeader("Authorization", "Negotiate ");
                 abstractHttpMessage.addHeader("cookie", cookieNow);
-                logger.debug("Success to add securityToken and cookie in request header.");
+                if(logger.isDebugEnabled())
+                    logger.debug("Success to add securityToken and cookie in request header.");
             } else {
                 String tokenNew = this.getNewToken();
                 abstractHttpMessage.removeHeaders("Authorization");
                 abstractHttpMessage.removeHeaders("cookie");
                 abstractHttpMessage.addHeader("Authorization", "Negotiate " + tokenNew);
-                logger.debug("Success to add new securityToken in request header.");
+                if(logger.isDebugEnabled())
+                    logger.debug("Success to add new securityToken in request header.");
             }
         
 
     }
 
     private String getNewToken() {
-        byte[] tokenN = serverRealmKerberosUtil.initiateSecurityContext(serverRealmKerberosUtil.getSubj(), this.serverRealmKerberosUtil.getServerRealm());
+        byte[] tokenN = serverRealmKerberosUtil.initiateSecurityContext(serverRealmKerberosUtil.getSubject(), this.serverRealmKerberosUtil.getServerRealm());
 
         for(int times = 0; null == tokenN && times < 3; ++times) {
-            logger.debug("InitiateSecurityContext again.");
-            tokenN = serverRealmKerberosUtil.initiateSecurityContext(serverRealmKerberosUtil.getSubj(), this.serverRealmKerberosUtil.getServerRealm());
+            if(logger.isDebugEnabled())
+                logger.debug("InitiateSecurityContext again.");
+            tokenN = serverRealmKerberosUtil.initiateSecurityContext(serverRealmKerberosUtil.getSubject(), this.serverRealmKerberosUtil.getServerRealm());
         }
 
         if (null == tokenN) {

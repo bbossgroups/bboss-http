@@ -31,6 +31,9 @@ import javax.security.auth.login.AppConfigurationEntry;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.PrivilegedAction;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -44,13 +47,13 @@ import java.util.concurrent.ThreadFactory;
  * @Date 2025/2/16
  */
 public class ServerRealmKerberosUtil {
-    private static final Logger LOG = LoggerFactory.getLogger(ServerRealmClientHelper.class);
+    private static final Logger logger = LoggerFactory.getLogger(ServerRealmKerberosUtil.class);
     private String serverRealm;
-    private Subject subj = null;
-    private final Object SUBJECT_LOCK = new Object();
+    private Subject subject = null;
+    private final Object subjectLock = new Object();
     private ClientConfiguration clientConfiguration; 
     private KerberosConfig kerberosConfig;
-    private RefreshTGTSingleton refreshTGTSingleton;
+    private RefreshTgtTool refreshTgtTool;
     private String serverRealmPath = "/elasticsearch/serverrealm";
 
     public ServerRealmKerberosUtil(ClientConfiguration clientConfiguration){
@@ -62,10 +65,10 @@ public class ServerRealmKerberosUtil {
             handleRealm(this.kerberosConfig.getServerRealm());
         }
     }
-    private final Map<String, String> KERBEROS_OPTIONS = new HashMap(6);
+    private final Map<String, String> kerberosOptions = new HashMap(6);
 
-    public Subject getSubj() {
-        return subj;
+    public Subject getSubject() {
+        return subject;
     }
 
     public String getServerRealm() {
@@ -90,88 +93,59 @@ public class ServerRealmKerberosUtil {
             public byte[] run() {
                 GSSContext context = null;
 
-                Object var3;
                 try {
                     context = getGssContext(servicePrincipalName);
                     context.requestMutualAuth(true);
                     context.requestCredDeleg(true);
                     byte[] tokenNew = new byte[0];
-                    byte[] var15 = context.initSecContext(tokenNew, 0, tokenNew.length);
-                    return var15;
-                } catch (GSSException var13) {
-                    LOG.error("Init secure context failed.", var13);
-                    var3 = null;
+                    byte[] token = context.initSecContext(tokenNew, 0, tokenNew.length);
+                    return token;
+                } catch (GSSException gssException) {
+                    if(logger.isErrorEnabled())
+                        logger.error("Init secure context failed.", gssException);
                 } finally {
                     if (context != null) {
                         try {
                             context.dispose();
-                        } catch (GSSException var12) {
-                            LOG.error("Dispose secure context failed.", var12);
+                        } catch (GSSException gssException) {
+                            if(logger.isErrorEnabled())
+                                logger.error("Dispose secure context failed.", gssException);
                         }
                     }
 
                 }
 
-                return (byte[])var3;
+                return (byte[])null;
             }
         });
         return token;
     }
     private void initKerberosOptions(KerberosConfig kerberosConfig) {
-        KERBEROS_OPTIONS.clear();
+        kerberosOptions.clear();
         AppConfigurationEntry[] appConfigurationEntries = getAppConfigurationEntry(kerberosConfig);
         if (appConfigurationEntries != null && appConfigurationEntries.length > 0) {
-            AppConfigurationEntry[] var1 = appConfigurationEntries;
-            int var2 = appConfigurationEntries.length;
+            int length = appConfigurationEntries.length;
 
-            for(int var3 = 0; var3 < var2; ++var3) {
-                AppConfigurationEntry entry = var1[var3];
-                KERBEROS_OPTIONS.putAll((Map<String, String>) entry.getOptions());
+            for(int i = 0; i < length; ++i) {
+                AppConfigurationEntry entry = appConfigurationEntries[i];
+                kerberosOptions.putAll((Map<String, String>) entry.getOptions());
             }
 
         } else {
-            LOG.error("Can not get ES app configuration entry from jaas conf file.");
-            throw new IllegalArgumentException("Can not get ES app configuration entry from jaas conf file.");
+            if(logger.isErrorEnabled())
+                logger.error("Can not get kerberos app configuration entry from jaas conf file.");
+            throw new IllegalArgumentException("Can not get kerberos app configuration entry from jaas conf file.");
         }
     }
 
+ 
+
     private AppConfigurationEntry[] getAppConfigurationEntry(KerberosConfig kerberosConfig) {
-        String jaasAppNameVersionAfter6 = System.getProperty("elasticsearch.kerberos.jaas.appname", "EsClient");
-        LOG.info(String.format(Locale.ENGLISH, "Get application configuration entry use by application name %s.", jaasAppNameVersionAfter6));
-        AppConfigurationEntry[] entries = readAppConfigurationEntryByAppName(  kerberosConfig);
-//        if (entries == null || entries.length <= 0) {
-//            entries = readAppConfigurationEntryByAppName("Client");
-//        }
-
-        return entries;
-    }
-
-    private AppConfigurationEntry[] readAppConfigurationEntryByAppName(KerberosConfig kerberosConfig) {
-        LOG.info(String.format(Locale.ENGLISH, "Try to read the jaas configuration entry again, app name is %s.", kerberosConfig.getLoginContextName()));
+        if(logger.isInfoEnabled())
+            logger.info(String.format(Locale.ENGLISH, "Try to read the jaas configuration entry again, app name is %s.", kerberosConfig.getLoginContextName()));
         AppConfigurationEntry[] entries = KerberosHelper.getAppConfigurationEntry(kerberosConfig);;
-        LOG.info("Read application configuration entry from Es jaas conf file.");
-//        if (esJaasConfFile != null && !esJaasConfFile.isEmpty()) {
-//            entries = readAppConfigurationEntryFromFile(esJaasConfFile, appName);
-//            LOG.info(String.format(Locale.ENGLISH, " Complete to read from Es jaas conf file, app name is %s.", appName));
-//        } else {
-//            LOG.warn("Fail to get application configuration entry from from Es jaas conf file, because Es jaas conf file path is empty.");
-//        }
-//
-//        if (entries == null || entries.length <= 0) {
-//            LOG.warn("Fail to get application configuration entry from esJaasConfFile.");
-//            LOG.info(String.format(Locale.ENGLISH, "Get application configuration entry use by application name %s from memory.", appName));
-//            entries = Configuration.getConfiguration().getAppConfigurationEntry(appName);
-//        }
-//
-//        String securityAuthConfig = System.getProperty("java.security.auth.login.config");
-//        if ((entries == null || entries.length <= 0) && securityAuthConfig != null && !securityAuthConfig.isEmpty()) {
-//            LOG.info(String.format(Locale.ENGLISH, "Get application configuration entry from %s.", "java.security.auth.login.config"));
-//            entries = readAppConfigurationEntryFromFile(securityAuthConfig, appName);
-//        }
-//
-//        if (entries == null || entries.length <= 0) {
-//            LOG.error(String.format(Locale.ENGLISH, "Failed to read the jaas configuration entry user by application name %s.", appName));
-//        }
+        if(logger.isInfoEnabled())
+            logger.info("Read application configuration entry from kerberos jaas conf file.");
 
         return entries;
     }
@@ -180,23 +154,25 @@ public class ServerRealmKerberosUtil {
     private synchronized KerberosTicket getKerberosTicket(Subject subject) {
         KerberosTicket kerberosTicket = null;
         if (null == subject) {
-            LOG.debug("The subject is invalid.");
+            if(logger.isDebugEnabled())
+                logger.debug("The subject is invalid.");
             return null;
         } else {
             Set<Object> privateCredentials = subject.getPrivateCredentials();
             if (null == privateCredentials) {
-                LOG.debug("The privateCredentials is null.");
+                if(logger.isDebugEnabled())
+                    logger.debug("The privateCredentials is null.");
                 return null;
             } else {
-                Iterator var3 = privateCredentials.iterator();
+                Iterator iterator = privateCredentials.iterator();
 
                 Object privateCredential;
                 do {
-                    if (!var3.hasNext()) {
+                    if (!iterator.hasNext()) {
                         return kerberosTicket;
                     }
 
-                    privateCredential = var3.next();
+                    privateCredential = iterator.next();
                 } while(!(privateCredential instanceof KerberosTicket));
 
                 kerberosTicket = (KerberosTicket)privateCredential;
@@ -214,7 +190,8 @@ public class ServerRealmKerberosUtil {
         if (null != subject && null != subject.getPrincipals() && null != subject.getPrivateCredentials()) {
             KerberosTicket kerberosTicket = getKerberosTicket(subject);
             if (null == kerberosTicket) {
-                LOG.debug("The kerberosTicket is null.");
+                if(logger.isDebugEnabled())
+                    logger.debug("The kerberosTicket is null.");
                 return true;
             } else {
                 long tgtWillExpireTime = null == kerberosTicket.getEndTime() ? -1L : kerberosTicket.getEndTime().getTime();
@@ -222,17 +199,20 @@ public class ServerRealmKerberosUtil {
                 if (tgtWillExpireTime > 0L && tgtWillExpireTime >= System.currentTimeMillis() && tgtValidityPeriod > 0L) {
                     boolean willExpired = (double)(tgtWillExpireTime - System.currentTimeMillis()) < (double)tgtValidityPeriod * 0.25;
                     if (willExpired) {
-                        LOG.debug("TGT will expire!");
+                        if(logger.isDebugEnabled())
+                            logger.debug("TGT will expire!");
                     }
 
                     return willExpired;
                 } else {
-                    LOG.debug("TgtWillExpireTime is invalid.");
+                    if(logger.isDebugEnabled())
+                        logger.debug("TgtWillExpireTime is invalid.");
                     return true;
                 }
             }
         } else {
-            LOG.debug("The subject is invalid.");
+            if(logger.isDebugEnabled())
+                logger.debug("The subject is invalid.");
             return true;
         }
     }
@@ -240,11 +220,12 @@ public class ServerRealmKerberosUtil {
 
     public synchronized void getTGT() {
         try {
-            if (KERBEROS_OPTIONS.isEmpty()) {
+            if (kerberosOptions.isEmpty()) {
                 initKerberosOptions(kerberosConfig);
-                if (KERBEROS_OPTIONS.isEmpty()) {
-                    LOG.error("Please generate EsClient loginContext in jaas.conf file for ES to get TGT.");
-                    throw new IllegalArgumentException("EsClient loginContext is not configured properly in jaas.conf file,please set the correct content.");
+                if (kerberosOptions.isEmpty()) {
+                    if(logger.isErrorEnabled())
+                        logger.error("Please generate KerberosClient loginContext in jaas.conf file for kerberos to get TGT.");
+                    throw new IllegalArgumentException("KerberosClient loginContext is not configured properly in jaas.conf file,please set the correct content.");
                 }
             }
 
@@ -254,10 +235,12 @@ public class ServerRealmKerberosUtil {
             String className = null;
             if (isIbmJdk) {
                 className = "com.ibm.security.auth.module.Krb5LoginModule";
-                LOG.info("JDK version is IBM");
+                if(logger.isInfoEnabled())
+                    logger.info("JDK version is IBM");
             } else {
                 className = "com.sun.security.auth.module.Krb5LoginModule";
-                LOG.info("JDK version is SUN");
+                if(logger.isInfoEnabled())
+                    logger.info("JDK version is SUN");
             }
 
             clazz = Class.forName(className);
@@ -265,47 +248,60 @@ public class ServerRealmKerberosUtil {
             Method login = clazz.getDeclaredMethod("login");
             Method commit = clazz.getDeclaredMethod("commit");
             Object krb5LoginModule = clazz.newInstance();
-            initialize.invoke(krb5LoginModule, loginSubject, null, null, KERBEROS_OPTIONS);
+            initialize.invoke(krb5LoginModule, loginSubject, null, null, kerberosOptions);
             login.invoke(krb5LoginModule);
             commit.invoke(krb5LoginModule);
-            subj = loginSubject;
-            LOG.info("Get kerberos TGT successfully.");
-        } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException | ClassNotFoundException var8) {
-            LOG.error("Get kerberos TGT failed." + var8);
-            throw new RuntimeException(var8);
+            subject = loginSubject;
+            if(logger.isInfoEnabled())
+                logger.info("Get kerberos TGT successfully.");
+        } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException | ClassNotFoundException exception) {
+            if(logger.isErrorEnabled())
+                logger.error("Get kerberos TGT failed." , exception);
+            throw new RuntimeException(exception);
         }
     }
     private long getRefreshTime(KerberosTicket tgt) {
         long start = tgt.getStartTime().getTime();
         long expires = tgt.getEndTime().getTime();
-        LOG.info("TGT valid starting at:        " + tgt.getStartTime().toString());
-        LOG.info("TGT expires:                  " + tgt.getEndTime().toString());
+        // 定义日期时间格式化器
+        DateFormat formatter = getDateFormat();
+        if(logger.isInfoEnabled())
+            logger.info("TGT valid starting at:        {}\r\nTGT expires:                  {}" , formatter.format(tgt.getStartTime()),formatter.format(tgt.getEndTime()));
         long proposedRefresh = start + (long)((float)(expires - start) * 0.8F);
         return proposedRefresh > expires ? System.currentTimeMillis() : proposedRefresh;
     }
+    private DateFormat getDateFormat(){
+        return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+    }
     public long getNextRefreshTime(long localCurrentTime, Subject subj) throws Exception {
         KerberosTicket kerberosTicket = getKerberosTicket(subj);
+        DateFormat formatter = getDateFormat();
         if (kerberosTicket == null) {
             Date nextRefreshDate = new Date(localCurrentTime);
-            LOG.warn("No TGT found: will try again at {}" + nextRefreshDate);
+            if(logger.isWarnEnabled())
+                logger.warn("No TGT found: will try again at {}" , formatter.format(nextRefreshDate));
             return localCurrentTime;
         } else {
             long nextRefreshTime = getRefreshTime(kerberosTicket);
             long expiry = kerberosTicket.getEndTime().getTime();
             Date expiryDate = new Date(expiry);
             if (kerberosTicket.getEndTime().equals(kerberosTicket.getRenewTill())) {
-                LOG.error("The TGT cannot be renewed beyond the next expiry date: " + expiryDate + ".This process will not be able to authenticate new SASL connections after that time (for example, it will not be authenticate a new connection with a Zookeeper Quorum member).  Ask your system administrator to either increase the 'renew until' time by doing : 'modprinc -maxrenewlife username within kadmin, or instead, to generate a keytab for username. Because the TGT's expiry cannot be further extended by refreshing");
-                throw new Exception("The TGT cannot be renewed beyond the next expiry date: " + expiryDate);
+                String timeStr = formatter.format(expiryDate);
+                if(logger.isErrorEnabled())
+                    logger.error("The TGT cannot be renewed beyond the next expiry date: {}.This process will not be able to authenticate new SASL connections after that time (for example, it will not be authenticate a new connection with a Zookeeper Quorum member).  Ask your system administrator to either increase the 'renew until' time by doing : 'modprinc -maxrenewlife username within kadmin, or instead, to generate a keytab for username. Because the TGT's expiry cannot be further extended by refreshing",timeStr);
+                throw new Exception("The TGT cannot be renewed beyond the next expiry date: " + timeStr);
             } else {
                 if (nextRefreshTime < localCurrentTime + 60000L) {
                     Date until = new Date(nextRefreshTime);
                     Date newuntil = new Date(localCurrentTime + 60000L);
                     nextRefreshTime = localCurrentTime + 60000L;
-                    LOG.warn("TGT refresh thread time adjusted from : " + until + " to : " + newuntil + " since the former is sooner than the minimum refresh interval (" + 60L + " seconds) from now.");
+                    if(logger.isWarnEnabled())
+                        logger.warn("TGT refresh thread time adjusted from : {} to : {} since the former is sooner than the minimum refresh interval ({} seconds) from now.",  formatter.format(until) ,formatter.format(newuntil),60L );
                 }
 
                 if (nextRefreshTime > expiry) {
-                    LOG.info("refreshing now because expiry is before next scheduled refresh time.");
+                    if(logger.isInfoEnabled())
+                        logger.info("refreshing now because expiry is before next scheduled refresh time.");
                     return localCurrentTime;
                 } else {
                     return nextRefreshTime;
@@ -316,18 +312,20 @@ public class ServerRealmKerberosUtil {
 
     private void getTGTwithRetry() throws InterruptedException {
         int count = 1;
-
+        DateFormat formatter = getDateFormat();
         while(count <= 3) {
             try {
                 getTGT(  );
-                LOG.info("TGT refresh at: " + new Date(System.currentTimeMillis()));
+                if(logger.isInfoEnabled())
+                    logger.info("TGT refresh at: {}", formatter.format(new Date(System.currentTimeMillis())));
                 break;
             } catch (Exception var2) {
                 if (count < 3) {
                     ++count;
                     Thread.sleep(10000L);
                 } else {
-                    LOG.error("Could not refresh TGT ", var2);
+                    if(logger.isErrorEnabled())
+                        logger.error("Could not refresh TGT ", var2);
                 }
             }
         }
@@ -335,8 +333,8 @@ public class ServerRealmKerberosUtil {
     }
 
     public void close() {
-        if(refreshTGTSingleton != null)
-            refreshTGTSingleton.shutdown();
+        if(refreshTgtTool != null)
+            refreshTgtTool.shutdown();
     }
 
     public class RefreshTgtThread implements Runnable 
@@ -347,52 +345,57 @@ public class ServerRealmKerberosUtil {
         }
 
         public void run() {
-            LOG.info("TGT refresh thread started");
-
+            if(logger.isInfoEnabled())
+                logger.info("TGT refresh thread started");
+            DateFormat formatter = getDateFormat();
             while(true) {
                 while(true) {
                     try {
                         long localCurrentTime = System.currentTimeMillis();
-                        long nextRefresh = getNextRefreshTime(localCurrentTime, subj);
+                        long nextRefresh = getNextRefreshTime(localCurrentTime, subject);
                         if (localCurrentTime <= nextRefresh) {
                             Date until = new Date(nextRefresh);
-                            LOG.info("TGT refresh sleeping until: " + until.toString());
+                            if(logger.isInfoEnabled())
+                                logger.info("TGT refresh sleeping until: {}", formatter.format(until));
                             Thread.sleep(nextRefresh - localCurrentTime);
                         } else {
-                            LOG.warn("nextRefresh:" + new Date(nextRefresh) + " is in the past: exiting refresh thread. Check clock sync between this host and KDC - (KDC's clock is likely ahead of this host). Manual intervention will be required for this client to successfully authenticate. In case of TGT being expiring, try to refresh TGT right now.");
+                            if(logger.isWarnEnabled())
+                                logger.warn("nextRefresh:{} is in the past: exiting refresh thread. Check clock sync between this host and KDC - (KDC's clock is likely ahead of this host). Manual intervention will be required for this client to successfully authenticate. In case of TGT being expiring, try to refresh TGT right now.",formatter.format(new Date(nextRefresh)));
                         }
 
                         getTGTwithRetry();
-                    } catch (Exception var6) {
-                        LOG.error("Failed to refresh TGT: refresh thread exiting now.", var6);
+                    } catch (Exception exception) {
+                        if(logger.isErrorEnabled())
+                            logger.error("Failed to refresh TGT: refresh thread exiting now.", exception);
                     }
                 }
             }
         }
     }
-    public class RefreshTGTSingleton {
-        private volatile ExecutorService esService;
+    public class RefreshTgtTool {
+        private volatile ExecutorService refreshTgtService;
         private KerberosConfig kerberosConfig;
-        private RefreshTGTSingleton(  KerberosConfig kerberosConfig) {
+        private RefreshTgtTool(KerberosConfig kerberosConfig) {
             this.kerberosConfig = kerberosConfig;
         }
         public void shutdown(){
-            if(esService != null){
+            if(refreshTgtService != null){
                 try {
-                    esService.shutdown();
+                    refreshTgtService.shutdown();
                 }
                 catch (Exception e){
-                    LOG.warn("Shutdown kerberos RefreshTGTThread ThreadPool failed:",e);
+                    if(logger.isWarnEnabled())
+                        logger.warn("Shutdown kerberos RefreshTGTThread ThreadPool failed:",e);
                 }
                 
             }
         }
 
         public void startRefreshThread(  ) {
-            if (esService == null) {
-                synchronized(RefreshTGTSingleton.class) {
-                    if (esService == null) {
-                        esService = Executors.newFixedThreadPool(1, new ThreadFactory() {
+            if (refreshTgtService == null) {
+                synchronized(RefreshTgtTool.class) {
+                    if (refreshTgtService == null) {
+                        refreshTgtService = Executors.newFixedThreadPool(1, new ThreadFactory() {
                             public Thread newThread(Runnable r) {
                                 Thread t = Executors.defaultThreadFactory().newThread(r);
                                 t.setDaemon(true);
@@ -402,7 +405,7 @@ public class ServerRealmKerberosUtil {
                         });
                     }
 
-                    esService.submit(new RefreshTgtThread(kerberosConfig));
+                    refreshTgtService.submit(new RefreshTgtThread(kerberosConfig));
                 }
             }
 
@@ -410,13 +413,14 @@ public class ServerRealmKerberosUtil {
     }
     public void authenticate() {
         int times = 0;
-        synchronized(SUBJECT_LOCK) {
-            if(refreshTGTSingleton == null){
-                refreshTGTSingleton = new RefreshTGTSingleton(kerberosConfig);
-                refreshTGTSingleton.startRefreshThread();
+        synchronized(subjectLock) {
+            if(refreshTgtTool == null){
+                refreshTgtTool = new RefreshTgtTool(kerberosConfig);
+                refreshTgtTool.startRefreshThread();
             }
-            while(subjectWillExpire(subj) && times < 3) {
-                LOG.debug("Subject is not ok ,retry get new TGT.");
+            while(subjectWillExpire(subject) && times < 3) {
+                if(logger.isDebugEnabled())
+                    logger.debug("Subject is not ok ,retry get new TGT.");
                 getTGT();
                 ++times;
             }
@@ -425,8 +429,7 @@ public class ServerRealmKerberosUtil {
             return;
         }
         
-//        int index = 0;
-//        int times1 = 0;
+
         String realm = null;
         try {
             ServerRealmKerberosThreadLocal.setAuthenticateLocal();
@@ -435,28 +438,13 @@ public class ServerRealmKerberosUtil {
         finally {
             ServerRealmKerberosThreadLocal.clearAuthenticateLocal();
         }
-//        for(realm = null; null == realm && times1 < 3; ++times1) {
-//            realm = this.getRealm(((Node)this.nodes.get(index)).getHost().toHostString());
-//            int var10000;
-//            if (index < this.nodes.size() - 1) {
-//                ++index;
-//                var10000 = index;
-//            } else {
-//                var10000 = 0;
-//            }
-//
-//            index = var10000;
-//        }
+
 
         if (realm != null && !realm.isEmpty()) {
-//            if (realm.toLowerCase(Locale.ENGLISH).startsWith("elasticsearch/hadoop.")) {
-//                this.serverRealm = realm;
-//            } else {
-//                this.serverRealm = "elasticsearch/hadoop." + realm.toLowerCase(Locale.ENGLISH) + "@" + realm.toUpperCase(Locale.ENGLISH);
-//            }
             handleRealm(realm);
-             
-            LOG.info("Initialize the client successfully.");
+
+            if(logger.isInfoEnabled())
+                logger.info("Initialize the client successfully.");
         } else {
             throw new IllegalArgumentException("Get ServerRealm failed.");
         }

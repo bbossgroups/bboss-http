@@ -1826,14 +1826,18 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	}
 
     public static String getAPIHeader(String encodedAuthCharset ,String apiKeyId, String apiKeySecret) {
-        String auth = apiKeyId + ":" + apiKeySecret;
-        if(encodedAuthCharset != null && !encodedAuthCharset.equals("")) {
-            byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(Charset.forName(encodedAuthCharset)));
-            return "ApiKey " + new String(encodedAuth);
+        if(SimpleStringUtil.isNotEmpty(apiKeySecret)) {
+            String auth = apiKeyId + ":" + apiKeySecret;
+            if (encodedAuthCharset != null && !encodedAuthCharset.equals("")) {
+                byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(Charset.forName(encodedAuthCharset)));
+                return "ApiKey " + new String(encodedAuth);
+            } else {
+                byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(StandardCharsets.UTF_8));
+                return "ApiKey " + new String(encodedAuth);
+            }
         }
         else{
-            byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(StandardCharsets.UTF_8));
-            return "ApiKey " + new String(encodedAuth);
+            return "Bearer " + apiKeyId;
         }
     }
 	private void buildRetryHandler(HttpClientBuilder builder) {

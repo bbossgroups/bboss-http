@@ -100,6 +100,9 @@ public class KerberosHelper {
                 else if(key.equals("serverRealmPath")){
                     kerberosConfig.setServerRealmPath((String)entry.getValue());
                 }
+                else if(key.equals("serverRealmHttpMethod")){
+                    kerberosConfig.setServerRealmHttpMethod((String)entry.getValue());
+                }
                 else if(key.equals("serverRealm")){
                     kerberosConfig.setServerRealm((String)entry.getValue());
                 }

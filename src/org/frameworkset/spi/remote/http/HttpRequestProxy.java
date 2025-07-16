@@ -869,6 +869,17 @@ public class HttpRequestProxy {
         return httpPostFileforString(poolname, url, (String) null, (String) null, (Map) null,
                 (Map<String, File>) null);
     }
+    /**
+     * 公用post方法
+     *
+     * @param clientConfiguration
+     * @param url
+     * @throws HttpProxyRequestException
+     */
+    public static String httpPostforString(ClientConfiguration clientConfiguration, String url) throws HttpProxyRequestException {
+        return httpPostFileforString(clientConfiguration, url, (String) null, (String) null, (Map) null,
+                (Map<String, File>) null);
+    }
 
     /**
      * 公用post方法
@@ -907,6 +918,12 @@ public class HttpRequestProxy {
                 files, null);
     }
 
+    public static String httpPostFileforString(ClientConfiguration clientConfiguration, String url, String cookie, String userAgent, Object params,
+                                               Map<String, File> files) throws HttpProxyRequestException {
+        return httpPostFileforString(clientConfiguration, url, cookie, userAgent, params,
+                files, null);
+    }
+
 
 
 	public static class HttpOption{
@@ -930,6 +947,24 @@ public class HttpRequestProxy {
 		// System.out.println("post_url==> "+url);
 		// String cookie = getCookie(appContext);
 		// String userAgent = getUserAgent(appContext);
+        ClientConfiguration config = ClientConfiguration.getClientConfiguration(poolname);
+        return httpPost(config,   url,   httpOption,  responseHandler);
+        
+
+	}
+
+    /**
+     * 公用post方法
+     *
+     * @param clientConfiguration
+     * @param url
+     * @param httpOption
+     * @throws HttpProxyRequestException
+     */
+    public static <T> T httpPost(ClientConfiguration clientConfiguration, String url, final HttpOption httpOption,final ResponseHandler<T> responseHandler) throws HttpProxyRequestException {
+        // System.out.println("post_url==> "+url);
+        // String cookie = getCookie(appContext);
+        // String userAgent = getUserAgent(appContext);
         HttpEntity httpEntity = null;
         List<NameValuePair> paramPair = null;
         if (httpOption.files != null) {
@@ -994,7 +1029,7 @@ public class HttpRequestProxy {
         }
         final HttpEntity _httpEntity = httpEntity;
         final List<NameValuePair> _paramPair = paramPair;
-        return _handleRequest( poolname,  url ,
+        return _handleRequest( clientConfiguration,  url ,
                 responseHandler,new ExecuteRequest(){
                     @Override
                     public Object execute(ClientConfiguration config, HttpClient httpClient,String url, int triesCount) throws Exception {
@@ -1021,9 +1056,9 @@ public class HttpRequestProxy {
                         }
                     }
                 } );
-       
 
-	}
+
+    }
     /**
      * 公用post方法
      *
@@ -1038,13 +1073,22 @@ public class HttpRequestProxy {
      */
     public static <T> T httpPost(String poolname, String url, String cookie, String userAgent, Object params,
                                                Map<String, File> files, Map headers,ResponseHandler<T> responseHandler) throws HttpProxyRequestException {
-		HttpOption httpOption = new HttpOption();
-		httpOption.cookie = cookie;
-		httpOption.userAgent = userAgent;
-		httpOption.params = params;
-		httpOption.files = files;
-		httpOption.headers = headers;
-    	return httpPost(  poolname,   url,  httpOption,  responseHandler);
+        ClientConfiguration config = ClientConfiguration.getClientConfiguration(poolname);
+        return httpPost(config,   url,   cookie,   userAgent,   params,
+                 files,  headers,  responseHandler);
+         
+
+    }
+
+    public static <T> T httpPost(ClientConfiguration clientConfiguration, String url, String cookie, String userAgent, Object params,
+                                 Map<String, File> files, Map headers,ResponseHandler<T> responseHandler) throws HttpProxyRequestException {
+        HttpOption httpOption = new HttpOption();
+        httpOption.cookie = cookie;
+        httpOption.userAgent = userAgent;
+        httpOption.params = params;
+        httpOption.files = files;
+        httpOption.headers = headers;
+        return httpPost(  clientConfiguration,   url,  httpOption,  responseHandler);
 
     }
 
@@ -1727,6 +1771,15 @@ public class HttpRequestProxy {
 
     	return httpPost(  poolname,   url,   cookie,   userAgent,   params,
                   files,  headers,new StringResponseHandler() );
+
+
+    }
+
+    public static String httpPostFileforString(ClientConfiguration clientConfiguration, String url, String cookie, String userAgent, Object params,
+                                               Map<String, File> files, Map headers) throws HttpProxyRequestException {
+
+        return httpPost(  clientConfiguration,   url,   cookie,   userAgent,   params,
+                files,  headers,new StringResponseHandler() );
 
 
     }

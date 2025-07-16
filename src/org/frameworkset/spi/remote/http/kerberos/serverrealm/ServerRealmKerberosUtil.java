@@ -17,6 +17,7 @@ package org.frameworkset.spi.remote.http.kerberos.serverrealm;
 
 import com.frameworkset.util.SimpleStringUtil;
 import org.frameworkset.spi.remote.http.ClientConfiguration;
+import org.frameworkset.spi.remote.http.HttpMethodName;
 import org.frameworkset.spi.remote.http.HttpRequestProxy;
 import org.frameworkset.spi.remote.http.kerberos.KerberosConfig;
 import org.frameworkset.spi.remote.http.kerberos.KerberosHelper;
@@ -55,15 +56,21 @@ public class ServerRealmKerberosUtil {
     private KerberosConfig kerberosConfig;
     private RefreshTgtTool refreshTgtTool;
     private String serverRealmPath = "/elasticsearch/serverrealm";
+    private String serverRealmHttpMethod = HttpMethodName.HTTP_POST;
 
     public ServerRealmKerberosUtil(ClientConfiguration clientConfiguration){
         this.clientConfiguration = clientConfiguration;
         this.kerberosConfig = clientConfiguration.getKerberosConfig();
         if(SimpleStringUtil.isNotEmpty(kerberosConfig.getServerRealmPath()))
             this.serverRealmPath = kerberosConfig.getServerRealmPath();
+        if(SimpleStringUtil.isNotEmpty(kerberosConfig.getServerRealmHttpMethod())){
+            this.serverRealmHttpMethod = kerberosConfig.getServerRealmHttpMethod();
+        }
         if(SimpleStringUtil.isNotEmpty(kerberosConfig.getServerRealm())){
             handleRealm(this.kerberosConfig.getServerRealm());
         }
+        
+
     }
     private final Map<String, String> kerberosOptions = new HashMap(6);
 
@@ -433,7 +440,15 @@ public class ServerRealmKerberosUtil {
         String realm = null;
         try {
             ServerRealmKerberosThreadLocal.setAuthenticateLocal();
-            realm = HttpRequestProxy.httpGetforString(clientConfiguration, this.serverRealmPath);
+            if(SimpleStringUtil.isEmpty(serverRealmHttpMethod ) || serverRealmHttpMethod.equalsIgnoreCase(HttpMethodName.HTTP_POST)) {
+                realm = HttpRequestProxy.httpPostforString(clientConfiguration, this.serverRealmPath);
+            }
+            else if( serverRealmHttpMethod.equalsIgnoreCase(HttpMethodName.HTTP_GET)) {
+                realm = HttpRequestProxy.httpGetforString(clientConfiguration, this.serverRealmPath);
+            }
+            else {
+                realm = HttpRequestProxy.httpPostforString(clientConfiguration, this.serverRealmPath);
+            }
         }
         finally {
             ServerRealmKerberosThreadLocal.clearAuthenticateLocal();

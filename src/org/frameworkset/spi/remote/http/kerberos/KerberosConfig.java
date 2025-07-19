@@ -16,7 +16,6 @@ package org.frameworkset.spi.remote.http.kerberos;
  */
 
 import org.frameworkset.spi.remote.http.HttpMethodName;
-import org.frameworkset.util.annotations.HttpMethod;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -67,7 +66,7 @@ public class KerberosConfig {
 
 
     private String serverRealmPath;
-    private String serverRealmHttpMethod = HttpMethodName.HTTP_POST;
+    private String serverRealmHttpMethod = HttpMethodName.HTTP_GET;
     private String serverRealm;
     private String useSubjectCredsOnly ;
     private Map<String,String> exts;

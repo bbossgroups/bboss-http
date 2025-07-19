@@ -56,7 +56,7 @@ public class ServerRealmKerberosUtil {
     private KerberosConfig kerberosConfig;
     private RefreshTgtTool refreshTgtTool;
     private String serverRealmPath = "/elasticsearch/serverrealm";
-    private String serverRealmHttpMethod = HttpMethodName.HTTP_POST;
+    private String serverRealmHttpMethod = HttpMethodName.HTTP_GET;
 
     public ServerRealmKerberosUtil(ClientConfiguration clientConfiguration){
         this.clientConfiguration = clientConfiguration;
@@ -440,14 +440,15 @@ public class ServerRealmKerberosUtil {
         String realm = null;
         try {
             ServerRealmKerberosThreadLocal.setAuthenticateLocal();
-            if(SimpleStringUtil.isEmpty(serverRealmHttpMethod ) || serverRealmHttpMethod.equalsIgnoreCase(HttpMethodName.HTTP_POST)) {
-                realm = HttpRequestProxy.httpPostforString(clientConfiguration, this.serverRealmPath);
-            }
-            else if( serverRealmHttpMethod.equalsIgnoreCase(HttpMethodName.HTTP_GET)) {
+            if(SimpleStringUtil.isEmpty(serverRealmHttpMethod ) 
+                    || serverRealmHttpMethod.equalsIgnoreCase(HttpMethodName.HTTP_GET)) {
                 realm = HttpRequestProxy.httpGetforString(clientConfiguration, this.serverRealmPath);
+            }           
+            else  if(serverRealmHttpMethod.equalsIgnoreCase(HttpMethodName.HTTP_POST)) {
+                realm = HttpRequestProxy.httpPostforString(clientConfiguration, this.serverRealmPath);
             }
             else {
-                realm = HttpRequestProxy.httpPostforString(clientConfiguration, this.serverRealmPath);
+                realm = HttpRequestProxy.httpGetforString(clientConfiguration, this.serverRealmPath);
             }
         }
         finally {

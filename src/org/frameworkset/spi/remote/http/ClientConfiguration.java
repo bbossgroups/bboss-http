@@ -1841,24 +1841,24 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
         }
     }
 	private void buildRetryHandler(HttpClientBuilder builder) {
+        //如果禁止重试机制，则禁用重试机制
 		if(automaticRetriesDisabled) {
 			builder.disableAutomaticRetries();
-			return ;
 		}
-
-		if (getRetryTime() > 0 ) {
-			CustomHttpRequestRetryHandler customHttpRequestRetryHandler = null;
-			if (this.customHttpRequestRetryHandler != null && !this.customHttpRequestRetryHandler.trim().equals("")) {
-				try {
-					customHttpRequestRetryHandler = (CustomHttpRequestRetryHandler) Class.forName(this.customHttpRequestRetryHandler).newInstance();
-				} catch (Exception e) {
-					logger.error("Create CustomHttpRequestRetryHandler[" + this.customHttpRequestRetryHandler + "] failed:", e);
-					customHttpRequestRetryHandler = null;
-				}
-			}
-			HttpRequestRetryHandlerHelper httpRequestRetryHandlerHelper = new HttpRequestRetryHandlerHelper(customHttpRequestRetryHandler, this);
-			builder.setRetryHandler(httpRequestRetryHandlerHelper);
-		}
+        else {
+            
+            CustomHttpRequestRetryHandler customHttpRequestRetryHandler = null;
+            if (this.customHttpRequestRetryHandler != null && !this.customHttpRequestRetryHandler.trim().equals("")) {
+                try {
+                    customHttpRequestRetryHandler = (CustomHttpRequestRetryHandler) Class.forName(this.customHttpRequestRetryHandler).newInstance();
+                } catch (Exception e) {
+                    logger.error("Create CustomHttpRequestRetryHandler[" + this.customHttpRequestRetryHandler + "] failed:", e);
+                    customHttpRequestRetryHandler = null;
+                }
+            }
+            HttpRequestRetryHandlerHelper httpRequestRetryHandlerHelper = new HttpRequestRetryHandlerHelper(customHttpRequestRetryHandler, this);
+            builder.setRetryHandler(httpRequestRetryHandlerHelper);
+        }
 
 	}
 

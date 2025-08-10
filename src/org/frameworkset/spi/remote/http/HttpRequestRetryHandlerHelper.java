@@ -15,6 +15,7 @@ package org.frameworkset.spi.remote.http;
  * limitations under the License.
  */
 
+import org.apache.http.client.HttpRequestRetryHandler;
 import org.apache.http.protocol.HttpContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,28 +23,45 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 
 /**
- * <p>Description: </p>
- * <p></p>
+ * 重试组件
  * <p>Copyright (c) 2018</p>
  * @Date 2018/12/18 22:10
  * @author biaoping.yin
  * @version 1.0
  */
-public class HttpRequestRetryHandlerHelper extends org.apache.http.impl.client.DefaultHttpRequestRetryHandler {
+public class HttpRequestRetryHandlerHelper implements HttpRequestRetryHandler {
 	private static Logger logger = LoggerFactory.getLogger(DefaultHttpRequestRetryHandler.class);
 	private CustomHttpRequestRetryHandler httpRequestRetryHandler;
+    private HttpRequestRetryHandler defaultHttpRequestRetryHandler;
 	private ClientConfiguration configuration ;
+    private int retryTime;
 	public HttpRequestRetryHandlerHelper(CustomHttpRequestRetryHandler httpRequestRetryHandler,ClientConfiguration configuration){
-		super(configuration.getRetryTime(),false);
-		this.httpRequestRetryHandler = httpRequestRetryHandler;
+		
+        if(httpRequestRetryHandler != null) {
+            if(configuration.getRetryTime() > 0){
+                retryTime = configuration.getRetryTime();
+            }
+            else{
+                retryTime = 3;
+            }
+            this.httpRequestRetryHandler = httpRequestRetryHandler;
+        }
+        else{
+            if (configuration.getRetryTime() > 0) {
+                this.defaultHttpRequestRetryHandler = new org.apache.http.impl.client.DefaultHttpRequestRetryHandler(configuration.getRetryTime(),false);
+            }
+            else {
+                this.defaultHttpRequestRetryHandler = org.apache.http.impl.client.DefaultHttpRequestRetryHandler.INSTANCE;
+            }
+        }
+        
 		this.configuration = configuration;
 	}
 
 	@Override
 	public boolean retryRequest(IOException exception, int executionCount, HttpContext context) {
 		if(httpRequestRetryHandler != null){
-			if (executionCount > configuration.getRetryTime()) {
-//			logger.warn("Maximum tries[" + configuration.getRetryTime() + "] reached for client http pool ");
+			if (executionCount > retryTime) {
 				return false;
 			}
 			if(httpRequestRetryHandler.retryRequest(exception,executionCount,context,configuration)) {
@@ -54,14 +72,11 @@ public class HttpRequestRetryHandlerHelper extends org.apache.http.impl.client.D
 						return false;
 					}
 				}
-//			if(logger.isWarnEnabled())
-//				logger.warn(new StringBuilder().append(exception.getClass().getName()).append(" on ")
-//					.append(executionCount).append(" call").toString());
 				return true;
 			}
 			return false;
 		}
-		else if(super.retryRequest(exception,executionCount,context)){
+		else if(defaultHttpRequestRetryHandler.retryRequest(exception,executionCount,context)){
 			if (configuration.getRetryInterval() > 0) {
 				try {
 					Thread.sleep(configuration.getRetryInterval());
@@ -72,26 +87,6 @@ public class HttpRequestRetryHandlerHelper extends org.apache.http.impl.client.D
 			return true;
 		}
 		return false;
-		/**
-		if (executionCount > configuration.getRetryTime()) {
-//			logger.warn("Maximum tries[" + configuration.getRetryTime() + "] reached for client http pool ");
-			return false;
-		}
-		if(httpRequestRetryHandler.retryRequest(exception,executionCount,context,configuration)) {
-			if (configuration.getRetryInterval() > 0) {
-				try {
-					Thread.sleep(configuration.getRetryInterval());
-				} catch (InterruptedException e1) {
-					return false;
-				}
-			}
-//			if(logger.isWarnEnabled())
-//				logger.warn(new StringBuilder().append(exception.getClass().getName()).append(" on ")
-//					.append(executionCount).append(" call").toString());
-			return true;
-		}
-		return false;
-		 */
-//		return false;
+
 	}
 }

@@ -153,16 +153,21 @@ public class ResponseUtil {
 					return null;
 				}
 				else{
-					return (T)Integer.valueOf(Integer.parseInt(value));
+                    Object v = Integer.parseInt(value);
+                    return (T)v;
 				}
 			}
 			else if(resultType.isAssignableFrom(int.class)) {
 				String value =  handleStringResponse(url, response);
 				if(value == null){
-					return (T)new Integer(0);
+                    Object v = 0;
+                    return (T)v;
+//					return (T)new Integer(0);
 				}
 				else{
-					return (T)Integer.valueOf(Integer.parseInt(value));
+                    Object v = Integer.parseInt(value);
+                    return (T)v;
+//					return (T)Integer.valueOf(Integer.parseInt(value));
 				}
 			}
 			else if(resultType.isAssignableFrom(Long.class) ) {
@@ -171,16 +176,21 @@ public class ResponseUtil {
 					return null;
 				}
 				else{
-					return (T)Long.valueOf(Long.parseLong(value));
+                    Object v = Long.parseLong(value);
+                    return (T)v;
 				}
 			}
 			else if(resultType.isAssignableFrom(long.class)) {
 				String value =  handleStringResponse(url, response);
 				if(value == null){
-					return (T)new Long(0l);
+                    Object v = 0l;
+                    return (T)v;
+//					return (T)new Long(0l);
 				}
 				else{
-					return (T)Long.valueOf(Long.parseLong(value));
+                    Object v = Long.parseLong(value);
+                    return (T)v;
+//					return (T)Long.valueOf(Long.parseLong(value));
 				}
 			}
 			else if(resultType.isAssignableFrom(Short.class) ) {
@@ -189,16 +199,22 @@ public class ResponseUtil {
 					return null;
 				}
 				else{
-					return (T)Short.valueOf(Short.parseShort(value));
+                    Object v = Short.parseShort(value);
+                    return (T)v;
+//					return (T)Short.valueOf(Short.parseShort(value));
 				}
 			}
 			else if(resultType.isAssignableFrom(short.class)) {
 				String value =  handleStringResponse(url, response);
 				if(value == null){
-					return (T)new Short((short)0);
+                    Object v = (short)0;
+                    return (T)v;
+//					return (T)new Short((short)0);
 				}
 				else{
-					return (T)Short.valueOf(Short.parseShort(value));
+                    Object v = Short.parseShort(value);
+                    return (T)v;
+//					return (T)Short.valueOf(Short.parseShort(value));
 				}
 			}
 			else if(resultType.isAssignableFrom(Float.class) ) {
@@ -207,16 +223,21 @@ public class ResponseUtil {
 					return null;
 				}
 				else{
-					return (T)Float.valueOf(Float.parseFloat(value));
+                    Object v = Float.parseFloat(value);
+                    return (T)v;
+//					return (T)Float.valueOf(Float.parseFloat(value));
 				}
 			}
 			else if(resultType.isAssignableFrom(float.class)) {
 				String value =  handleStringResponse(url, response);
 				if(value == null){
-					return (T)new Float(0f);
+                    Object v = 0f;
+					return (T)v;
 				}
 				else{
-					return (T)Float.valueOf(Float.parseFloat(value));
+                    Object v = Float.parseFloat(value);
+                    return (T)v;
+//					return (T)Float.valueOf(Float.parseFloat(value));
 				}
 			}
 			else if(resultType.isAssignableFrom(Double.class) ) {
@@ -225,16 +246,21 @@ public class ResponseUtil {
 					return null;
 				}
 				else{
-					return (T)Double.valueOf(Double.parseDouble(value));
+                    Object v = Double.parseDouble(value);
+                    return (T)v;
 				}
 			}
 			else if(resultType.isAssignableFrom(double.class)) {
 				String value =  handleStringResponse(url, response);
 				if(value == null){
-					return (T)new Double(0d);
+                    Object v = 0d;
+                    return (T)v;
+//					return (T)new Double(0d);
 				}
 				else{
-					return (T)Double.valueOf(Double.parseDouble(value));
+                    Object v = Double.parseDouble(value);
+                    return (T)v;
+//					return (T)Double.valueOf(Double.parseDouble(value));
 				}
 			}
 			else if(resultType.isAssignableFrom(Boolean.class) ) {
@@ -249,10 +275,13 @@ public class ResponseUtil {
 			else if(resultType.isAssignableFrom(boolean.class)) {
 				String value =  handleStringResponse(url, response);
 				if(value == null){
-					return (T)new Boolean(false);
+                    Object v = false;
+                    return (T)v;
 				}
 				else{
-					return (T)Boolean.valueOf(Boolean.parseBoolean(value));
+                    Object v = Boolean.parseBoolean(value);
+                    return (T)v;
+//					return (T)Boolean.valueOf(Boolean.parseBoolean(value));
 				}
 			}
 		}

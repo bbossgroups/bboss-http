@@ -137,6 +137,18 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
     private KerberosConfig kerberosConfig;
     private BaseRequestKerberosUrlUtils requestKerberosUrlUtils;
 
+    /**
+     * 单位:秒
+     * 链接空闲时间，链接空闲时间达到maxIdleTime时，将被回收掉
+     * @param maxIdleTime
+     */
+    public void setMaxIdleTime(Integer maxIdleTime) {
+        this.maxIdleTime = maxIdleTime;
+    }
+
+    public Integer getMaxIdleTime() {
+        return maxIdleTime;
+    }
     public void setRequestKerberosUrlUtils(BaseRequestKerberosUrlUtils requestKerberosUrlUtils) {
         this.requestKerberosUrlUtils = requestKerberosUrlUtils;
     }
@@ -229,7 +241,7 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 	/**
 	 * 单位毫秒：
 	 */
-	private final int maxIdleTime = -1;
+	private Integer maxIdleTime ;
 
 	public HttpServiceHosts getHttpServiceHosts() {
 		return httpServiceHosts;
@@ -963,8 +975,16 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
                 else
                     log.append(",http.authPassword=******");
 			}
-			
 
+
+
+
+            String maxIdleTime = ClientConfiguration._getStringValue(name, "http.maxIdleTime", context, null);
+            if(maxIdleTime != null && !maxIdleTime.equals("")){
+                clientConfiguration.setMaxIdleTime(Integer.parseInt(maxIdleTime));
+            }
+
+            log.append(",http.maxIdleTime=").append(maxIdleTime);
 
 
 
@@ -1725,6 +1745,9 @@ public class ClientConfiguration implements InitializingBean, BeanNameAware {
 
 
 		}
+        if(maxIdleTime != null && maxIdleTime > 0) {
+            builder.evictIdleConnections(maxIdleTime, TimeUnit.SECONDS);
+        }
 		buildRetryHandler(builder);
 		customizeHttpBuilder( builder );
 		httpclient = builder.build();

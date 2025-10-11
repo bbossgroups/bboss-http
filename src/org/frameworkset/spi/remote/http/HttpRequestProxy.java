@@ -2382,6 +2382,8 @@ public class HttpRequestProxy {
                             }
                         });
                     }
+                    //正常调用结束后，如果e不为空，需要置空
+                    e = null;
                     httpAddress.recover();
                     httpResponseStatusException = HttpParamsHandler.getException(  responseHandler,httpServiceHosts );
                     

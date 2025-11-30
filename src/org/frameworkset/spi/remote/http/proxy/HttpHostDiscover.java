@@ -20,12 +20,12 @@ public abstract class HttpHostDiscover extends Thread{
 	private HttpServiceHosts httpServiceHosts;
 	public HttpHostDiscover( ){
 		super("Http HostDiscover Thread");
-		ShutdownUtil.addShutdownHook(new Runnable() {
-			@Override
-			public void run() {
-				stopCheck();
-			}
-		});
+//		ShutdownUtil.addShutdownHook(new Runnable() {
+//			@Override
+//			public void run() {
+//				stopCheck();
+//			}
+//		});
 		this.setDaemon(true);
 	}
 	boolean stop = false;
